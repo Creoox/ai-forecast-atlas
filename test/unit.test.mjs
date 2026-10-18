@@ -78,6 +78,18 @@ test('chat guide carries a referential follow-up but does not invent unknown fea
   assert.deepEqual(selectChatGuide(guide, 'What is xylophone?', '../broadcast').details, [], 'an unknown panel id cannot supply a feature');
 });
 
+test('chat guide explains reading size and its browser-only persistence', () => {
+  const guide = chatGuide();
+  for (const question of ['How do I change text size?', 'The fonts are small; can I change font size?', 'How do I get larger text?']) {
+    const selected = selectChatGuide(guide, question);
+    assert.ok(guideIds(selected).includes('panel:layout'), question);
+    const help = JSON.stringify(selected.details);
+    assert.match(help, /100%.*125%.*150%/);
+    assert.match(help, /do not sync between browsers or devices/);
+    assert.match(help, /does not reset the scenario, theme or text size/);
+  }
+});
+
 test('engine instances are independent and deterministic', () => {
   const a = createEngine(), b = createEngine();
   const s = a.SCENARIOS[0];

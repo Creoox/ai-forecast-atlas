@@ -17,6 +17,21 @@ function load(k) { try { const v = localStorage.getItem(k); return v == null ? n
 function store(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
 const SITE = Object.assign({ mode: 'artifact' }, window.AIMONITOR || {}, window.AIMONITOR_SITE || {});
 
+/* Text size is independent of layout presets, theme and shared views. */
+const TEXT_SIZE_KEY = 'aimonitor.text-size.v1';
+const TEXT_SIZES = [100, 125, 150];
+const savedTextSize = load(TEXT_SIZE_KEY);
+let TEXT_SIZE = TEXT_SIZES.includes(savedTextSize) ? savedTextSize : 100;
+const textScale = () => TEXT_SIZE / 100;
+function applyTextSizeTokens() {
+  document.documentElement.style.setProperty('--text-scale', textScale());
+  document.documentElement.dataset.textSize = String(TEXT_SIZE);
+  const select = $('#textSize'); if (select) select.value = String(TEXT_SIZE);
+}
+applyTextSizeTokens();
+// Broadcast is a fixed 1920×1080 recording composition, independent of reading preferences.
+const chartScale = ctx => ctx.canvas.id === 'bcv' ? 1 : textScale();
+
 /* ---------- theme: dark (default, the terminal look) or light; tokens are re-read on every switch ---------- */
 let THEME = (function () {
   const saved = load('aimonitor.theme');
@@ -306,7 +321,7 @@ function pathSeries(ctx, get, i0, i1, X, Y, fEnd) {
   return started;
 }
 function drawLane(ctx, x, y, w, h, L, o) {
-  const big = o.big || 1;
+  const big = (o.big || 1) * chartScale(ctx);
   const axisW = 44 * big, top = 7 * big, bot = 6 * big;
   const x0 = x, x1 = x + w - axisW, y0 = y + top, y1 = y + h - bot;
   const X = i => xOfI(i, x0, x1), Y = yMap(L, y0, y1);
@@ -424,7 +439,7 @@ function drawLane(ctx, x, y, w, h, L, o) {
 /* ---------- scrubber ---------- */
 function regimeOf(i) { const r = view.to.regime[i]; return E.REGIMES[r] || E.REGIMES.STEADY; }
 function drawScrub(ctx, x, y, w, h, o) {
-  const big = o.big || 1, axisW = 44 * big;
+  const big = (o.big || 1) * chartScale(ctx), axisW = 44 * big;
   const x0 = x, x1 = x + w - axisW;
   const X = i => xOfI(i, x0, x1);
   ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
@@ -508,7 +523,7 @@ function nodeZ(n, f) {
 function nodeRate(n, f) { const a = nodeZ(n, Math.max(0, f - 1)), b = nodeZ(n, f); return b - a; }
 let netHover = null;
 function drawNet(ctx, x, y, w, h, o) {
-  const big = o.big || 1, f = o.f, time = o.time / 1000;
+  const big = (o.big || 1) * chartScale(ctx), f = o.f, time = o.time / 1000;
   ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
   ctx.fillStyle = o.bg || TH.panel; ctx.fillRect(x, y, w, h);
   const padX = 40 * big;
@@ -564,7 +579,7 @@ function drawNet(ctx, x, y, w, h, o) {
 
 /* ---------- phase portrait ---------- */
 function drawPhase(ctx, x, y, w, h, o) {
-  const big = o.big || 1, f = o.f;
+  const big = (o.big || 1) * chartScale(ctx), f = o.f;
   const padL = 34 * big, padB = 24 * big, padT = 8 * big, padR = 10 * big;
   const x0 = x + padL, x1 = x + w - padR, y0 = y + padT, y1 = y + h - padB;
   const lx = v => x0 + (Math.log10(clamp(v, 4, 300)) - Math.log10(4)) / (Math.log10(300) - Math.log10(4)) * (x1 - x0);
@@ -647,7 +662,7 @@ function drawPhase(ctx, x, y, w, h, o) {
 const POOL_SHORT = ['Chips', 'Power/DC', 'Cloud', 'Models', 'Agents', 'Services'];
 function poolShares(i) { const p = view.to.pools; let s = 0; for (let l = 0; l < 6; l++) s += p[l][i]; return p.map(a => (s > 0 ? a[i] / s : 0)); }
 function drawPools(ctx, x, y, w, h, o) {
-  const big = o.big || 1, f = o.f;
+  const big = (o.big || 1) * chartScale(ctx), f = o.f;
   const wide = w > 300 * big, labW = (wide ? 104 : 46) * big, x0 = x, x1 = x + w - labW, y0 = y + 4 * big, y1 = y + h - 16 * big;
   const X = i => xOfI(i, x0, x1);
   ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
@@ -684,28 +699,29 @@ function drawPools(ctx, x, y, w, h, o) {
 /* ---------- heatmap ---------- */
 const HEAT = { rows: [], col0: NOW, colW: 0, x0: 0, y0: 0, rowH: 17 };
 function heatLayout(w) {
+  const scale = textScale();
   const rows = []; let g = null;
   E.IMPACT_ROWS.forEach((r, idx) => { if (r.g !== g) { rows.push({ head: r.g }); g = r.g; } rows.push({ r, idx }); });
   HEAT.rows = rows;
-  const labW = Math.min(250, Math.max(180, w * 0.3));
-  HEAT.x0 = labW; HEAT.colW = (w - labW - 4) / (NQ - NOW); HEAT.y0 = 22;
-  let h = HEAT.y0; rows.forEach(r => { r.y = h; h += r.head ? 18 : HEAT.rowH; }); HEAT.h = h + 4;
+  const labW = Math.min(250 * scale, Math.max(180 * scale, w * 0.3));
+  HEAT.x0 = labW; HEAT.colW = (w - labW - 4) / (NQ - NOW); HEAT.y0 = 22 * scale;
+  let h = HEAT.y0; rows.forEach(r => { r.y = h; h += r.head ? 18 * scale : HEAT.rowH; }); HEAT.h = h + 4;
   return HEAT.h;
 }
 function impactsOf(run) { if (!run._imp) run._imp = E.impacts(run); return run._imp; }
 function drawHeat(ctx, w, h) {
-  const run = view.to, imp = impactsOf(run);
+  const run = view.to, imp = impactsOf(run), scale = textScale();
   ctx.fillStyle = TH.panel; ctx.fillRect(0, 0, w, h);
   const X = i => HEAT.x0 + (i - NOW) * HEAT.colW;
-  font(ctx, 8.5, 600); ctx.fillStyle = TH.ink3; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  for (let yr = 2027; yr <= 2035; yr++) ctx.fillText(String(yr), X(E.idxOf(yr)) + HEAT.colW * 2, 11);
+  font(ctx, 8.5 * scale, 600); ctx.fillStyle = TH.ink3; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let yr = 2027; yr <= 2035; yr++) ctx.fillText(String(yr), X(E.idxOf(yr)) + HEAT.colW * 2, 11 * scale);
   HEAT.rows.forEach(row => {
     if (row.head) {
-      font(ctx, 8.5, 700); ctx.fillStyle = TH.amber; ctx.textAlign = 'left'; ctx.fillText(row.head.toUpperCase(), 2, row.y + 10);
+      font(ctx, 8.5 * scale, 700); ctx.fillStyle = TH.amber; ctx.textAlign = 'left'; ctx.fillText(row.head.toUpperCase(), 2, row.y + 10 * scale);
       ctx.strokeStyle = TH.rule; ctx.beginPath(); ctx.moveTo(0, row.y + 0.5); ctx.lineTo(w, row.y + 0.5); ctx.stroke();
       return;
     }
-    font(ctx, 11, 500, FX, 'semi-condensed'); ctx.fillStyle = HEAT.hoverRow === row.idx ? TH.ink : TH.ink2; ctx.textAlign = 'left';
+    font(ctx, 11 * scale, 500, FX, 'semi-condensed'); ctx.fillStyle = HEAT.hoverRow === row.idx ? TH.ink : TH.ink2; ctx.textAlign = 'left';
     let label = row.r.n;
     while (ctx.measureText(label).width > HEAT.x0 - 12 && label.length > 4) label = label.slice(0, -2) + '…';
     ctx.fillText(label, 2, row.y + HEAT.rowH / 2);
@@ -1336,7 +1352,7 @@ function showTip(x, y, build) {
 }
 function hideTip() { tip.hidden = true; }
 function laneIndexAt(e, cv) {
-  const r = cv.getBoundingClientRect(); const axisW = 44;
+  const r = cv.getBoundingClientRect(); const axisW = 44 * textScale();
   const u = clamp((e.clientX - r.left) / (r.width - axisW), 0, 1);
   return Math.round(u * (NQ - 1));
 }
@@ -1363,7 +1379,7 @@ function onLaneHover(e, L, cv) {
 /* ---------- scrubber interaction ---------- */
 function bindScrub() {
   const cv = $('#scrub');
-  const idxAt = e => { const r = cv.getBoundingClientRect(); return clamp((e.clientX - r.left) / (r.width - 44), 0, 1) * (NQ - 1); };
+  const idxAt = e => { const r = cv.getBoundingClientRect(); return clamp((e.clientX - r.left) / (r.width - 44 * textScale()), 0, 1) * (NQ - 1); };
   let drag = false;
   cv.addEventListener('pointerdown', e => { drag = true; cv.setPointerCapture(e.pointerId); jumpTo(Math.round(idxAt(e))); });
   cv.addEventListener('pointermove', e => {
@@ -1686,6 +1702,7 @@ function frame(now) {
 
 /* ---------- wiring ---------- */
 function wire() {
+  $('#textSize').addEventListener('change', e => setTextSize(Number(e.target.value)));
   $('#bPlay').addEventListener('click', () => { stopTour(); togglePlay(); });
   $('#bStart').addEventListener('click', () => jumpTo(0));
   $('#bNow').addEventListener('click', () => jumpTo(NOW));
@@ -1727,7 +1744,16 @@ function wire() {
   new ResizeObserver(() => { document.documentElement.style.setProperty('--hdr-h', hdr.offsetHeight + 'px'); }).observe(hdr);
 }
 
-/* ---------- theme switching ---------- */
+/* ---------- text size and theme switching ---------- */
+function setTextSize(value) {
+  if (!TEXT_SIZES.includes(value)) return;
+  TEXT_SIZE = value;
+  store(TEXT_SIZE_KEY, TEXT_SIZE);
+  applyTextSizeTokens();
+  HEAT.rowH = (HEAT_ROW[(LAYOUT.size || {}).heat || 'm'] || HEAT_ROW.m) * textScale();
+  hideTip();
+  dirty(true);
+}
 function setTheme(t, opt) {
   opt = opt || {};
   const next = t === 'light' ? 'light' : 'dark';
@@ -1799,7 +1825,7 @@ function applyLayout() {
     if (sz && sz !== 'm') P.el.dataset.size = sz; else delete P.el.dataset.size;
     updatePanelControls(P.el);
   });
-  HEAT.rowH = HEAT_ROW[(LAYOUT.size || {}).heat || 'm'];
+  HEAT.rowH = (HEAT_ROW[(LAYOUT.size || {}).heat || 'm'] || HEAT_ROW.m) * textScale();
   document.documentElement.style.setProperty('--lane-h', (LANE_H[LAYOUT.laneH] || 84) + 'px');
   const ks = (LAYOUT.kpis || KPI_DEFAULT).filter(k => MET[k]).slice(0, 12);
   KPIS = ks.length ? ks : KPI_DEFAULT.slice();
@@ -1822,7 +1848,7 @@ function cycleSize(id) { const cur = (LAYOUT.size || {})[id] || 'm'; setSize(id,
 function applyOne(id) {
   const el2 = PANELS[id].el, sz = (LAYOUT.size || {})[id];
   if (sz && sz !== 'm') el2.dataset.size = sz; else delete el2.dataset.size;
-  if (id === 'heat') HEAT.rowH = HEAT_ROW[sz || 'm'];
+  if (id === 'heat') HEAT.rowH = (HEAT_ROW[sz || 'm'] || HEAT_ROW.m) * textScale();
   updatePanelControls(el2); dirty(true);
 }
 function movePanel(id, dir) {
@@ -2041,6 +2067,7 @@ window.AICX_UI = {
   setTime: tt => { const v = parseT(tt); if (v != null) jumpTo(E.idxOf(v)); },
   setLens: sec => { if (LENS.find(x => x.id === sec)) { lensState.sec = sec; showLensSector(); dirty(true); } },
   get theme() { return THEME; }, setTheme: t => setTheme(t), toggleTheme: () => setTheme(THEME === 'light' ? 'dark' : 'light'),
+  get textSize() { return TEXT_SIZE; }, setTextSize,
   toast, saveFile, openFocus, closeFocus, resetLayout, applyPreset, openLayoutMenu, setCustomizing, permalink,
   panels: () => Object.keys(PANELS),
   engine: E, data: DATA, metrics: MET, fmt, panelInfo,

@@ -7,7 +7,7 @@ const PANEL_TERMS = {
   time: ['timeline', 'scrubber', 'play', 'pause', 'playback', 'tour', 'tour all', 'scenario tour', 'speed', 'now button', '2023 button', 'from today', 'from 2023', 'reveal as it plays', 'time cursor'],
   guide: ['help', 'keyboard', 'keyboard shortcuts', 'shortcut', 'hotkeys', 'controls', 'tour', 'tutorial', 'walkthrough', 'guided tour', '60 second tour', 'explain mode'],
   theme: ['theme', 'dark mode', 'light mode', 'sun icon', 'moon icon'],
-  layout: ['layout', 'resize', 'move panel', 'pin panel', 'hide panel', 'show panel', 'expand panel', 'focus view', 'customize panels', 'big charts', 'presenter', 'compact', 'reset', 'reset to default', 'reset layout'],
+  layout: ['layout', 'text size', 'font size', 'small text', 'larger text', 'readability', 'resize', 'move panel', 'pin panel', 'hide panel', 'show panel', 'expand panel', 'focus view', 'customize panels', 'big charts', 'presenter', 'compact', 'reset', 'reset to default', 'reset layout'],
   relbar: ['weekly release', 'release bar', 'release schedule'],
   wire: ['news wire'], kpis: ['kpi', 'key figures'], brief: ['scenario brief', 'thesis'],
   drivers: ['driver', 'slider', 'tilt', 'custom', 'custom run', 'custom scenario', 'reset', 'reset drivers', 'reset scenario'],
