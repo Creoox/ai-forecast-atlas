@@ -6,6 +6,8 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createEngine as createChatEngine } from '../engine/engine.mjs';
+import { buildChatGuide, selectChatGuide } from '../web/src/chat-guide.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'aim-it-'));
@@ -52,6 +54,14 @@ const admin = async (a, body) => {
   return r.json();
 };
 const mockLog = () => fs.existsSync(LOG) ? fs.readFileSync(LOG, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l)) : [];
+const promptObject = (instructions, matches) => {
+  for (const paragraph of instructions.split('\n\n')) {
+    const start = paragraph.indexOf('{');
+    if (start < 0) continue;
+    try { const value = JSON.parse(paragraph.slice(start)); if (matches(value)) return value; } catch { /* another prompt paragraph */ }
+  }
+  assert.fail('Expected structured context is missing from the outgoing provider prompt');
+};
 const cli = (php, now) => execFileSync('php', ['-r', 'define("AIM_ROOT", ' + JSON.stringify(WEB) + '); define("AIM_PRIVATE", AIM_ROOT . "/_private"); require AIM_PRIVATE . "/lib/bootstrap.php"; ' + php], { env: { ...process.env, AIM_FAKE_NOW: now || '' }, encoding: 'utf8', timeout: 120000 });
 const tick = now => JSON.parse(execFileSync('php', [path.join(WEB, '_private/cron/run.php')], { env: { ...process.env, AIM_FAKE_NOW: now }, encoding: 'utf8', timeout: 120000 }));
 
@@ -134,8 +144,65 @@ try {
     const pid = Object.keys(JSON.parse(fs.readFileSync(methodsFile, 'utf8')).panels || {})[0];
     r = await req('api/chat.php', { body: JSON.stringify({ p: b64(JSON.stringify({ mode: 'ask', messages: [{ role: 'user', content: 'Explain this panel' }], snapshot: { ...snap, panel: { id: pid } }, session })) }), headers: { 'Content-Type': 'application/json', Accept: 'application/json' } });
     await r.json();
-    ok('"Ask AI about this panel" adds the panel explainer', mockLog().filter(x => x.u.endsWith('/responses')).pop().b.instructions.includes('The visitor asked about this dashboard panel'));
+    const panelGuide = promptObject(mockLog().filter(x => x.u.endsWith('/responses')).pop().b.instructions, value => value.overview && Array.isArray(value.details));
+    ok('"Ask AI about this panel" adds its canonical guide detail', panelGuide.details[0]?.id === 'panel:' + pid);
   }
+
+  console.log('Chat site guide');
+  const guide = JSON.parse(fs.readFileSync(path.join(WEB, 'assets/chat-guide.json'), 'utf8'));
+  assert.deepEqual(guide, buildChatGuide(createChatEngine(), JSON.parse(fs.readFileSync(methodsFile, 'utf8'))));
+  ok('built chat guide matches the model and methods used by the dashboard', guide.schema === 'aimonitor.chat-guide/1');
+  const guideCases = [
+    { name: 'singular Bubble Burst', question: 'What is Bubble Burst?', ids: ['scenario:BUST'] },
+    { name: 'plural Bubble Bursts', question: 'What does Bubble Bursts mean?', ids: ['scenario:BUST'] },
+    { name: 'Broadcast', question: 'What is Broadcast?', ids: ['panel:broadcast'] },
+    { name: 'joint scenario and feature question', question: 'Explain Bubble Burst and Broadcast.', ids: ['scenario:BUST', 'panel:broadcast'] },
+    { name: 'both kinds of Tour', question: 'What does Tour do?', ids: ['panel:time', 'panel:guide'] },
+    { name: 'capex', question: 'What is capex?', ids: ['glossary:capex'] },
+    { name: 'X watch', question: 'What is X watch?', ids: ['panel:xwatch'] },
+    { name: 'unknown feature', question: 'What does quantum teleportation mode do?', ids: [] },
+    { name: 'Broadcast follow-up', question: 'How do I exit it?', previous: 'What is Broadcast?', ids: ['panel:broadcast'] },
+  ];
+  const parityCases = [...guideCases,
+    { name: 'explicit panel', question: 'Explain Bubble Burst and capex.', panel: 'broadcast' },
+    { name: 'unrelated question after Broadcast', question: 'What is xylophone?', previous: 'What is Broadcast?' },
+    { name: 'alias word boundaries', question: 'Explain microbroadcasting.' },
+    { name: 'punctuation and case', question: 'BUBBLE-BURSTS, X WATCH, and BROADCAST?' },
+    { name: 'follow-up using this', question: 'How do I leave this?', previous: 'What is Broadcast?' },
+    { name: 'topic change after Broadcast', question: 'What is capex?', previous: 'What is Broadcast?' },
+  ];
+  const phpGuides = JSON.parse(cli('$cases = json_decode(base64_decode("' + b64(JSON.stringify(parityCases)) + '"), true); echo json_encode(array_map(fn($c) => aim_chat_guide($c["question"], $c["panel"] ?? "", $c["previous"] ?? ""), $cases));'));
+  parityCases.forEach((c, i) => {
+    assert.deepEqual(phpGuides[i], selectChatGuide(guide, c.question, c.panel || '', c.previous || ''), c.name);
+    ok('PHP and browser choose identical help for ' + c.name, true);
+  });
+  let bubblePrompt = '';
+  for (const c of guideCases) {
+    const messages = c.previous ? [{ role: 'user', content: c.previous }, { role: 'assistant', content: 'This is the presentation view.' }, { role: 'user', content: c.question }] : [{ role: 'user', content: c.question }];
+    const beforeRequest = mockLog().length;
+    r = await req('api/chat.php', { body: JSON.stringify({ p: b64(JSON.stringify({ mode: 'ask', messages, snapshot: snap, session })) }), headers: { 'Content-Type': 'application/json', Accept: 'application/json' } });
+    const answer = await r.json();
+    assert.equal(r.status, 200, c.name + ': chat status');
+    assert.equal(answer.ok, true, c.name + ': chat answered');
+    const outgoing = mockLog().slice(beforeRequest).filter(x => x.u === '/openai/v1/responses' && !x.b.tools).pop();
+    assert.ok(outgoing, c.name + ': a real request reached the local provider mock');
+    const instructions = outgoing.b.instructions;
+    const deliveredGuide = promptObject(instructions, value => value.overview && Array.isArray(value.details));
+    assert.deepEqual(deliveredGuide, selectChatGuide(guide, c.question, '', c.previous || ''), c.name + ': outgoing guide');
+    const ids = deliveredGuide.details.map(detail => detail.id);
+    assert.ok(c.ids.every(id => ids.includes(id)), c.name + ': requested definitions included');
+    if (!c.ids.length) assert.deepEqual(ids, [], 'unknown feature receives no invented detail');
+    assert.ok(instructions.includes(guide.rules), c.name + ': product knowledge and missing-data rules reach the provider');
+    assert.ok(deliveredGuide.details.length <= 3, c.name + ': bounded detailed context');
+    ok('outgoing mock prompt explains ' + c.name + ' from the site guide', true);
+    if (c.name === 'singular Bubble Burst') bubblePrompt = instructions;
+  }
+  const bubbleGuide = promptObject(bubblePrompt, value => value.overview && Array.isArray(value.details));
+  const bubbleRelease = promptObject(bubblePrompt, value => value.numbersAtHorizons);
+  ok('basic help keeps all eight scenario summaries even when COMM is selected', bubbleGuide.overview.scenarios.length === 8 && bubbleGuide.overview.scenarios.find(s => s.key === 'BUST')?.short === 'Bubble bursts');
+  ok('unselected BUST gets its definition without invented selected-run numbers', bubbleGuide.details.some(d => d.id === 'scenario:BUST') && Object.keys(bubbleRelease.numbersAtHorizons).includes('COMM') && !Object.hasOwn(bubbleRelease.numbersAtHorizons, 'BUST'));
+  ok('basic help preserves evidence, model and general-knowledge citation rules', ['[AN1]', '[M:K]', '[AI]'].every(citation => bubblePrompt.includes(citation)) && bubblePrompt.includes('Evidence ledger'));
+
   // capacity: with one answer slot taken, the next visitor gets a friendly "busy"
   await admin('settings', { settings: { chat: { max_concurrent: 1 } } });
   const holder = spawn('php', ['-r', 'flock($f = fopen(' + JSON.stringify(path.join(WEB, '_private/storage/locks/chat-slot-0.lock')) + ', "c"), LOCK_EX); echo "x"; sleep(4);'], { stdio: ['ignore', 'pipe', 'ignore'] });

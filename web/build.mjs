@@ -10,6 +10,8 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createEngine } from '../engine/engine.mjs';
+import { buildChatGuide } from './src/chat-guide.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
@@ -40,6 +42,13 @@ const guideJs = rd('web/src/guide.js');
 const methods = JSON.parse(rd('config/methods.json'));
 const methodsJson = JSON.stringify(methods);
 const methodsJs = '/* AI Forecast Atlas — explanations, formulas and source notes (CC BY 4.0). Generated from config/methods.json. */\nwindow.AIMONITOR_METHODS = ' + methodsJson.replace(/<\/(script)/gi, '<\\/$1') + ';\n';
+const chatGuide = buildChatGuide(createEngine(), methods);
+const chatGuideJson = JSON.stringify(chatGuide);
+const chatGuideClassic = rd('web/src/chat-guide.mjs').replace(/^export (?=function (?:buildChatGuide|selectChatGuide)\()/gm, '');
+if (/^export /m.test(chatGuideClassic)) throw new Error('chat guide: export left in the classic build');
+const chatGuideJs = '(function () {\n' + chatGuideClassic + '\nwindow.AIMONITOR_CHAT_GUIDE = '
+  + chatGuideJson.replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029')
+  + ';\nwindow.AIMONITOR_selectChatGuide = selectChatGuide;\n})();\n';
 const newsletter = JSON.parse(rd('config/newsletter.json'));
 const engineClassic = '/* AI Forecast Atlas engine (browser build of engine/engine.mjs). Copyright (C) 2026 Creoox AG. Business Source License 1.1 (see LICENSE). */\n(function () {\n'
   + engineEsm.replace(/^export function createEngine\(/m, 'function createEngine(').replace(/^export const AICX = createEngine\(\);\s*$/m, '').replace(/^export default AICX;\s*$/m, '')
@@ -65,7 +74,7 @@ fs.mkdirSync(path.join(OUT, '_private/config'), { recursive: true });   // git k
 for (const f of ['newsletter.json', 'i18n.json', 'sources.json', 'operator.json']) fs.copyFileSync(path.join(ROOT, 'config', f), path.join(OUT, '_private/config', f));
 copyDir(path.join(ROOT, 'server/cron'), path.join(DIST, 'homepl', 'cron'));
 
-const assets = { 'engine.js': engineClassic, 'engine.esm.js': engineEsm, 'release-core.js': releaseCore, 'app.js': appJs, 'site.js': siteJs, 'guide.js': guideJs, 'methods.js': methodsJs, 'methods.json': JSON.stringify(methods, null, 1) + '\n' };
+const assets = { 'engine.js': engineClassic, 'engine.esm.js': engineEsm, 'release-core.js': releaseCore, 'app.js': appJs, 'site.js': siteJs, 'guide.js': guideJs, 'methods.js': methodsJs, 'methods.json': JSON.stringify(methods, null, 1) + '\n', 'chat-guide.js': chatGuideJs, 'chat-guide.json': chatGuideJson + '\n' };
 const ver = {};
 for (const [n, s] of Object.entries(assets)) { wr(path.join(OUT, 'assets', n), s); ver[n] = hash(s); }
 const desc = 'Weekly scenario monitor of AI commoditization: capex, revenue, token prices, compute, energy and work, 2023–2035. Eight scenarios, open data, by Creoox AG.';
@@ -95,6 +104,7 @@ const index = '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">
   + '<script>window.AIMONITOR = ' + JSON.stringify(siteCfg) + ';</script>\n'
   + '<script>(function(){var h=Math.floor(Date.now()/36e5);document.write(\'<script src="data/site-config.js?h=\'+h+\'"><\\/script><script src="data/latest/release.js?h=\'+h+\'"><\\/script>\');})();</script>\n'
   + '<script src="assets/methods.js?v=' + ver['methods.js'] + '"></script>\n'
+  + '<script src="assets/chat-guide.js?v=' + ver['chat-guide.js'] + '"></script>\n'
   + '<script src="assets/engine.js?v=' + ver['engine.js'] + '"></script>\n<script src="assets/app.js?v=' + ver['app.js'] + '"></script>\n<script src="assets/site.js?v=' + ver['site.js'] + '"></script>\n<script src="assets/guide.js?v=' + ver['guide.js'] + '"></script>\n</body>\n</html>\n';
 wr(path.join(OUT, 'index.html'), index);
 wr(path.join(OUT, 'embed/index.html'), rd('web/src/embed.html'));
@@ -111,7 +121,6 @@ wr(path.join(storage, '.htaccess'), 'RewriteEngine On\nRewriteRule .* - [F]\n');
 wr(path.join(storage, 'index.html'), '<!doctype html><title>Not here</title>\n');
 
 /* base release, computed here with the same release core the admin page uses, published with the server's PHP */
-const { createEngine } = await import(pathToFileURL(path.join(ROOT, 'engine/engine.mjs')).href);
 const RC = await import(pathToFileURL(path.join(ROOT, 'web/src/release-core.mjs')).href);
 const baseDs = RC.datasetFromEngine(createEngine(), '2026-10-17');
 const baseId = RC.isoWeekId('2026-10-17');
@@ -138,7 +147,7 @@ console.log('site     dist/homepl/aimonitor  (' + fileCount(OUT) + ' files, base
 const artCfg = { mode: 'artifact', siteUrl: SITE, version: VERSION, buildDate: BUILD_DATE, newsletter: NL_PUBLIC };
 const artifact = template
   .replace('<!--__HEAD__-->', '')
-  .replace('/*__CONFIG__*/', () => 'window.AIMONITOR = ' + JSON.stringify(artCfg) + ';\n' + methodsJs)
+  .replace('/*__CONFIG__*/', () => 'window.AIMONITOR = ' + JSON.stringify(artCfg) + ';\n' + methodsJs + chatGuideJs)
   .replace('/*__ENGINE__*/', () => engineClassic)
   .replace('/*__APP__*/', () => appJs)
   .replace('/*__SITE__*/', () => siteJs)

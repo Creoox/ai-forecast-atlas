@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- The visitor assistant now receives a shared site guide with all scenario names and summaries, feature definitions and the glossary. Ordinary questions about “Bubble Burst”, Broadcast and other controls retrieve the same explanations used by the dashboard; short follow-up questions retain the relevant topic. The live site and single-file preview use the same guide, with regression checks for basic questions, citations and unsupported features.
+
 ## 1.2.0 — 18 October 2026
 - **New name and address:** AI Monitor is now **AI Forecast Atlas**, at https://aiforecastatlas.com. The install guide now covers the site's own domain instead of a creoox.com subdomain; technical names (folder `aimonitor`, `aim_` code prefixes, data schema ids) stay unchanged.
 - **Licence:** the code, scenario model, dashboard design and texts are published under the **Business Source License 1.1** (Creoox AG). The source stays public and may be used in production, but not to offer a competing AI forecast, scenario or monitoring service without a licence. Each version becomes AGPL-3.0 four years after its release. Published data and charts stay CC BY 4.0. See `docs/LICENSING.md`.
