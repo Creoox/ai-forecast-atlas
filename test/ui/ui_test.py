@@ -61,6 +61,177 @@ def check(name, cond, info=''):
     results.append((name, bool(cond)))
     print(('  ✓ ' if cond else '  ✗ ') + name + ('' if cond else '  — ' + str(info)))
     if not cond: problems.append(name)
+
+def check_reading_size(browser):
+    """Exercise the actual control and rendered text in isolated browser profiles."""
+    print('Remembered text size')
+    storage_key = 'aimonitor.text-size.v1'
+    seen_guide = 'localStorage.setItem("aimonitor.guide.v1", JSON.stringify({ seen: true }));'
+
+    def ready(page):
+        page.wait_for_function('() => window.AICX_UI && document.querySelector("#briefThesis").textContent.trim()')
+
+    def text_px(page):
+        return page.eval_on_selector('#briefThesis', 'e => parseFloat(getComputedStyle(e).fontSize)')
+
+    def near(actual, expected):
+        return abs(actual - expected) < 0.1
+
+    def fits(page):
+        return page.evaluate('''() => {
+          const root = document.documentElement, box = document.querySelector('#textSize').getBoundingClientRect();
+          return { overflow: root.scrollWidth - root.clientWidth,
+            controlFits: box.left >= -1 && box.right <= root.clientWidth + 1 && box.width > 0 };
+        }''')
+
+    def chat_geometry(page):
+        return page.evaluate('''() => {
+          const box = document.querySelector('#chat'), log = document.querySelector('#chatLog'),
+            sugg = document.querySelector('#chatSugg');
+          return { height: box.clientHeight, log: log.clientHeight, suggestions: sugg.clientHeight,
+            suggestionCount: sugg.querySelectorAll('button').length,
+            suggestionOverflow: sugg.scrollHeight - sugg.clientHeight,
+            suggestionScroll: getComputedStyle(sugg).overflowY,
+            overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+        }''')
+
+    def reachable_in_chat(page, selector, parent='#chat'):
+        target = page.locator(selector)
+        target.scroll_into_view_if_needed()
+        return target.evaluate('''(e, parent) => {
+          const b = e.getBoundingClientRect(), p = document.querySelector(parent).getBoundingClientRect(),
+            chat = document.querySelector('#chat').getBoundingClientRect();
+          return b.width > 0 && b.height > 0 && b.top >= Math.max(0, p.top, chat.top) - 1 &&
+            b.bottom <= Math.min(innerHeight, p.bottom, chat.bottom) + 1 &&
+            b.left >= Math.max(0, p.left, chat.left) - 1 &&
+            b.right <= Math.min(innerWidth, p.right, chat.right) + 1 &&
+            e.scrollWidth <= e.clientWidth + 1 && e.scrollHeight <= e.clientHeight + 1;
+        }''', parent)
+
+    def enlarged_chat(page, label):
+        # Opening chat needs only the suite's mock-provider configuration; no question is sent.
+        page.click('#chatFab')
+        page.wait_for_selector('#chatSugg button')
+        geometry = chat_geometry(page)
+        check('150% chat keeps readable conversation space and capped suggestions on ' + label,
+              geometry['log'] >= 120 and geometry['suggestionCount'] >= 3 and
+              geometry['suggestions'] <= geometry['height'] * 0.25 and geometry['overflow'] <= 1 and
+              (geometry['suggestionOverflow'] <= 1 or geometry['suggestionScroll'] in ['auto', 'scroll']), geometry)
+        check('150% chat can scroll to its last initial suggestion on ' + label,
+              reachable_in_chat(page, '#chatSugg button:last-child', '#chatSugg'))
+        reachable = {selector: reachable_in_chat(page, selector) for selector in ['#chatIn', '#chatSend', '#chatFoot']}
+        # A trial click verifies the controls are not covered; it never submits a message.
+        page.locator('#chatIn').click(trial=True)
+        page.locator('#chatSend').click(trial=True)
+        check('150% chat input, Send and complete privacy footer remain reachable on ' + label,
+              all(reachable.values()) and 'Please do not enter personal data.' in page.inner_text('#chatFoot'), reachable)
+        page.keyboard.press('Escape')
+
+    ctx = browser.new_context(viewport={'width': 1440, 'height': 900}, reduced_motion='reduce')
+    ctx.add_init_script(seen_guide)
+    errors = []
+    try:
+        page = ctx.new_page()
+        page.on('pageerror', lambda e: errors.append(str(e)))
+        page.goto(SITE, wait_until='networkidle'); ready(page)
+        size = page.get_by_label('Text size', exact=True)
+        normal = text_px(page)
+        check('Text size is a labelled native control, initially 100%', size.is_visible() and size.input_value() == '100' and normal > 0)
+        size.select_option('125')
+        check('125% visibly enlarges the scenario explanation', near(text_px(page), normal * 1.25), (normal, text_px(page)))
+        size.select_option('150')
+        check('150% visibly enlarges the scenario explanation', near(text_px(page), normal * 1.5), (normal, text_px(page)))
+        dimensions = fits(page)
+        check('150% fits the desktop viewport and keeps the control reachable', dimensions['overflow'] <= 1 and dimensions['controlFits'], dimensions)
+        page.reload(wait_until='networkidle'); ready(page)
+        check('text size survives reload with the same rendered size', size.input_value() == '150' and near(text_px(page), normal * 1.5))
+        other = ctx.new_page()
+        other.goto(SITE + '?s=PWR', wait_until='networkidle'); ready(other)
+        check('a new page on the site remembers text size independently of its scenario', other.get_by_label('Text size', exact=True).input_value() == '150' and near(text_px(other), normal * 1.5) and 'PWR' in other.inner_text('#briefCode'))
+        other.close()
+
+        page.click('#bTheme')
+        chosen_theme = page.get_attribute('html', 'data-theme')
+        page.click('#bLayout'); page.click('#lmenu >> text=Big charts')
+        check('theme and layout changes leave text size at 150%', size.input_value() == '150' and near(text_px(page), normal * 1.5) and page.eval_on_selector('#phasePanel', 'e => e.parentElement.id') == 'stage')
+        size.select_option('100')
+        check('returning to 100% changes only text size', near(text_px(page), normal) and page.get_attribute('html', 'data-theme') == chosen_theme and page.eval_on_selector('#phasePanel', 'e => e.parentElement.id') == 'stage')
+        size.select_option('150')
+        page.click('#bLayout'); page.click('#lmenu .reset'); page.keyboard.press('Escape')
+        check('Reset layout preserves the text-size and theme choices', size.input_value() == '150' and near(text_px(page), normal * 1.5) and page.get_attribute('html', 'data-theme') == chosen_theme and page.eval_on_selector('#phasePanel', 'e => e.parentElement.id') == 'colRight')
+
+        size.select_option('100'); size.focus()
+        before = page.evaluate('() => [AICX_UI.state.key, AICX_UI.state.t, AICX_UI.state.playing]')
+        page.keyboard.press('ArrowDown'); page.keyboard.press('Enter')
+        check('keyboard selects 125% without moving or playing the timeline', size.input_value() == '125' and near(text_px(page), normal * 1.25) and page.evaluate('() => [AICX_UI.state.key, AICX_UI.state.t, AICX_UI.state.playing]') == before)
+        size.select_option('100'); page.click('#chatFab')
+        normal_chat = chat_geometry(page)
+        page.keyboard.press('Escape'); size.select_option('150')
+        enlarged_chat(page, 'desktop')
+        size.select_option('100'); page.click('#chatFab')
+        restored_chat = chat_geometry(page)
+        check('returning chat to 100% restores its original dimensions',
+              all(abs(normal_chat[k] - restored_chat[k]) <= 1 for k in ['height', 'log', 'suggestions']))
+        page.keyboard.press('Escape')
+        check('text-size controls produce no script errors', not errors, errors[:3])
+    finally:
+        ctx.close()
+
+    # Bad JSON, a valid but unsupported size, and a numeric-looking string all fall back safely.
+    for label, stored in [('malformed JSON', '{broken'), ('unsupported size', '175'), ('wrong value type', '"150"')]:
+        ctx = browser.new_context(viewport={'width': 1440, 'height': 900}, reduced_motion='reduce')
+        ctx.add_init_script(seen_guide + 'localStorage.setItem(' + json.dumps(storage_key) + ', ' + json.dumps(stored) + ');')
+        errors = []
+        try:
+            page = ctx.new_page(); page.on('pageerror', lambda e: errors.append(str(e)))
+            page.goto(SITE, wait_until='networkidle'); ready(page)
+            size = page.get_by_label('Text size', exact=True)
+            fallback = size.input_value() == '100' and near(text_px(page), normal)
+            size.select_option('125')
+            saved = page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', storage_key)
+            check(label + ' falls back to 100% and can be replaced by a valid choice', fallback and saved == 125 and near(text_px(page), normal * 1.25) and not errors, errors[:3])
+        finally:
+            ctx.close()
+
+    # A browser can deny even access to localStorage, not just setItem().
+    ctx = browser.new_context(viewport={'width': 1440, 'height': 900}, reduced_motion='reduce')
+    ctx.add_init_script('''Object.defineProperty(window, 'localStorage', { configurable: true,
+      get() { throw new DOMException('Storage is blocked for this test', 'SecurityError'); } });''')
+    errors = []
+    try:
+        page = ctx.new_page(); page.on('pageerror', lambda e: errors.append(str(e)))
+        page.goto(SITE, wait_until='networkidle'); ready(page)
+        size = page.get_by_label('Text size', exact=True)
+        check('blocked storage defaults to readable 100% without breaking startup', size.input_value() == '100' and near(text_px(page), normal) and not errors, errors[:3])
+        size.select_option('150')
+        check('text size still works for this page when storage writes are denied', size.input_value() == '150' and near(text_px(page), normal * 1.5) and not errors, errors[:3])
+        page.reload(wait_until='networkidle'); ready(page)
+        check('blocked storage reload falls back to 100% without errors', size.input_value() == '100' and near(text_px(page), normal) and not errors, errors[:3])
+    finally:
+        ctx.close()
+
+    for width in [390, 320]:
+        ctx = browser.new_context(viewport={'width': width, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, reduced_motion='reduce')
+        ctx.add_init_script(seen_guide)
+        try:
+            page = ctx.new_page(); page.goto(SITE, wait_until='networkidle'); ready(page)
+            mobile_normal = text_px(page)
+            page.get_by_label('Text size', exact=True).select_option('150')
+            dimensions = fits(page)
+            check('150% text fits a %d px phone without horizontal scrolling' % width, near(text_px(page), mobile_normal * 1.5) and dimensions['overflow'] <= 1 and dimensions['controlFits'], dimensions)
+            enlarged_chat(page, '%d px phone' % width)
+        finally:
+            ctx.close()
+
+    ctx = browser.new_context(viewport={'width': 390, 'height': 480}, is_mobile=True, has_touch=True, reduced_motion='reduce')
+    ctx.add_init_script(seen_guide)
+    try:
+        page = ctx.new_page(); page.goto(SITE, wait_until='networkidle'); ready(page)
+        page.get_by_label('Text size', exact=True).select_option('150')
+        enlarged_chat(page, 'a short 390 × 480 viewport')
+    finally:
+        ctx.close()
+
 s = requests.Session()
 def admin(a, body=None):
     if body is None: return s.get(SITE + 'api/admin.php?a=' + a).json()
@@ -316,6 +487,7 @@ try:
         pg.click('#bTheme'); pg.wait_for_timeout(200)
         check('no script errors with X watch items and panel provenance', not errs, errs[:3])
         ctx.close()
+        check_reading_size(br)
         # ---------- embed ----------
         print('Embed')
         ctx = br.new_context(viewport={'width': 680, 'height': 400}); pg = ctx.new_page(); errs = []

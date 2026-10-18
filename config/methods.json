@@ -221,21 +221,22 @@
    ]
   },
   "layout": {
-   "title": "Layout",
-   "oneLiner": "Resize, pin, move or hide panels; pick KPI tiles and lanes; presets; Reset to default.",
-   "what": "The layout menu changes how the dashboard is arranged — never the data.",
+   "title": "Layout and text size",
+   "oneLiner": "Choose a comfortable text size; resize, pin, move or hide panels; pick KPI tiles and lanes.",
+   "what": "Text size in the top bar makes the dashboard easier to read. The Layout menu changes how panels are arranged. Neither changes the data.",
    "howToRead": [
+    "Choose 100%, 125% or 150% in Text size. Dashboard text and chart labels grow together; help, tables and assistant text also grow. Choose 100% to restore the original size. Broadcast recordings keep their fixed composition.",
     "Customize panels: ▲▼ move a panel within its column, S/M/L/XL resize charts, pin puts a panel full width at the top, ✕ hides it.",
     "Expand (corner icon on every panel) opens the panel full screen; Esc closes it.",
-    "Presets: Big charts, Presenter, Compact. Reset to default restores the default layout; it does not reset the scenario or theme."
+    "Presets: Big charts, Presenter, Compact. Reset to default restores the default layout; it does not reset the scenario, theme or text size."
    ],
    "whyItMatters": "Different people need different views: an analyst wants every table, a presenter wants two big charts.",
-   "method": "The layout is stored in this browser only (no account, no server).",
+   "method": "Text size, layout and theme are saved automatically in this browser on this device and restored when you return, including after a site update. No account or server storage is used for these preferences.",
    "sources": {
     "metrics": []
    },
    "caveats": [
-    "Clearing the browser’s site data resets the layout."
+    "Preferences do not sync between browsers or devices. Clearing site data removes them; private browsing or blocked local storage may prevent them being remembered."
    ]
   },
   "relbar": {

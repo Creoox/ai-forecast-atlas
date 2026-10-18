@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- A Text size control offers 100%, 125% and 150% reading sizes, remembered in the visitor's browser independently of layout and theme. Dashboard text, chart labels, help and chat scale together, with responsive layouts for larger text.
 - The visitor assistant now receives a shared site guide with all scenario names and summaries, feature definitions and the glossary. Ordinary questions about “Bubble Burst”, Broadcast and other controls retrieve the same explanations used by the dashboard; short follow-up questions retain the relevant topic. The live site and single-file preview use the same guide, with regression checks for basic questions, citations and unsupported features.
 
 ## 1.2.0 — 18 October 2026
