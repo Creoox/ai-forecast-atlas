@@ -18,7 +18,7 @@ $xwOn = !empty($s['xwatch']['enabled']) && aim_xwatch_agent() !== null;
 $xw = $xwOn || aim_xwatch_approved();   // the section stays while published items exist
 $provList = $prov ? implode(', ', array_map('aim_h', $prov)) : 'OpenAI';
 $authority = trim((string)($site['authority'] ?? ''));
-$b = '<h1>Privacy notice</h1><p class="note">Last updated: 17 October 2026 · applies to aiforecastatlas.com, its newsletter, its AI assistant and its X watch list.</p>'
+$b = '<h1>Privacy notice</h1><p class="note">Last updated: 18 October 2026 · applies to aiforecastatlas.com, its newsletter, its AI assistant and its X watch list.</p>'
  . '<h2>1. Who is responsible</h2><p>' . $co . ($site['legal_form'] !== '' ? ' (' . aim_h($site['legal_form']) . ')' : '') . ', ' . $miss($addr, 'address') . ' · email: ' . $miss($site['email'], 'contact email') . '.</p>'
  . ($site['dpo'] !== '' ? '<p>Data protection contact: ' . aim_h($site['dpo']) . '.</p>' : '')
  . '<p>We are established in Liechtenstein, which belongs to the European Economic Area (EEA). The EU General Data Protection Regulation (GDPR) therefore applies to us directly, together with the Liechtenstein Data Protection Act. For people in Switzerland we also follow the Swiss Federal Act on Data Protection (FADP).</p>'

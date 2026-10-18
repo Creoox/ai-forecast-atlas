@@ -75,6 +75,7 @@ button, select, input { font: inherit; color: inherit; }
   padding-block: 8px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
+.cmd-in > * { min-width: 0; max-width: 100%; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1 1 280px; }
 .key { font-family: var(--f-data); font-stretch: 80%; font-weight: 700; font-size: calc(12px * var(--text-scale, 1)); letter-spacing: .04em; padding: 3px 6px 2px; border-radius: 2px; line-height: 1.1; }
 .key.y { background: var(--amber); color: var(--amber-ink); }
@@ -360,12 +361,20 @@ td.act, th.act { background: rgba(255,162,31,.08); color: var(--ink); }
   .lane .vr .vn { flex: none; }
   .lane canvas { height: calc(var(--lane-h) * .9 * var(--text-scale)); }
   .scrub-wrap { position: relative; top: 0; }
-  .flash { max-width: 72vw; }
+  .wire { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .flash { min-width: 0; max-width: none; border-right: 0; }
+  .tape { grid-column: 1 / -1; grid-row: 2; }
   .wl { grid-template-columns: minmax(0, 1fr); }
   .wltable { grid-template-columns: minmax(0, 1fr); }
 }
+@media (max-width: 400px) {
+  .brand { flex-wrap: wrap; }
+  .brand-t { flex-basis: 100%; }
+  .brand-t b { white-space: normal; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .tape-in { animation: none; flex-wrap: wrap; width: auto; }
+  .tape { overflow-x: auto; }
+  .tape-in { animation: none; }
   .flash.pulse { animation: none; }
 }
 
