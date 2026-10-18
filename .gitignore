@@ -1,0 +1,10 @@
+node_modules/
+dist/
+release-out/
+test/ui/out/
+*.log
+.DS_Store
+# never commit a live server's private data
+server/_private/storage/*
+!server/_private/storage/.gitkeep
+.claude/

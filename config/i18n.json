@@ -1,0 +1,1124 @@
+{
+ "langs": [
+  "en",
+  "de",
+  "fr",
+  "pl"
+ ],
+ "num": {
+  "en": {
+   "dec": ".",
+   "thou": ",",
+   "pct": "%",
+   "B": [
+    "$",
+    "B"
+   ],
+   "T": [
+    "$",
+    "T"
+   ],
+   "usd": [
+    "$",
+    ""
+   ],
+   "twh": " TWh",
+   "mo": " mo",
+   "pp": " pp",
+   "x": "×"
+  },
+  "de": {
+   "dec": ",",
+   "thou": ".",
+   "pct": " %",
+   "B": [
+    "",
+    " Mrd. $"
+   ],
+   "T": [
+    "",
+    " Bio. $"
+   ],
+   "usd": [
+    "",
+    " $"
+   ],
+   "twh": " TWh",
+   "mo": " Mon.",
+   "pp": " Pp.",
+   "x": "×"
+  },
+  "fr": {
+   "dec": ",",
+   "thou": " ",
+   "pct": " %",
+   "B": [
+    "",
+    " Md$"
+   ],
+   "T": [
+    "",
+    " billion $"
+   ],
+   "usd": [
+    "",
+    " $"
+   ],
+   "twh": " TWh",
+   "mo": " mois",
+   "pp": " pt",
+   "x": "×"
+  },
+  "pl": {
+   "dec": ",",
+   "thou": " ",
+   "pct": "%",
+   "B": [
+    "",
+    " mld $"
+   ],
+   "T": [
+    "",
+    " bln $"
+   ],
+   "usd": [
+    "",
+    " $"
+   ],
+   "twh": " TWh",
+   "mo": " mies.",
+   "pp": " pp",
+   "x": "×"
+  }
+ },
+ "t": {
+  "brand": {
+   "en": "AI Forecast Atlas",
+   "de": "AI Forecast Atlas",
+   "fr": "AI Forecast Atlas",
+   "pl": "AI Forecast Atlas"
+  },
+  "by": {
+   "en": "by Creoox AG",
+   "de": "von Creoox AG",
+   "fr": "par Creoox AG",
+   "pl": "od Creoox AG"
+  },
+  "confirm_subject": {
+   "en": "Please confirm your AI Forecast Atlas subscription",
+   "de": "Bitte bestätigen Sie Ihr AI-Forecast-Atlas-Abonnement",
+   "fr": "Merci de confirmer votre abonnement à AI Forecast Atlas",
+   "pl": "Potwierdź subskrypcję AI Forecast Atlas"
+  },
+  "confirm_intro": {
+   "en": "Someone (hopefully you) asked to receive the AI Forecast Atlas newsletter at this address. Please confirm with the button below. The link is valid for 7 days.",
+   "de": "Jemand (hoffentlich Sie) möchte den AI-Forecast-Atlas-Newsletter an diese Adresse erhalten. Bitte bestätigen Sie mit der Schaltfläche unten. Der Link ist 7 Tage gültig.",
+   "fr": "Quelqu’un (vous, nous l’espérons) a demandé à recevoir la lettre d’AI Forecast Atlas à cette adresse. Merci de confirmer avec le bouton ci-dessous. Le lien est valable 7 jours.",
+   "pl": "Ktoś (miejmy nadzieję, że Ty) poprosił o newsletter AI Forecast Atlas na ten adres. Potwierdź za pomocą przycisku poniżej. Link jest ważny 7 dni."
+  },
+  "confirm_button": {
+   "en": "Confirm my subscription",
+   "de": "Abonnement bestätigen",
+   "fr": "Confirmer mon abonnement",
+   "pl": "Potwierdzam subskrypcję"
+  },
+  "confirm_ignore": {
+   "en": "If you did not ask for this, ignore this email: nothing will be sent to you.",
+   "de": "Wenn Sie das nicht angefordert haben, ignorieren Sie diese E-Mail: Sie erhalten nichts.",
+   "fr": "Si vous n’êtes pas à l’origine de cette demande, ignorez ce message : vous ne recevrez rien.",
+   "pl": "Jeśli to nie Ty, zignoruj tę wiadomość: nic nie zostanie wysłane."
+  },
+  "your_topics": {
+   "en": "Your topics",
+   "de": "Ihre Themen",
+   "fr": "Vos thèmes",
+   "pl": "Twoje tematy"
+  },
+  "page_confirm_title": {
+   "en": "Confirm your subscription",
+   "de": "Abonnement bestätigen",
+   "fr": "Confirmer votre abonnement",
+   "pl": "Potwierdź subskrypcję"
+  },
+  "page_confirm_text": {
+   "en": "Click the button to start receiving the AI Forecast Atlas newsletter at",
+   "de": "Klicken Sie auf die Schaltfläche, um den AI-Forecast-Atlas-Newsletter zu erhalten an",
+   "fr": "Cliquez sur le bouton pour recevoir la lettre d’AI Forecast Atlas à l’adresse",
+   "pl": "Kliknij przycisk, aby otrzymywać newsletter AI Forecast Atlas na adres"
+  },
+  "page_subscribed_title": {
+   "en": "You are subscribed",
+   "de": "Sie sind angemeldet",
+   "fr": "Vous êtes abonné·e",
+   "pl": "Subskrypcja aktywna"
+  },
+  "page_subscribed_text": {
+   "en": "Thank you. The next newsletter arrives after the Friday release at 13:00 Swiss time. Every email has a one-click unsubscribe link and a link to change your topics.",
+   "de": "Vielen Dank. Der nächste Newsletter kommt nach der Freitagsausgabe um 13:00 Uhr Schweizer Zeit. Jede E-Mail enthält einen Abmeldelink und einen Link zum Ändern Ihrer Themen.",
+   "fr": "Merci. La prochaine lettre arrive après la publication du vendredi à 13 h (heure suisse). Chaque e-mail contient un lien de désabonnement en un clic et un lien pour modifier vos thèmes.",
+   "pl": "Dziękujemy. Kolejny newsletter przyjdzie po piątkowej publikacji o 13:00 czasu szwajcarskiego. Każdy e-mail zawiera link do wypisania się jednym kliknięciem i link do zmiany tematów."
+  },
+  "page_invalid_title": {
+   "en": "This link does not work",
+   "de": "Dieser Link funktioniert nicht",
+   "fr": "Ce lien ne fonctionne pas",
+   "pl": "Ten link nie działa"
+  },
+  "page_invalid_text": {
+   "en": "The link is invalid or has expired. Please sign up again on the AI Forecast Atlas page.",
+   "de": "Der Link ist ungültig oder abgelaufen. Bitte melden Sie sich auf der AI-Forecast-Atlas-Seite erneut an.",
+   "fr": "Le lien est invalide ou a expiré. Merci de vous réinscrire sur la page d’AI Forecast Atlas.",
+   "pl": "Link jest nieprawidłowy lub wygasł. Zapisz się ponownie na stronie AI Forecast Atlas."
+  },
+  "page_error_text": {
+   "en": "Something went wrong on our side. Please try again in a few minutes.",
+   "de": "Bei uns ist ein Fehler aufgetreten. Bitte versuchen Sie es in einigen Minuten erneut.",
+   "fr": "Une erreur s’est produite de notre côté. Merci de réessayer dans quelques minutes.",
+   "pl": "Wystąpił błąd po naszej stronie. Spróbuj ponownie za kilka minut."
+  },
+  "prefs_title": {
+   "en": "Your newsletter settings",
+   "de": "Ihre Newsletter-Einstellungen",
+   "fr": "Vos préférences de lettre",
+   "pl": "Ustawienia newslettera"
+  },
+  "prefs_lang": {
+   "en": "Language",
+   "de": "Sprache",
+   "fr": "Langue",
+   "pl": "Język"
+  },
+  "prefs_freq": {
+   "en": "How often",
+   "de": "Wie oft",
+   "fr": "Fréquence",
+   "pl": "Jak często"
+  },
+  "prefs_save": {
+   "en": "Save",
+   "de": "Speichern",
+   "fr": "Enregistrer",
+   "pl": "Zapisz"
+  },
+  "prefs_saved": {
+   "en": "Saved. Your next newsletter follows these settings.",
+   "de": "Gespeichert. Ihr nächster Newsletter folgt diesen Einstellungen.",
+   "fr": "Enregistré. Votre prochaine lettre suivra ces réglages.",
+   "pl": "Zapisano. Kolejny newsletter uwzględni te ustawienia."
+  },
+  "unsub_title": {
+   "en": "Unsubscribe",
+   "de": "Abmelden",
+   "fr": "Se désabonner",
+   "pl": "Wypisz się"
+  },
+  "unsub_text": {
+   "en": "Stop sending the AI Forecast Atlas newsletter to",
+   "de": "Den AI-Forecast-Atlas-Newsletter nicht mehr senden an",
+   "fr": "Ne plus envoyer la lettre d’AI Forecast Atlas à",
+   "pl": "Nie wysyłaj już newslettera AI Forecast Atlas na adres"
+  },
+  "unsub_button": {
+   "en": "Unsubscribe",
+   "de": "Abmelden",
+   "fr": "Me désabonner",
+   "pl": "Wypisz mnie"
+  },
+  "unsub_done": {
+   "en": "You are unsubscribed. You will not receive further newsletters. You can subscribe again at any time on the AI Forecast Atlas page.",
+   "de": "Sie sind abgemeldet und erhalten keine weiteren Newsletter. Sie können sich jederzeit auf der AI-Forecast-Atlas-Seite wieder anmelden.",
+   "fr": "Vous êtes désabonné·e et ne recevrez plus de lettres. Vous pouvez vous réabonner à tout moment sur la page d’AI Forecast Atlas.",
+   "pl": "Wypisano Cię z listy. Nie otrzymasz kolejnych newsletterów. W każdej chwili możesz zapisać się ponownie na stronie AI Forecast Atlas."
+  },
+  "or_change": {
+   "en": "Or change your topics instead",
+   "de": "Oder ändern Sie stattdessen Ihre Themen",
+   "fr": "Ou modifiez plutôt vos thèmes",
+   "pl": "Albo zmień tylko tematy"
+  },
+  "back": {
+   "en": "Back to AI Forecast Atlas",
+   "de": "Zurück zu AI Forecast Atlas",
+   "fr": "Retour à AI Forecast Atlas",
+   "pl": "Wróć do AI Forecast Atlas"
+  },
+  "nl_subject": {
+   "en": "AI Forecast Atlas {id}: {headline}",
+   "de": "AI Forecast Atlas {id}: {headline}",
+   "fr": "AI Forecast Atlas {id} : {headline}",
+   "pl": "AI Forecast Atlas {id}: {headline}"
+  },
+  "nl_subject_changes": {
+   "en": "{n} data updates",
+   "de": "{n} Datenänderungen",
+   "fr": "{n} mises à jour des données",
+   "pl": "zmiany danych: {n}"
+  },
+  "nl_subject_one": {
+   "en": "1 data update",
+   "de": "1 Datenänderung",
+   "fr": "1 mise à jour des données",
+   "pl": "1 zmiana danych"
+  },
+  "nl_subject_none": {
+   "en": "no new data this week",
+   "de": "keine neuen Daten diese Woche",
+   "fr": "pas de nouvelles données cette semaine",
+   "pl": "brak nowych danych w tym tygodniu"
+  },
+  "nl_monthly": {
+   "en": "Monthly edition",
+   "de": "Monatsausgabe",
+   "fr": "Édition mensuelle",
+   "pl": "Wydanie miesięczne"
+  },
+  "nl_weekly": {
+   "en": "Weekly release",
+   "de": "Wochenausgabe",
+   "fr": "Publication hebdomadaire",
+   "pl": "Wydanie tygodniowe"
+  },
+  "nl_published": {
+   "en": "Published",
+   "de": "Veröffentlicht",
+   "fr": "Publié",
+   "pl": "Opublikowano"
+  },
+  "nl_data_to": {
+   "en": "data to",
+   "de": "Daten bis",
+   "fr": "données au",
+   "pl": "dane do"
+  },
+  "nl_open": {
+   "en": "Open the monitor",
+   "de": "Monitor öffnen",
+   "fr": "Ouvrir le moniteur",
+   "pl": "Otwórz monitor"
+  },
+  "nl_changes": {
+   "en": "What changed in the data",
+   "de": "Was sich in den Daten geändert hat",
+   "fr": "Ce qui a changé dans les données",
+   "pl": "Co zmieniło się w danych"
+  },
+  "nl_no_changes": {
+   "en": "No starting values changed this week, so all scenario paths are unchanged.",
+   "de": "Diese Woche haben sich keine Startwerte geändert; alle Szenariopfade bleiben gleich.",
+   "fr": "Aucune valeur de départ n’a changé cette semaine ; toutes les trajectoires restent identiques.",
+   "pl": "W tym tygodniu nie zmieniła się żadna wartość początkowa, więc ścieżki scenariuszy są bez zmian."
+  },
+  "nl_was": {
+   "en": "was",
+   "de": "bisher",
+   "fr": "avant",
+   "pl": "było"
+  },
+  "nl_now": {
+   "en": "now",
+   "de": "neu",
+   "fr": "maintenant",
+   "pl": "teraz"
+  },
+  "nl_source": {
+   "en": "Source",
+   "de": "Quelle",
+   "fr": "Source",
+   "pl": "Źródło"
+  },
+  "nl_moves": {
+   "en": "How the scenarios moved (Q4 2030)",
+   "de": "Wie sich die Szenarien bewegt haben (Q4 2030)",
+   "fr": "Évolution des scénarios (T4 2030)",
+   "pl": "Jak zmieniły się scenariusze (IV kw. 2030)"
+  },
+  "nl_scenario": {
+   "en": "Scenario",
+   "de": "Szenario",
+   "fr": "Scénario",
+   "pl": "Scenariusz"
+  },
+  "nl_measure": {
+   "en": "Measure",
+   "de": "Kennzahl",
+   "fr": "Indicateur",
+   "pl": "Wskaźnik"
+  },
+  "nl_today": {
+   "en": "Today",
+   "de": "Heute",
+   "fr": "Aujourd’hui",
+   "pl": "Dziś"
+  },
+  "nl_range": {
+   "en": "Range across the eight scenarios",
+   "de": "Spanne über die acht Szenarien",
+   "fr": "Fourchette sur les huit scénarios",
+   "pl": "Rozpiętość w ośmiu scenariuszach"
+  },
+  "nl_signals_intro": {
+   "en": "When each scenario first crosses a warning threshold (— = not before 2036):",
+   "de": "Wann jedes Szenario zuerst eine Warnschwelle überschreitet (— = nicht vor 2036):",
+   "fr": "Quand chaque scénario franchit pour la première fois un seuil d’alerte (— = pas avant 2036) :",
+   "pl": "Kiedy każdy scenariusz po raz pierwszy przekracza próg ostrzegawczy (— = nie przed 2036):"
+  },
+  "nl_sector_intro": {
+   "en": "Impact score in Q4 2030 versus today (−100 loses most … +100 gains most):",
+   "de": "Wirkungswert in Q4 2030 gegenüber heute (−100 verliert am meisten … +100 gewinnt am meisten):",
+   "fr": "Score d’impact au T4 2030 par rapport à aujourd’hui (−100 perd le plus … +100 gagne le plus) :",
+   "pl": "Ocena wpływu w IV kw. 2030 względem dziś (−100 traci najwięcej … +100 zyskuje najwięcej):"
+  },
+  "nl_evidence": {
+   "en": "Evidence today",
+   "de": "Belege heute",
+   "fr": "Faits actuels",
+   "pl": "Fakty dziś"
+  },
+  "nl_method_intro": {
+   "en": "Every starting value that changed, with its status and source:",
+   "de": "Jeder geänderte Startwert mit Status und Quelle:",
+   "fr": "Chaque valeur de départ modifiée, avec son statut et sa source :",
+   "pl": "Każda zmieniona wartość początkowa ze statusem i źródłem:"
+  },
+  "nl_month_list": {
+   "en": "This month’s releases",
+   "de": "Die Ausgaben dieses Monats",
+   "fr": "Les publications du mois",
+   "pl": "Wydania z tego miesiąca"
+  },
+  "nl_why": {
+   "en": "You receive this because you subscribed to the AI Forecast Atlas newsletter.",
+   "de": "Sie erhalten diese E-Mail, weil Sie den AI-Forecast-Atlas-Newsletter abonniert haben.",
+   "fr": "Vous recevez ce message car vous êtes abonné·e à la lettre d’AI Forecast Atlas.",
+   "pl": "Otrzymujesz tę wiadomość, ponieważ zapisałeś(-aś) się na newsletter AI Forecast Atlas."
+  },
+  "nl_prefs": {
+   "en": "Change topics or language",
+   "de": "Themen oder Sprache ändern",
+   "fr": "Modifier les thèmes ou la langue",
+   "pl": "Zmień tematy lub język"
+  },
+  "nl_unsub": {
+   "en": "Unsubscribe",
+   "de": "Abmelden",
+   "fr": "Se désabonner",
+   "pl": "Wypisz się"
+  },
+  "nl_disclaimer": {
+   "en": "A scenario model, not a forecast and not investment advice. Data and texts: CC BY 4.0.",
+   "de": "Ein Szenariomodell, keine Prognose und keine Anlageberatung. Daten und Texte: CC BY 4.0.",
+   "fr": "Un modèle de scénarios, ni une prévision ni un conseil en investissement. Données et textes : CC BY 4.0.",
+   "pl": "Model scenariuszowy, nie prognoza i nie porada inwestycyjna. Dane i teksty: CC BY 4.0."
+  },
+  "nl_ai_note": {
+   "en": "The opening paragraph is written with AI from the release data; numbers in the tables come straight from the model.",
+   "de": "Der Einleitungsabsatz wird mit KI aus den Ausgabedaten geschrieben; die Zahlen in den Tabellen stammen direkt aus dem Modell.",
+   "fr": "Le paragraphe d’ouverture est rédigé avec l’IA à partir des données publiées ; les chiffres des tableaux viennent directement du modèle.",
+   "pl": "Akapit wstępny powstaje z pomocą AI na podstawie danych wydania; liczby w tabelach pochodzą bezpośrednio z modelu."
+  },
+  "ok": {
+   "en": "OK",
+   "de": "OK",
+   "fr": "OK",
+   "pl": "OK"
+  },
+  "nl_intro_changes": {
+   "en": "This week {n} starting values were updated with newly verified data. Below: what changed and how the eight scenarios moved.",
+   "de": "Diese Woche wurden {n} Startwerte mit neu geprüften Daten aktualisiert. Unten: was sich geändert hat und wie sich die acht Szenarien bewegt haben.",
+   "fr": "Cette semaine, {n} valeurs de départ ont été mises à jour avec des données nouvellement vérifiées. Ci-dessous : ce qui a changé et l’évolution des huit scénarios.",
+   "pl": "W tym tygodniu zaktualizowano {n} wartości początkowych na podstawie nowo zweryfikowanych danych. Poniżej: co się zmieniło i jak zmieniło się osiem scenariuszy."
+  },
+  "nl_intro_base": {
+   "en": "Welcome to AI Forecast Atlas. This first release sets the starting values checked on 17 October 2026; from now on the data is checked daily and released every Friday at 13:00 Swiss time.",
+   "de": "Willkommen bei AI Forecast Atlas. Diese erste Ausgabe legt die am 17. Oktober 2026 geprüften Startwerte fest; ab jetzt werden die Daten täglich geprüft und jeden Freitag um 13:00 Uhr Schweizer Zeit veröffentlicht.",
+   "fr": "Bienvenue sur AI Forecast Atlas. Cette première publication fixe les valeurs de départ vérifiées le 17 octobre 2026 ; désormais, les données sont vérifiées chaque jour et publiées chaque vendredi à 13 h, heure suisse.",
+   "pl": "Witamy w AI Forecast Atlas. To pierwsze wydanie ustala wartości początkowe sprawdzone 17 października 2026 r.; od teraz dane są sprawdzane codziennie i publikowane w każdy piątek o 13:00 czasu szwajcarskiego."
+  },
+  "nl_range_head": {
+   "en": "Q4 2030: lowest … highest",
+   "de": "Q4 2030: niedrigster … höchster Wert",
+   "fr": "T4 2030 : plus bas … plus haut",
+   "pl": "IV kw. 2030: najniższy … najwyższy"
+  },
+  "nl_in_english": {
+   "en": "",
+   "de": "(auf Englisch)",
+   "fr": "(en anglais)",
+   "pl": "(po angielsku)"
+  },
+  "nl_never": {
+   "en": "not before 2036 in any scenario",
+   "de": "in keinem Szenario vor 2036",
+   "fr": "dans aucun scénario avant 2036",
+   "pl": "w żadnym scenariuszu przed 2036"
+  },
+  "nl_today_hit": {
+   "en": "already today",
+   "de": "bereits heute",
+   "fr": "déjà aujourd’hui",
+   "pl": "już dziś"
+  },
+  "nl_signal": {
+   "en": "Signal",
+   "de": "Signal",
+   "fr": "Signal",
+   "pl": "Sygnał"
+  },
+  "nl_first_hits": {
+   "en": "First crossed",
+   "de": "Erstmals überschritten",
+   "fr": "Premier franchissement",
+   "pl": "Pierwsze przekroczenie"
+  },
+  "nl_status": {
+   "en": "Status",
+   "de": "Status",
+   "fr": "Statut",
+   "pl": "Status"
+  },
+  "nl_period": {
+   "en": "Period",
+   "de": "Zeitraum",
+   "fr": "Période",
+   "pl": "Okres"
+  },
+  "nl_test": {
+   "en": "TEST EMAIL",
+   "de": "TEST-E-MAIL",
+   "fr": "E-MAIL DE TEST",
+   "pl": "WIADOMOŚĆ TESTOWA"
+  },
+  "prefs_unavailable": {
+   "en": "We could not load your preferences right now. Please try again later — your current settings are unchanged.",
+   "de": "Ihre Einstellungen können gerade nicht geladen werden. Bitte versuchen Sie es später erneut – Ihre aktuellen Einstellungen bleiben unverändert.",
+   "fr": "Nous ne pouvons pas charger vos préférences pour le moment. Veuillez réessayer plus tard : vos réglages actuels restent inchangés.",
+   "pl": "Nie możemy teraz wczytać Twoich ustawień. Spróbuj ponownie później – obecne ustawienia pozostają bez zmian."
+  },
+  "nl_sources": {
+   "en": "Sources for these changes",
+   "de": "Quellen dieser Änderungen",
+   "fr": "Sources de ces changements",
+   "pl": "Źródła tych zmian"
+  },
+  "nl_all_sources": {
+   "en": "All sources, formulas and methods",
+   "de": "Alle Quellen, Formeln und Methoden",
+   "fr": "Toutes les sources, formules et méthodes",
+   "pl": "Wszystkie źródła, wzory i metody"
+  },
+  "nl_via_api": {
+   "en": "official data interface",
+   "de": "offizielle Datenschnittstelle",
+   "fr": "interface de données officielle",
+   "pl": "oficjalny interfejs danych"
+  },
+  "nl_via_ai": {
+   "en": "AI-assisted research, reviewed by the team",
+   "de": "KI-gestützte Recherche, vom Team geprüft",
+   "fr": "recherche assistée par IA, vérifiée par l’équipe",
+   "pl": "wyszukiwanie wspomagane AI, sprawdzone przez zespół"
+  },
+  "nl_via_manual": {
+   "en": "entered by the team",
+   "de": "vom Team erfasst",
+   "fr": "saisi par l’équipe",
+   "pl": "wprowadzone przez zespół"
+  },
+  "nl_via_desk": {
+   "en": "desk research",
+   "de": "Desk-Recherche",
+   "fr": "recherche documentaire",
+   "pl": "analiza źródeł"
+  },
+  "nl_check_agree": {
+   "en": "second opinion agreed",
+   "de": "Zweitmeinung bestätigt",
+   "fr": "second avis concordant",
+   "pl": "druga opinia zgodna"
+  },
+  "nl_check_disagree": {
+   "en": "second opinion disagreed",
+   "de": "Zweitmeinung abweichend",
+   "fr": "second avis divergent",
+   "pl": "druga opinia rozbieżna"
+  },
+  "nl_via_aik": {
+   "en": "AI knowledge without a specific source, reviewed by the team",
+   "de": "KI-Wissen ohne konkrete Quelle, vom Team geprüft",
+   "fr": "connaissance d’une IA sans source précise, vérifiée par l’équipe",
+   "pl": "wiedza modelu AI bez konkretnego źródła, sprawdzona przez zespół"
+  },
+  "nl_via_panel": {
+   "en": "AI research panel ({n} of {m} agents answered), reviewed by the team",
+   "de": "KI-Recherchepanel ({n} von {m} Agenten antworteten), vom Team geprüft",
+   "fr": "panel de recherche IA ({n} agents sur {m} ont répondu), vérifié par l’équipe",
+   "pl": "panel badawczy AI (odpowiedziało {n} z {m} agentów), sprawdzone przez zespół"
+  },
+  "nl_panel_agree": {
+   "en": "{a} of {b} agree",
+   "de": "{a} von {b} stimmen überein",
+   "fr": "{a} sur {b} concordent",
+   "pl": "{a} z {b} zgodnych"
+  },
+  "nl_xwatch": {
+   "en": "X watch: posts we are watching",
+   "de": "X-Beobachtung: Beiträge, die wir verfolgen",
+   "fr": "Veille X : publications que nous suivons",
+   "pl": "Obserwacja X: wpisy, które śledzimy"
+  },
+  "nl_xwatch_note": {
+   "en": "Found on X by Grok (xAI), labelled for credibility and impact, checked by our editor. Signals, not data: they do not change the model.",
+   "de": "Von Grok (xAI) auf X gefunden, nach Glaubwürdigkeit und Wirkung eingestuft, von unserer Redaktion geprüft. Signale, keine Daten: Sie ändern das Modell nicht.",
+   "fr": "Trouvées sur X par Grok (xAI), classées selon leur crédibilité et leur impact, vérifiées par notre rédaction. Des signaux, pas des données : elles ne modifient pas le modèle.",
+   "pl": "Znalezione na X przez Grok (xAI), ocenione pod kątem wiarygodności i zasięgu, sprawdzone przez naszą redakcję. To sygnały, nie dane: nie zmieniają modelu."
+  },
+  "nl_cred": {
+   "en": "credibility",
+   "de": "Glaubwürdigkeit",
+   "fr": "crédibilité",
+   "pl": "wiarygodność"
+  },
+  "nl_impact": {
+   "en": "impact on X",
+   "de": "Wirkung auf X",
+   "fr": "impact sur X",
+   "pl": "zasięg na X"
+  },
+  "nl_lvl_high": {
+   "en": "high",
+   "de": "hoch",
+   "fr": "élevée",
+   "pl": "wysoka"
+  },
+  "nl_lvl_medium": {
+   "en": "medium",
+   "de": "mittel",
+   "fr": "moyenne",
+   "pl": "średnia"
+  },
+  "nl_lvl_low": {
+   "en": "low",
+   "de": "gering",
+   "fr": "faible",
+   "pl": "niska"
+  },
+  "nl_lvl_unverified": {
+   "en": "unverified",
+   "de": "unbestätigt",
+   "fr": "non vérifiée",
+   "pl": "niepotwierdzona"
+  },
+  "nl_edited": {
+   "en": "value adjusted by the team",
+   "de": "Wert vom Team angepasst",
+   "fr": "valeur ajustée par l’équipe",
+   "pl": "wartość skorygowana przez zespół"
+  }
+ },
+ "metrics": {
+  "K": {
+   "de": "Investitionen der vier größten Hyperscaler",
+   "fr": "Investissements des quatre grands hyperscalers",
+   "pl": "Nakłady inwestycyjne czterech największych hyperscalerów"
+  },
+  "R": {
+   "de": "KI-Umsatz (Endkundenausgaben, brutto)",
+   "fr": "Revenus de l’IA (dépenses finales, brut)",
+   "pl": "Przychody z AI (wydatki końcowe, brutto)"
+  },
+  "CC": {
+   "de": "Kapitalkosten des installierten Bestands",
+   "fr": "Coût du capital de la base installée",
+   "pl": "Koszt kapitału zainstalowanej bazy"
+  },
+  "ccov": {
+   "de": "Umsatz ÷ Kapitalkosten",
+   "fr": "Revenus ÷ coût du capital",
+   "pl": "Przychody ÷ koszt kapitału"
+  },
+  "cov": {
+   "de": "Umsatz ÷ 1,4× Investitionen (Ausgabenindikator)",
+   "fr": "Revenus ÷ 1,4× investissements (indicateur de dépenses)",
+   "pl": "Przychody ÷ 1,4× nakłady (wskaźnik wydatków)"
+  },
+  "VL": {
+   "de": "Eigenkapitalwert OpenAI + Anthropic",
+   "fr": "Valeur des fonds propres d’OpenAI + Anthropic",
+   "pl": "Wartość kapitału OpenAI + Anthropic"
+  },
+  "VN": {
+   "de": "Börsenwert von Nvidia",
+   "fr": "Capitalisation boursière de Nvidia",
+   "pl": "Wartość rynkowa Nvidii"
+  },
+  "Mult": {
+   "de": "Bewertung der Labore ÷ Umsatz der Labore",
+   "fr": "Valorisation des laboratoires ÷ leurs revenus",
+   "pl": "Wycena laboratoriów ÷ ich przychody"
+  },
+  "S": {
+   "de": "Hype-Index",
+   "fr": "Indice d’engouement",
+   "pl": "Indeks hype’u"
+  },
+  "Cs": {
+   "de": "KI-Kreditstress-Index",
+   "fr": "Indice de tension du crédit IA",
+   "pl": "Indeks napięć kredytowych AI"
+  },
+  "Bs": {
+   "de": "Bankenstress-Index",
+   "fr": "Indice de tension bancaire",
+   "pl": "Indeks napięć bankowych"
+  },
+  "G": {
+   "de": "Rückstand offener Modelle",
+   "fr": "Retard des modèles ouverts",
+   "pl": "Opóźnienie modeli otwartych"
+  },
+  "Np": {
+   "de": "Labore auf Spitzenniveau",
+   "fr": "Laboratoires à parité avec la pointe",
+   "pl": "Laboratoria na poziomie czołówki"
+  },
+  "Pf": {
+   "de": "Preis der Spitzenklasse",
+   "fr": "Prix du niveau de pointe",
+   "pl": "Cena modeli z czołówki"
+  },
+  "Pc": {
+   "de": "Preis der „ausreichend guten“ Klasse",
+   "fr": "Prix du niveau « suffisant »",
+   "pl": "Cena modeli „wystarczająco dobrych”"
+  },
+  "prem": {
+   "de": "Preisaufschlag der Spitzenklasse",
+   "fr": "Prime de prix de la pointe",
+   "pl": "Premia cenowa czołówki"
+  },
+  "mf": {
+   "de": "Aufschlag der Spitzenklasse auf die Ressourcenkosten",
+   "fr": "Marge de la pointe sur le coût des ressources",
+   "pl": "Marża czołówki ponad koszt zasobów"
+  },
+  "DC": {
+   "de": "Strombedarf der Rechenzentren",
+   "fr": "Électricité des centres de données",
+   "pl": "Zużycie energii przez centra danych"
+  },
+  "Pp": {
+   "de": "US-Gewerbestrompreis",
+   "fr": "Prix de l’électricité commerciale aux États-Unis",
+   "pl": "Cena energii dla firm w USA"
+  },
+  "GR": {
+   "de": "H100-Miete (Einjahresvertrag)",
+   "fr": "Location H100 (contrat d’un an)",
+   "pl": "Najem H100 (umowa roczna)"
+  },
+  "DR": {
+   "de": "DRAM-Vertragspreisindex",
+   "fr": "Indice des prix contractuels DRAM",
+   "pl": "Indeks cen kontraktowych DRAM"
+  },
+  "LB": {
+   "de": "Günstigster lokaler KI-Rechner mit 128 GB",
+   "fr": "Boîtier IA local 128 Go le moins cher",
+   "pl": "Najtańszy lokalny komputer AI ze 128 GB"
+  },
+  "Ufp": {
+   "de": "Genutzter Anteil der gekauften Chips",
+   "fr": "Part du parc acheté en service",
+   "pl": "Wykorzystanie zakupionej floty"
+  },
+  "Uopp": {
+   "de": "Genutzte versorgte Kapazität",
+   "fr": "Capacité alimentée utilisée",
+   "pl": "Wykorzystanie zasilanej mocy"
+  },
+  "STp": {
+   "de": "Gekaufte Rechenleistung ohne Strom",
+   "fr": "Calcul acheté non alimenté",
+   "pl": "Zakupiona moc bez zasilania"
+  },
+  "SVp": {
+   "de": "Bediente Nachfrage nach Rechenleistung",
+   "fr": "Demande de calcul servie",
+   "pl": "Obsłużony popyt na moc obliczeniową"
+  },
+  "OS": {
+   "de": "Anteil offener Modelle an den Token",
+   "fr": "Part des modèles ouverts dans les jetons",
+   "pl": "Udział modeli otwartych w tokenach"
+  },
+  "ES": {
+   "de": "Nutzung offener Modelle in Unternehmen",
+   "fr": "Usage des modèles ouverts en entreprise",
+   "pl": "Wykorzystanie modeli otwartych w firmach"
+  },
+  "LS": {
+   "de": "Anteil lokal / On-Premises",
+   "fr": "Part locale / sur site",
+   "pl": "Udział lokalny / on-premise"
+  },
+  "AS": {
+   "de": "Anteil spezialisierter Agenten an den Ausgaben",
+   "fr": "Part des agents spécialisés dans les dépenses",
+   "pl": "Udział wyspecjalizowanych agentów w wydatkach"
+  },
+  "TC": {
+   "de": "Anteil der Top-3 an den LLM-Ausgaben von Unternehmen",
+   "fr": "Part des trois premiers dans les dépenses LLM des entreprises",
+   "pl": "Udział trzech największych w firmowych wydatkach na LLM"
+  },
+  "PF": {
+   "de": "Notlage-Index der Labore",
+   "fr": "Indice de difficulté des laboratoires",
+   "pl": "Indeks kłopotów laboratoriów"
+  },
+  "SN": {
+   "de": "Signal-Rausch-Verhältnis",
+   "fr": "Rapport signal/bruit",
+   "pl": "Stosunek sygnału do szumu"
+  },
+  "GDP": {
+   "de": "KI-Beitrag zum US-BIP-Wachstum",
+   "fr": "Contribution de l’IA à la croissance du PIB américain",
+   "pl": "Wkład AI we wzrost PKB USA"
+  },
+  "AU": {
+   "de": "Von KI erledigte Wissensarbeit (realisiert)",
+   "fr": "Travail intellectuel réalisé par l’IA",
+   "pl": "Praca umysłowa wykonywana przez AI (zrealizowana)"
+  },
+  "AUd": {
+   "de": "Nachgefragte Arbeit nach Preisreaktion",
+   "fr": "Travail demandé après réaction aux prix",
+   "pl": "Popyt na pracę po reakcji cenowej"
+  },
+  "AUp": {
+   "de": "Potenzielle Arbeit (Adoptionskurve)",
+   "fr": "Travail potentiel (courbe d’adoption)",
+   "pl": "Praca potencjalna (krzywa adopcji)"
+  },
+  "CRp": {
+   "de": "Als Umsatz bezahlter Anteil des KI-Arbeitswerts",
+   "fr": "Part de la valeur du travail IA payée en revenus",
+   "pl": "Część wartości pracy AI opłacana jako przychód"
+  },
+  "BLD": {
+   "de": "Bau von Rechenzentren in den USA",
+   "fr": "Construction de centres de données aux États-Unis",
+   "pl": "Budowa centrów danych w USA"
+  },
+  "AUa": {
+   "de": "Von KI erledigte AECO-Planungs- und Ingenieurarbeit",
+   "fr": "Conception et ingénierie AECO réalisées par l’IA",
+   "pl": "Prace projektowe i inżynierskie AECO wykonywane przez AI"
+  },
+  "AUdev": {
+   "de": "Von KI erledigte Softwareentwicklung",
+   "fr": "Développement logiciel réalisé par l’IA",
+   "pl": "Programowanie wykonywane przez AI"
+  },
+  "seatG": {
+   "de": "Arbeitsplatz-Index Wissensarbeit",
+   "fr": "Indice des postes de travail intellectuel",
+   "pl": "Indeks stanowisk pracy umysłowej"
+  },
+  "seatA": {
+   "de": "Arbeitsplatz-Index AECO-Planung",
+   "fr": "Indice des postes de conception AECO",
+   "pl": "Indeks stanowisk projektowych AECO"
+  },
+  "CtaskI": {
+   "de": "KI-Kosten pro erledigter Aufgabe",
+   "fr": "Coût de l’IA par tâche accomplie",
+   "pl": "Koszt AI na wykonane zadanie"
+  },
+  "PLAT": {
+   "de": "Plattformbindung (Treiber)",
+   "fr": "Verrouillage des plateformes (facteur)",
+   "pl": "Uzależnienie od platform (czynnik)"
+  }
+ },
+ "scenarios": {
+  "COMM": {
+   "de": [
+    "Die große Kommodifizierung",
+    "Kommodifizierung"
+   ],
+   "fr": [
+    "La grande banalisation",
+    "Banalisation"
+   ],
+   "pl": [
+    "Wielkie utowarowienie",
+    "Utowarowienie"
+   ]
+  },
+  "BUST": {
+   "de": [
+    "Hype-Implosion und Kreditereignis",
+    "Blase platzt"
+   ],
+   "fr": [
+    "Implosion de l’engouement et événement de crédit",
+    "Bulle éclatée"
+   ],
+   "pl": [
+    "Implozja hype’u i zdarzenie kredytowe",
+    "Pęknięcie bańki"
+   ]
+  },
+  "BRKW": {
+   "de": [
+    "Ausbruch an der Spitze",
+    "Ausbruch"
+   ],
+   "fr": [
+    "Échappée de la frontière",
+    "Échappée"
+   ],
+   "pl": [
+    "Odskok czołówki",
+    "Odskok"
+   ]
+  },
+  "SPLT": {
+   "de": [
+    "Souveränes Splinternet",
+    "Zersplitterung"
+   ],
+   "fr": [
+    "Splinternet souverain",
+    "Fragmentation"
+   ],
+   "pl": [
+    "Suwerenny splinternet",
+    "Rozpad"
+   ]
+  },
+  "PWR": {
+   "de": [
+    "Die Energiemauer",
+    "Energiemauer"
+   ],
+   "fr": [
+    "Le mur énergétique",
+    "Mur énergétique"
+   ],
+   "pl": [
+    "Ściana energetyczna",
+    "Ściana energii"
+   ]
+  },
+  "BOOM": {
+   "de": [
+    "Produktivitätsboom durch Agenten",
+    "Agenten-Boom"
+   ],
+   "fr": [
+    "Boom de productivité agentique",
+    "Boom agentique"
+   ],
+   "pl": [
+    "Boom produktywności agentów",
+    "Boom agentów"
+   ]
+  },
+  "TRST": {
+   "de": [
+    "Vertrauensschock",
+    "Vertrauensschock"
+   ],
+   "fr": [
+    "Choc de confiance",
+    "Choc de confiance"
+   ],
+   "pl": [
+    "Szok zaufania",
+    "Szok zaufania"
+   ]
+  },
+  "PLAT": {
+   "de": [
+    "Standardmodelle, konzentrierte Plattformen",
+    "Plattformen"
+   ],
+   "fr": [
+    "Modèles banalisés, plateformes concentrées",
+    "Plateformes"
+   ],
+   "pl": [
+    "Modele jako towar, skoncentrowane platformy",
+    "Platformy"
+   ]
+  }
+ },
+ "quarter": {
+  "en": "Q{q} {y}",
+  "de": "Q{q} {y}",
+  "fr": "T{q} {y}",
+  "pl": "{r} kw. {y}"
+ },
+ "signposts": {
+  "gap2": {
+   "de": "Rückstand offener Modelle unter 2 Monaten",
+   "fr": "Retard des modèles ouverts inférieur à 2 mois",
+   "pl": "Opóźnienie modeli otwartych poniżej 2 miesięcy"
+  },
+  "markup": {
+   "de": "Aufschlag der Spitzenklasse auf die Ressourcenkosten unter 1,5×",
+   "fr": "Marge de la pointe sur le coût des ressources inférieure à 1,5×",
+   "pl": "Marża czołówki ponad koszt zasobów poniżej 1,5×"
+  },
+  "capexyoy": {
+   "de": "Investitionen der Big 4 sinken im Jahresvergleich",
+   "fr": "Investissements des quatre grands en baisse sur un an",
+   "pl": "Nakłady Wielkiej Czwórki maleją rok do roku"
+  },
+  "cover": {
+   "de": "Umsatz deckt weniger als die Hälfte der Kapitalkosten",
+   "fr": "Les revenus couvrent moins de la moitié du coût du capital",
+   "pl": "Przychody pokrywają mniej niż połowę kosztu kapitału"
+  },
+  "credit": {
+   "de": "Kreditstress-Index über 70 (Warnstufe)",
+   "fr": "Indice de tension du crédit au-dessus de 70 (alerte)",
+   "pl": "Indeks napięć kredytowych powyżej 70 (alarm)"
+  },
+  "unpowered": {
+   "de": "Mehr als 15 % der gekauften Rechenleistung ohne Strom",
+   "fr": "Plus de 15 % du calcul acheté non alimenté",
+   "pl": "Ponad 15% zakupionej mocy obliczeniowej bez zasilania"
+  },
+  "served": {
+   "de": "Weniger als 85 % der gewünschten Rechenleistung bedient",
+   "fr": "Moins de 85 % de la demande de calcul servie",
+   "pl": "Obsłużone mniej niż 85% popytu na moc obliczeniową"
+  },
+  "glut": {
+   "de": "H100-Miete unter 1,50 $/h (Überangebot)",
+   "fr": "Location H100 sous 1,50 $/h (surabondance)",
+   "pl": "Najem H100 poniżej 1,50 $/h (nadpodaż)"
+  },
+  "crunch": {
+   "de": "H100-Miete über 4 $/h (Engpass)",
+   "fr": "Location H100 au-dessus de 4 $/h (pénurie)",
+   "pl": "Najem H100 powyżej 4 $/h (niedobór)"
+  },
+  "dram": {
+   "de": "DRAM-Index wieder unter 300",
+   "fr": "Indice DRAM repassé sous 300",
+   "pl": "Indeks DRAM znów poniżej 300"
+  },
+  "localbox": {
+   "de": "Lokaler 128-GB-KI-Rechner unter 1.000 $",
+   "fr": "Boîtier IA local 128 Go sous 1 000 $",
+   "pl": "Lokalny komputer AI ze 128 GB poniżej 1000 $"
+  },
+  "top3": {
+   "de": "Anteil der drei größten Anbieter unter 60 %",
+   "fr": "Part des trois premiers fournisseurs sous 60 %",
+   "pl": "Udział trzech największych dostawców poniżej 60%"
+  },
+  "distress": {
+   "de": "Notlage-Index der Labore über 25",
+   "fr": "Indice de difficulté des laboratoires au-dessus de 25",
+   "pl": "Indeks kłopotów laboratoriów powyżej 25"
+  },
+  "gdp": {
+   "de": "KI bremst das US-BIP-Wachstum",
+   "fr": "L’IA freine la croissance du PIB américain",
+   "pl": "AI hamuje wzrost PKB USA"
+  },
+  "iea": {
+   "de": "Strombedarf der Rechenzentren über der IEA-Projektion für 2030 (950 TWh)",
+   "fr": "Électricité des centres de données au-delà de la projection 2030 de l’AIE (950 TWh)",
+   "pl": "Zużycie energii przez centra danych powyżej prognozy MAE na 2030 r. (950 TWh)"
+  }
+ },
+ "impactRows": {
+  "Architecture practices": {
+   "de": "Architekturbüros",
+   "fr": "Cabinets d’architecture",
+   "pl": "Pracownie architektoniczne"
+  },
+  "Engineering consultancies": {
+   "de": "Ingenieurbüros",
+   "fr": "Bureaux d’ingénierie",
+   "pl": "Biura inżynierskie"
+  },
+  "General contractors": {
+   "de": "Generalunternehmer",
+   "fr": "Entreprises générales",
+   "pl": "Generalni wykonawcy"
+  },
+  "Data-centre & energy builders (EPC, MEP)": {
+   "de": "Bauunternehmen für Rechenzentren und Energie (EPC, Gebäudetechnik)",
+   "fr": "Constructeurs de centres de données et d’énergie (EPC, lots techniques)",
+   "pl": "Wykonawcy centrów danych i energetyki (EPC, instalacje)"
+  },
+  "Building owners & facility operators": {
+   "de": "Gebäudeeigentümer und Betreiber",
+   "fr": "Propriétaires et exploitants d’immeubles",
+   "pl": "Właściciele i zarządcy budynków"
+  },
+  "BIM/CAD platform incumbents": {
+   "de": "Etablierte BIM-/CAD-Plattformen",
+   "fr": "Plateformes BIM/CAO établies",
+   "pl": "Uznane platformy BIM/CAD"
+  },
+  "Open-source & SDK BIM tooling": {
+   "de": "Open-Source- und SDK-Werkzeuge für BIM",
+   "fr": "Outils BIM open source et SDK",
+   "pl": "Narzędzia BIM open source i SDK"
+  },
+  "AECO AI-native agent start-ups": {
+   "de": "KI-native Agenten-Start-ups für AECO",
+   "fr": "Start-up AECO d’agents nativement IA",
+   "pl": "Start-upy AECO z agentami AI"
+  },
+  "Construction-management & field software": {
+   "de": "Software für Bauleitung und Baustelle",
+   "fr": "Logiciels de gestion de chantier et de terrain",
+   "pl": "Oprogramowanie do zarządzania budową"
+  },
+  "Seat-based SaaS": {
+   "de": "SaaS mit Lizenzen pro Nutzer",
+   "fr": "SaaS facturé par utilisateur",
+   "pl": "SaaS rozliczane za użytkownika"
+  },
+  "Usage- and outcome-priced software": {
+   "de": "Software mit nutzungs- oder ergebnisbasierten Preisen",
+   "fr": "Logiciels facturés à l’usage ou au résultat",
+   "pl": "Oprogramowanie rozliczane za użycie lub efekt"
+  },
+  "Developer tools & coding agents": {
+   "de": "Entwicklerwerkzeuge und Coding-Agenten",
+   "fr": "Outils de développement et agents de code",
+   "pl": "Narzędzia programistyczne i agenci kodujący"
+  },
+  "Software developers (jobs)": {
+   "de": "Softwareentwickler (Stellen)",
+   "fr": "Développeurs logiciels (emplois)",
+   "pl": "Programiści (miejsca pracy)"
+  },
+  "AI wrappers & vibe-coded apps": {
+   "de": "KI-Wrapper und Vibe-Coding-Apps",
+   "fr": "Surcouches IA et applis « vibe-codées »",
+   "pl": "Nakładki AI i aplikacje z vibe codingu"
+  },
+  "Specialised-agent builders": {
+   "de": "Anbieter spezialisierter Agenten",
+   "fr": "Concepteurs d’agents spécialisés",
+   "pl": "Twórcy wyspecjalizowanych agentów"
+  },
+  "IT services & outsourcing": {
+   "de": "IT-Dienstleistungen und Outsourcing",
+   "fr": "Services informatiques et externalisation",
+   "pl": "Usługi IT i outsourcing"
+  }
+ }
+}

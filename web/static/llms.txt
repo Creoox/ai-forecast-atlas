@@ -1,0 +1,23 @@
+# AI Forecast Atlas
+
+> A weekly-updated scenario model by Creoox AG of how AI is becoming a commodity: capex, revenue, token prices, compute, energy, market structure and work, quarterly from 2023 to 2035, in eight scenarios. Open data under CC BY 4.0.
+
+History until Q4 2026 comes from dated public sources (see dataset.json, each value with status, period and source). Values after Q4 2026 are scenario paths of a system-dynamics model, not forecasts. A new release is published every Friday at 13:00 Swiss time. Please credit "AI Forecast Atlas by Creoox AG" with the release number.
+
+## Data
+- [Latest release summary]({{SITE}}data/latest/release.json): what changed, headline numbers per scenario, early-warning signposts, who gains and loses
+- [Starting values with sources]({{SITE}}data/latest/dataset.json): value, status, period, source link, derivation and provenance (quote, further references, how obtained, review date)
+- [Methods: explanations, formulas and source notes]({{SITE}}assets/methods.json): every dashboard panel and measure — definition, history method and sources, model formula, drivers, caveats (CC BY 4.0)
+- [All scenario paths as one long CSV]({{SITE}}data/latest/series/all.csv): columns scenario, quarter, t, metric, value
+- [Measure dictionary]({{SITE}}data/latest/metrics.json): names and units
+- [Scenarios and drivers]({{SITE}}data/latest/scenarios.json)
+- [Release archive]({{SITE}}data/releases/index.json)
+- [X watch]({{SITE}}data/xwatch.json): posts on X the editor is watching, newest first, with post links, credibility and impact labels — signals, not data; they never change the model (each release also lists the week's items)
+
+## API
+- [MCP server]({{SITE}}api/mcp.php): Streamable HTTP, read-only tools list_metrics, list_scenarios, list_releases, get_release, get_series, explain_metric, get_sources, get_xwatch, get_signposts, get_impacts
+- [OpenAPI description]({{SITE}}openapi.json)
+
+## Optional
+- [RSS feed of releases]({{SITE}}feeds/releases.xml)
+- [The model as a JavaScript module]({{SITE}}assets/engine.esm.js): createEngine(), applyData(dataset), simulate(scenario)

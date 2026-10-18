@@ -1,0 +1,47 @@
+{
+  "languages": [
+    { "id": "en", "name": "English" },
+    { "id": "de", "name": "Deutsch" },
+    { "id": "fr", "name": "Français" },
+    { "id": "pl", "name": "Polski" }
+  ],
+  "frequencies": [
+    { "id": "weekly", "label": { "en": "Every Friday", "de": "Jeden Freitag", "fr": "Chaque vendredi", "pl": "W każdy piątek" } },
+    { "id": "monthly", "label": { "en": "First Friday of the month", "de": "Erster Freitag im Monat", "fr": "Premier vendredi du mois", "pl": "Pierwszy piątek miesiąca" } }
+  ],
+  "categories": [
+    { "id": "summary", "always": true,
+      "label": { "en": "Weekly summary", "de": "Wochenüberblick", "fr": "Synthèse de la semaine", "pl": "Podsumowanie tygodnia" },
+      "desc": { "en": "What changed in the data and how the eight scenarios moved", "de": "Was sich in den Daten geändert hat und wie sich die acht Szenarien bewegt haben", "fr": "Ce qui a changé dans les données et l’évolution des huit scénarios", "pl": "Co zmieniło się w danych i jak zmieniło się osiem scenariuszy" } },
+    { "id": "markets", "groups": ["A"], "metrics": ["K", "R", "ccov", "VL", "VN", "S", "Cs", "Bs"],
+      "label": { "en": "Capital & markets", "de": "Kapital & Märkte", "fr": "Capitaux & marchés", "pl": "Kapitał i rynki" },
+      "desc": { "en": "Capex, AI revenue, valuations, hype and credit stress", "de": "Investitionen, KI-Umsatz, Bewertungen, Hype und Kreditstress", "fr": "Investissements, revenus de l’IA, valorisations, engouement et tensions de crédit", "pl": "Nakłady inwestycyjne, przychody z AI, wyceny, hype i napięcia kredytowe" } },
+    { "id": "models", "groups": ["B"], "metrics": ["G", "Np", "Pf", "Pc", "prem", "mf"],
+      "label": { "en": "Models & pricing", "de": "Modelle & Preise", "fr": "Modèles & prix", "pl": "Modele i ceny" },
+      "desc": { "en": "Open-weight gap, frontier parity and token prices", "de": "Rückstand offener Modelle, Gleichstand an der Spitze und Token-Preise", "fr": "Écart des modèles ouverts, parité à la frontière et prix des jetons", "pl": "Dystans modeli otwartych, parytet czołówki i ceny tokenów" } },
+    { "id": "compute", "groups": ["C"], "metrics": ["Ufp", "STp", "DC", "Pp", "GR", "DR", "LB"],
+      "label": { "en": "Compute, energy & hardware", "de": "Rechenleistung, Energie & Hardware", "fr": "Calcul, énergie & matériel", "pl": "Moc obliczeniowa, energia i sprzęt" },
+      "desc": { "en": "Chips in use, power, GPU rents, memory and local AI boxes", "de": "Genutzte Chips, Strom, GPU-Mieten, Speicher und lokale KI-Rechner", "fr": "Puces utilisées, électricité, loyers GPU, mémoire et boîtiers IA locaux", "pl": "Wykorzystanie chipów, energia, ceny najmu GPU, pamięć i lokalne komputery AI" } },
+    { "id": "structure", "groups": ["D"], "metrics": ["OS", "ES", "LS", "AS", "TC", "PF", "SN"],
+      "label": { "en": "Market structure", "de": "Marktstruktur", "fr": "Structure du marché", "pl": "Struktura rynku" },
+      "desc": { "en": "Openness, agents, concentration and lab distress", "de": "Offenheit, Agenten, Konzentration und Notlage der Labore", "fr": "Ouverture, agents, concentration et difficultés des laboratoires", "pl": "Otwartość, agenci, koncentracja i kondycja laboratoriów AI" } },
+    { "id": "work", "groups": ["E"], "metrics": ["GDP", "AU", "AUd", "AUp", "CRp"],
+      "label": { "en": "Macro & work", "de": "Makro & Arbeit", "fr": "Macroéconomie & travail", "pl": "Makroekonomia i praca" },
+      "desc": { "en": "US growth and how much knowledge work AI does", "de": "US-Wachstum und wie viel Wissensarbeit KI erledigt", "fr": "Croissance américaine et part du travail intellectuel réalisée par l’IA", "pl": "Wzrost w USA i udział AI w pracy umysłowej" } },
+    { "id": "aeco", "lens": "aeco", "metrics": ["BLD", "AUa", "seatA", "CtaskI"],
+      "label": { "en": "AECO firms", "de": "AECO-Unternehmen", "fr": "Entreprises AECO", "pl": "Firmy AECO" },
+      "desc": { "en": "Architecture, engineering, construction and operations", "de": "Architektur, Ingenieurwesen, Bau und Betrieb", "fr": "Architecture, ingénierie, construction et exploitation", "pl": "Architektura, inżynieria, budownictwo i eksploatacja" } },
+    { "id": "aecosw", "lens": "aecosw", "metrics": ["seatA", "AS", "ES", "TC"],
+      "label": { "en": "AECO software", "de": "AECO-Software", "fr": "Logiciels AECO", "pl": "Oprogramowanie AECO" },
+      "desc": { "en": "BIM, CAD and construction software vendors", "de": "Anbieter von BIM-, CAD- und Bausoftware", "fr": "Éditeurs de logiciels BIM, CAO et construction", "pl": "Dostawcy oprogramowania BIM, CAD i budowlanego" } },
+    { "id": "dev", "lens": "sw", "metrics": ["AUdev", "seatG", "Pc", "SN"],
+      "label": { "en": "Software & development", "de": "Software & Entwicklung", "fr": "Logiciel & développement", "pl": "Oprogramowanie i programowanie" },
+      "desc": { "en": "Software vendors and the teams who build software", "de": "Softwareanbieter und die Teams, die Software entwickeln", "fr": "Éditeurs de logiciels et équipes de développement", "pl": "Producenci oprogramowania i zespoły, które je tworzą" } },
+    { "id": "signals", "metrics": [],
+      "label": { "en": "Early-warning signals", "de": "Frühwarnsignale", "fr": "Signaux d’alerte", "pl": "Sygnały ostrzegawcze" },
+      "desc": { "en": "Which warning thresholds each scenario crosses, and when", "de": "Welche Warnschwellen jedes Szenario überschreitet und wann", "fr": "Quels seuils d’alerte chaque scénario franchit, et quand", "pl": "Które progi ostrzegawcze przekracza każdy scenariusz i kiedy" } },
+    { "id": "method", "metrics": [],
+      "label": { "en": "Data & method notes", "de": "Daten- & Methodenhinweise", "fr": "Notes sur les données et la méthode", "pl": "Uwagi o danych i metodzie" },
+      "desc": { "en": "Every changed starting value with its source", "de": "Jeder geänderte Startwert mit Quelle", "fr": "Chaque valeur de départ modifiée, avec sa source", "pl": "Każda zmieniona wartość początkowa wraz ze źródłem" } }
+  ]
+}

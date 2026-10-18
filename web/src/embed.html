@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Forecast Atlas chart</title>
+<meta name="robots" content="noindex">
+<style>
+:root { --bg: #ffffff; --ink: #17171a; --ink-2: #43413c; --ink-3: #66635b; --rule: #e6e3da; --fut: #f6f5f1; --accent: #9c5500; color-scheme: light; }
+:root[data-theme="dark"] { --bg: #111113; --ink: #f1efe8; --ink-2: #c9c6bc; --ink-3: #8f8c83; --rule: #2a2a2e; --fut: #17171a; --accent: #f5a524; color-scheme: dark; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 13px/1.35 Arial, Helvetica, sans-serif; }
+.wrap { display: flex; flex-direction: column; height: 100%; padding: 10px 12px 6px; box-sizing: border-box; }
+h1 { font-size: 15px; margin: 0; }
+.sub { color: var(--ink-3); font-size: 11px; margin: 2px 0 6px; }
+.cv { position: relative; flex: 1; min-height: 180px; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tip { position: absolute; pointer-events: none; background: var(--bg); border: 1px solid var(--rule); box-shadow: 0 6px 18px rgba(0,0,0,.15); padding: 6px 8px; font-size: 11.5px; min-width: 150px; z-index: 2; }
+.tip b { display: block; margin-bottom: 3px; }
+.tip div { display: flex; gap: 8px; justify-content: space-between; }
+.tip i { display: inline-block; width: 10px; height: 3px; vertical-align: middle; margin-right: 5px; }
+.foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; color: var(--ink-3); font-size: 10.5px; padding-top: 4px; }
+.foot a { color: var(--ink-2); }
+.err { color: #c0261f; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="t">AI Forecast Atlas</h1>
+  <div class="sub" id="u"></div>
+  <div class="cv" id="cv"><canvas id="c" role="img" aria-label="Chart"></canvas><div class="tip" id="tip" hidden></div></div>
+  <div class="foot"><span id="cr">AI Forecast Atlas by Creoox AG · CC BY 4.0</span><span><a id="how" href="../#sources" target="_blank" rel="noopener">Sources &amp; formula ↗</a> · <a id="open" href="../" target="_blank" rel="noopener">Open the full monitor ↗</a></span></div>
+</div>
+<script type="module">
+import { createEngine } from '../assets/engine.esm.js';
+import { METRICS, LOG_METRICS, LIGHT_COLORS, fmt } from '../assets/release-core.js';
+const q = new URLSearchParams(location.search);
+const k = METRICS[q.get('m')] ? q.get('m') : 'K';
+const theme = q.get('theme') === 'dark' ? 'dark' : 'light';
+document.documentElement.setAttribute('data-theme', theme);
+const $ = id => document.getElementById(id);
+try {
+  const E = createEngine();
+  let rel = null;
+  try {
+    const [ds, r] = await Promise.all([fetch('../data/latest/dataset.json', { cache: 'no-cache' }).then(x => x.json()), fetch('../data/latest/release.json', { cache: 'no-cache' }).then(x => x.json())]);
+    E.applyData(ds); rel = r;
+  } catch (e) { /* base data */ }
+  const want = (q.get('s') || '').toUpperCase().split(',').filter(Boolean);
+  const scn = E.SCENARIOS.filter(s => !want.length || want.indexOf(s.key) >= 0);
+  const runs = {}; scn.forEach(s => { runs[s.key] = E.simulate(s, null); });
+  const m = METRICS[k], log = !!LOG_METRICS[k], n = E.NQ, now = E.NOW_I;
+  const colors = {}; scn.forEach(s => { colors[s.key] = theme === 'dark' ? s.color : (LIGHT_COLORS[s.key] || s.color); });
+  $('t').textContent = q.get('title') || m.name;
+  $('u').textContent = m.unit + (log ? ' · log scale' : '') + ' · ' + (scn.length === 8 ? 'eight scenarios' : scn.map(s => s.short).join(', ')) + ' · history to ' + E.qLabel(now);
+  $('cr').textContent = 'AI Forecast Atlas by Creoox AG' + (rel ? ' · release ' + rel.id : '') + ' · CC BY 4.0';
+  const site = new URL('../', location.href);
+  if (scn.length === 1) site.searchParams.set('s', scn[0].key);
+  $('open').href = site.toString();
+  const how = new URL('../', location.href); how.hash = 'method-' + k; $('how').href = how.toString();
+  const cv = $('c'), ctx = cv.getContext('2d'), tip = $('tip');
+  let lo = Infinity, hi = -Infinity;
+  for (const s of scn) for (const v of runs[s.key][k]) if (isFinite(v) && (!log || v > 0)) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  if (!log) { const pad = (hi - lo) * 0.06 || 1; lo = lo >= 0 && lo - pad < 0 ? 0 : lo - pad; hi += pad; } else { lo /= 1.15; hi *= 1.15; }
+  let G = null, hov = null;
+  function draw() {
+    const w = cv.clientWidth, h = cv.clientHeight, dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const cs = getComputedStyle(document.documentElement), C = v => cs.getPropertyValue(v).trim();
+    const L = 54, R = scn.length > 1 ? 96 : 14, T = 6, B = 22;
+    const X = i => L + (w - L - R) * i / (n - 1);
+    const a = log ? Math.log(lo) : lo, b = log ? Math.log(hi) : hi;
+    const Y = v => T + (h - T - B) * (1 - ((log ? Math.log(Math.max(v, lo)) : v) - a) / (b - a));
+    G = { X, Y, L, R, T, B, w, h };
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = C('--fut'); ctx.fillRect(X(now), T, X(n - 1) - X(now), h - T - B);
+    ctx.font = '10.5px Arial'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    const ticks = []; if (log) { for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) for (const mm of [1, 2, 5]) { const v = mm * 10 ** e; if (v >= lo && v <= hi) ticks.push(v); } } else { const st0 = (hi - lo) / 5, p = 10 ** Math.floor(Math.log10(st0)); const st = [1, 2, 2.5, 5, 10].map(x => x * p).find(x => x >= st0); for (let v = Math.ceil(lo / st) * st; v <= hi; v += st) ticks.push(+v.toPrecision(10)); }
+    for (const v of (ticks.length > 7 ? ticks.filter((x, i) => i % 2 === 0) : ticks)) { ctx.strokeStyle = C('--rule'); ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(w - R, Y(v)); ctx.stroke(); ctx.fillStyle = C('--ink-3'); ctx.fillText(fmt(k, v), L - 6, Y(v)); }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let yr = 2023; yr <= 2035; yr += (w < 420 ? 4 : 2)) ctx.fillText(String(yr), X(E.idxOf(yr)), h - B + 6);
+    ctx.strokeStyle = C('--accent'); ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(X(now), T); ctx.lineTo(X(now), h - B); ctx.stroke(); ctx.setLineDash([]);
+    const line = (arr, i0, i1, col, lw) => { ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.beginPath(); let st = false; for (let i = i0; i <= i1; i++) { const v = arr[i]; if (!isFinite(v) || (log && v <= 0)) continue; st ? ctx.lineTo(X(i), Y(v)) : ctx.moveTo(X(i), Y(v)); st = true; } ctx.stroke(); };
+    scn.forEach(s => line(runs[s.key][k], now, n - 1, colors[s.key], 2));
+    line(runs[scn[0].key][k], 0, now, C('--ink'), 2.4);
+    if (scn.length > 1) {
+      const ends = scn.map(s => ({ s, y0: Y(runs[s.key][k][n - 1]) })).map(e => (e.y = e.y0, e)).sort((p, q2) => p.y - q2.y);
+      for (let i = 1; i < ends.length; i++) if (ends[i].y < ends[i - 1].y + 12) ends[i].y = ends[i - 1].y + 12;
+      const over = ends.length ? ends[ends.length - 1].y - (h - B - 4) : 0; if (over > 0) ends.forEach(e => { e.y -= over; });
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = '10.5px Arial';
+      ends.forEach(e => { ctx.strokeStyle = colors[e.s.key]; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(n - 1) + 2, e.y0); ctx.lineTo(X(n - 1) + 9, e.y); ctx.lineTo(X(n - 1) + 15, e.y); ctx.stroke(); ctx.fillStyle = C('--ink-2'); ctx.fillText(e.s.short, X(n - 1) + 18, e.y); });
+    }
+    if (hov != null) { ctx.strokeStyle = C('--ink-3'); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(hov), T); ctx.lineTo(X(hov), h - B); ctx.stroke(); }
+  }
+  function showTip(i, px, py) {
+    tip.innerHTML = ''; const b = document.createElement('b'); b.textContent = E.qLabel(i) + (i <= now ? ' · history' : ''); tip.append(b);
+    const rows = (i <= now ? [scn[0]] : scn).map(s => ({ s, v: runs[s.key][k][i] })).sort((p, q2) => q2.v - p.v);
+    rows.forEach(r => { const d = document.createElement('div'); const l = document.createElement('span'); const sw = document.createElement('i'); sw.style.background = i <= now ? 'var(--ink)' : colors[r.s.key]; l.append(sw, document.createTextNode(i <= now ? 'Reported' : r.s.short)); const v = document.createElement('span'); v.textContent = fmt(k, r.v); d.append(l, v); tip.append(d); });
+    tip.hidden = false;
+    const W2 = cv.clientWidth; tip.style.left = Math.min(W2 - tip.offsetWidth - 4, px + 12) + 'px'; tip.style.top = Math.max(0, py - 10) + 'px';
+  }
+  cv.addEventListener('pointermove', e => { if (!G) return; const r = cv.getBoundingClientRect(); const x = e.clientX - r.left; const i = Math.round((x - G.L) / (G.w - G.L - G.R) * (n - 1)); if (i < 0 || i >= n) { hov = null; tip.hidden = true; draw(); return; } hov = i; draw(); showTip(i, x, e.clientY - r.top); });
+  cv.addEventListener('pointerleave', () => { hov = null; tip.hidden = true; draw(); });
+  new ResizeObserver(draw).observe($('cv'));
+  cv.setAttribute('aria-label', m.name + ': ' + scn.map(s => s.short + ' ' + fmt(k, runs[s.key][k][E.idxOf(2030.75)]) + ' in Q4 2030').join('; '));
+} catch (e) {
+  document.querySelector('.wrap').innerHTML = '<p class="err">The chart could not load. <a href="../">Open AI Forecast Atlas</a></p>';
+  console.error(e);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_private/
+Disallow: /check.php
+Sitemap: {{SITE}}sitemap.xml

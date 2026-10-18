@@ -1,0 +1,34 @@
+name: CI
+on:
+  push:
+  pull_request:
+concurrency:   # a newer push to the same branch or pull request stops the older run
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.0', '8.2']   # 8.0 is the oldest supported version; 8.2 is the newest on home.pl's older platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, mbstring, json
+      - name: Lint PHP
+        run: find server test/mock -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: node web/build.mjs --no-zip
+      - name: End-to-end test (PHP built-in server, mocked services)
+        run: node test/integration.mjs
+        env:
+          AIM_TEST_TIMEOUT: '300'

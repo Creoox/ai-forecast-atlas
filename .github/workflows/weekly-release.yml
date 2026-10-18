@@ -1,0 +1,22 @@
+# Optional: build and stage the weekly release automatically (see docs/AUTOMATION.md).
+name: Weekly release build
+on:
+  schedule:
+    - cron: '30 11 * * 5'
+      timezone: 'Europe/Zurich'
+  workflow_dispatch: {}
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build and stage the release
+        env:
+          AIM_SITE: ${{ secrets.AIM_SITE }}
+          AIM_INGEST_SECRET: ${{ secrets.AIM_INGEST_SECRET }}
+        run: |
+          if [ -z "$AIM_INGEST_SECRET" ] || [ -z "$AIM_SITE" ]; then echo "AIM_SITE / AIM_INGEST_SECRET not set: nothing to do."; exit 0; fi
+          node tools/release.mjs

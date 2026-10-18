@@ -1,0 +1,17 @@
+{
+ "_about": "Who operates this copy of AI Forecast Atlas: shown in the imprint, the privacy notice and the newsletter footer. These are the public details of Creoox AG (creoox.com imprint and the Liechtenstein commercial register, checked 17 Oct 2026). If you run your own copy, replace them here or in Admin → Settings → Site and company.",
+ "site": {
+  "company": "Creoox AG",
+  "legal_form": "Company limited by shares (Aktiengesellschaft) under the law of Liechtenstein",
+  "address": "Landstrasse 40\n9495 Triesen\nLiechtenstein",
+  "postal": "Postfach 568, 9495 Triesen, Liechtenstein",
+  "vat": "MWST-Nr. 59 785",
+  "email": "contact@creoox.com",
+  "phone": "+41 76 278 5998",
+  "dpo": "privacy@creoox.com",
+  "represented_by": "Tomasz Basinski, member of the board of directors and CEO",
+  "register": "Commercial register of the Principality of Liechtenstein (Amt für Justiz, Vaduz), no. FL-0002.524.394-4",
+  "authority": "Datenschutzstelle Liechtenstein, Städtle 38, Postfach 684, 9490 Vaduz, Liechtenstein (info.dss@llv.li)",
+  "repo_url": "https://github.com/Creoox/ai-forecast-atlas"
+ }
+}

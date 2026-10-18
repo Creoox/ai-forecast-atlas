@@ -1,0 +1,3497 @@
+{
+ "schema": "aimonitor.methods/1",
+ "updated": "2026-10-17",
+ "licence": "CC BY 4.0 — credit “AI Forecast Atlas by Creoox AG”",
+ "about": "Plain-language explanations, formulas and source notes for every panel and measure of AI Forecast Atlas. The formulas are those of the open-source engine (engine/engine.mjs, model v3.3); numbers shown on the dashboard are computed by that code, not taken from this file.",
+ "conventions": [
+  "Δt = years after Q4 2026 (the last quarter of history, “today” in the model).",
+  "Drivers are on a 0–1 scale; “today” means their Q4 2026 value (for example investor appetite 0.70).",
+  "“X → X* at r a year” means partial adjustment: each quarter X moves r ÷ 4 of the way towards its target X*.",
+  "c is a calibration constant: it makes the first simulated quarter (Q1 2027) continue the Q4 2026 value.",
+  "max(0, x − a) means only the part of x above a counts; clamp(x, a, b) limits x to the range a…b.",
+  "ln = natural logarithm; growth rates such as gK and gR are log growth per year (0.3 ≈ +35% a year).",
+  "Subscript ₀ means the Q4 2026 value of the current release (the starting value in the evidence ledger, for example Pc₀ = AN6). Numbers quoted in formulas are those of the base release (17 Oct 2026); a weekly release can move them."
+ ],
+ "badges": {
+  "history": {
+   "label": "History",
+   "icon": "clock",
+   "tone": "ink",
+   "meaning": "Dated public data from Q1 2023 to Q4 2026. Between dated points the series is joined by straight lines (on a log scale for fast-growing series). Drawn in ink on the charts."
+  },
+  "reported": {
+   "label": "Reported",
+   "icon": "check",
+   "tone": "good",
+   "meaning": "Published by the company, agency or market itself: a filing, an announced funding round, a closing price."
+  },
+  "survey": {
+   "label": "Survey",
+   "icon": "survey",
+   "tone": "info",
+   "meaning": "From a survey of companies or users: a sample, not a census."
+  },
+  "estimate": {
+   "label": "Estimate",
+   "icon": "approx",
+   "tone": "warn",
+   "meaning": "Derived by AI Forecast Atlas from published figures; the derivation is shown next to the value."
+  },
+  "forecast": {
+   "label": "Forecast",
+   "icon": "forecast",
+   "tone": "warn",
+   "meaning": "A published forecast by a named analyst firm for a quarter that is not reported yet."
+  },
+  "assumption": {
+   "label": "Assumption",
+   "icon": "diamond",
+   "tone": "serious",
+   "meaning": "No reliable measure exists. A stated judgement by the AI Forecast Atlas team, to be replaced when data appear."
+  },
+  "index": {
+   "label": "Model index",
+   "icon": "grid",
+   "tone": "muted",
+   "meaning": "An illustrative index built by the model (hype, credit stress, bank stress, lab distress, signal-to-noise). Not a probability and not an observed statistic."
+  },
+  "model": {
+   "label": "Model output",
+   "icon": "fx",
+   "tone": "model",
+   "meaning": "Computed by the scenario model for 2027–2035 from the starting values, the scenario’s driver paths and the equations shown. A coherent story, not a forecast."
+  },
+  "ai-knowledge": {
+   "label": "AI knowledge",
+   "icon": "spark",
+   "tone": "info",
+   "meaning": "Stated by an AI model from its training and its own observations, without a specific published source. A person reviewed it before publication, and the model and date are named. Treat it as an informed estimate: it may be outdated or wrong, and it is replaced as soon as a sourced figure appears."
+  }
+ },
+ "via": {
+  "desk": "AI-assisted desk research by the AI Forecast Atlas team, checked against the cited source (base release, 17 Oct 2026).",
+  "api": "Collected by the daily check from an official data API and approved in review.",
+  "ai": "Found by AI research and approved by a person. Each research question goes to a panel of up to five AI agents (OpenAI, Anthropic Claude, Google Gemini, xAI Grok, DeepSeek) that answer independently; their answers are combined by weighted median with the weights the editor sets, the lead answer's source link and quote are published, and every agent's answer, weight and source are kept with the value. Values from before the panel (October 2026) may show a single second opinion instead.",
+  "manual": "Entered or corrected by the AI Forecast Atlas team.",
+  "assumption": "A stated assumption: no reliable measure exists.",
+  "model": "A model construct (an index defined by the model).",
+  "ai-knowledge": "Given by an AI model from its own knowledge or observations, without a specific source; the model, the date and its explanation are kept with the value, and a person approved it."
+ },
+ "process": {
+  "summary": "New data reach the dashboard only through a reviewed weekly release. Every value carries its source; values found with AI also carry the exact supporting quote, the pages the AI searched and the answers of the whole AI research panel. Knowledge that AI models hold without a citable source is welcome too, but always labelled “AI knowledge” with the model and date. Posts on X that the editor watches are shown separately as signals, never as data.",
+  "steps": [
+   {
+    "title": "Daily check of official sources",
+    "text": "Every morning from 06:00 Swiss time the server queries official data APIs: SEC EDGAR company filings (Big-4 capex), the U.S. Energy Information Administration (commercial electricity prices), OpenRouter (list prices of AI models) and Epoch AI (capability scores of open and closed models). Each result is stored as an observation with its source and date."
+   },
+   {
+    "title": "AI research panel, with citations",
+    "text": "On weekdays the same research question about a starting value goes to a panel of five AI agents: OpenAI, Anthropic Claude, Google Gemini and xAI Grok search the web; DeepSeek, which has no web access, answers from its own knowledge. Each agent must answer with a source link, the publication date, the period covered and an exact supporting quote. Answers without a valid link, outside a plausible range or citing a page that was not among the search results are flagged. When no page supports a figure, an agent may still give its own knowledge or observation: such answers are labelled “AI knowledge”, name the model and the date, and carry the model’s explanation of how it knows."
+   },
+   {
+    "title": "Combining the answers",
+    "text": "The answers are combined by weighted median: each agent counts with the weight the editor sets (0–10), and answers from model knowledge count half by default. The answer at the median becomes the lead: its source and quote are published with the value. The panel’s agreement (the share of the weight within ±10% of the value), the range of the answers and every agent’s answer and source are kept with the value, so you can see where the agents disagreed."
+   },
+   {
+    "title": "Human review",
+    "text": "Each candidate appears in a review queue with its source, quote, the panel’s answers and warnings. A person opens the source (or reads the AI’s explanation, for AI knowledge), may pick another agent’s answer, then approves (optionally after editing) or rejects it. AI-researched values are never published automatically; official-API values only if the team switches automatic approval on."
+   },
+   {
+    "title": "X watch",
+    "text": "Every weekday Grok (xAI) searches X for recent posts about the monitor’s topics, first from credible accounts — official company and institution accounts, executives, established journalists and media, analysts and researchers — and also from accounts with heavy impact on X. It labels each item’s credibility and impact and links the posts. The editor approves, edits or rejects every item; approved items appear in the X watch panel, the Friday release and the newsletter. They are signals, not data: they never change a starting value or the model."
+   },
+   {
+    "title": "Friday release",
+    "text": "Every Friday at 13:00 Swiss time the approved starting values are published as a weekly release: the model recomputes all eight scenarios and publishes data files, charts, feeds and a list of what changed, each with its source. If no new build was staged, the previous release is carried forward and marked as such."
+   },
+   {
+    "title": "Corrections",
+    "text": "Found a mistake? Use “Suggest an improvement” in the assistant. Corrections appear in the next release’s list of changes; every past release stays online unchanged."
+   }
+  ],
+  "aiRules": [
+   "Prefer primary sources: filings, official statistics, the original publisher.",
+   "Return the value with unit, the period it covers, the publication date, the source title and link, and an exact supporting quote (at most 300 characters).",
+   "If no page supports a figure, give it only from your own knowledge or observation, mark it as “knowledge”, say what date it refers to and how you know it; otherwise say “not found”. Never invent a source link.",
+   "Every agent of the panel answers on its own; the reviewer sees all answers side by side, their weights and the weighted median.",
+   "The reviewer sees the pages the search returned; a link that is not among them is flagged.",
+   "X watch: only post links that the X search returned; label credibility and impact honestly and say why; a rumour stays “unverified” until a credible source confirms it."
+  ]
+ },
+ "panels": {
+  "scenarios": {
+   "title": "Scenario chips",
+   "oneLiner": "Pick one of eight futures; every chart, number and table switches to it.",
+   "what": "Eight scenarios run on the same model and the same Q4 2026 starting values. They differ only in how fourteen drivers (investor appetite, cost of capital, enterprise adoption, open-model catch-up, energy, geopolitics and others) move from 2027 to 2035, plus a few one-off events in each story.",
+   "howToRead": [
+    "The coloured square is the scenario’s colour on every chart; the number is its keyboard shortcut (1–8).",
+    "The selected chip is underlined in its colour. Faint lines on the charts are the other seven scenarios, for comparison.",
+    "Tilting a driver or switching on a shock creates a ninth chip, CUSTOM, drawn as a dashed line."
+   ],
+   "whyItMatters": "Nobody knows which future arrives. Comparing coherent stories side by side shows which outcomes are robust (they appear in most scenarios) and which depend on one assumption.",
+   "method": "Each scenario sets every driver at five dates (mid-2027, mid-2028, 2030, 2032, 2035); in between, the path is eased smoothly from today’s value. The model then runs quarter by quarter. Every driver path is listed in Sources & methods → Scenarios & drivers.",
+   "sources": {
+    "metrics": [],
+    "anchors": []
+   },
+   "caveats": [
+    "Scenarios are stories, not probabilities. They are not equally likely and none of them is a forecast."
+   ]
+  },
+  "time": {
+   "title": "Time cursor and playback",
+   "oneLiner": "Move through 2023–2035; the big date, every number and every chart follow the cursor.",
+   "what": "The quarter in the big date is the cursor. Up to Q4 2026 you see history (dated public data); after it, the scenario model. The timeline strip above the charts shows the years, the NOW line (Q4 2026), event markers and the market-regime band.",
+   "howToRead": [
+    "Drag or click the timeline strip, click any chart, or use ← → for one quarter; Home and End jump to 2023 and 2035.",
+    "Play animates 2023 → 2035 (Space). Tour plays all eight scenarios in turn; Broadcast opens a 16:9 view for presenting or recording.",
+    "Triangles on the strip are events: amber = history, scenario colour = the scenario’s story, red = a shock you added, ink ⚡ = a threshold the model detected.",
+    "The thin band at the bottom of the strip is the market regime of each quarter (see the label next to the date)."
+   ],
+   "whyItMatters": "Most questions are about timing: when revenue covers the capital charge, when prices fall, when credit stress peaks.",
+   "method": "One step is one quarter: Q1 2023 is step 0, Q4 2026 (today) step 15, Q4 2035 step 51. Between quarters the values are interpolated linearly so that playback is smooth.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Dates in the scenario stories are illustrative, not predictions of when events happen."
+   ]
+  },
+  "regime": {
+   "title": "Market regime",
+   "oneLiner": "The label next to the date names the state of the AI market at the cursor.",
+   "what": "A label the model assigns to every quarter: BUILD-OUT, EUPHORIA, COMPUTE CRUNCH, COMMODITIZATION, CREDIT-STRESS FLAG, BUST, SHAKEOUT, RECOVERY, POWER-BOUND, BREAKAWAY, EXPANSION, UTILITY or STEADY.",
+   "howToRead": [
+    "Red = credit-stress flag; orange = bust or shakeout; amber = euphoria, build-out, compute crunch or power-bound; blue = commoditization or breakaway; green = expansion or recovery; grey = steady or utility. The word always accompanies the colour.",
+    "History quarters (to Q4 2026) carry a label assigned by the team; from 2027 the rules below decide."
+   ],
+   "whyItMatters": "A regime compresses many numbers into one word and marks the turning points of each story.",
+   "method": "From 2027 the first matching rule wins, in this order. Credit-stress index ≥ 70 → CREDIT-STRESS FLAG. Hype < 32 → BUST. Open-weight lag > 9 months → BREAKAWAY. Revenue growing faster than about 35% a year with revenue ≥ 90% of the capital charge and hype ≥ 50 → EXPANSION. Right after a bust with capex still falling more than 5% a year → BUST. Frontier markup < 1.6× and open-weight lag < 2.6 months → COMMODITIZATION (UTILITY if hype < 50 and capex is flat or falling). More than 12% of purchased compute unpowered → POWER-BOUND. Capex falling more than 12% a year → SHAKEOUT (BUST if the frontier premium is ≥ 30× and hype < 45). After a bust, shakeout, credit flag or recovery, with capex no longer falling fast and hype < 60 → RECOVERY. Unmet compute demand above 15% → COMPUTE CRUNCH. Hype ≥ 80 while revenue is below 40% of 1.4× capex → EUPHORIA. Capex growing faster than about 35% a year while revenue is below 40% of 1.4× capex → BUILD-OUT. Otherwise STEADY. A one-quarter blip between two equal labels is smoothed away.",
+   "sources": {
+    "metrics": [
+     "Cs",
+     "S",
+     "G",
+     "ccov",
+     "mf",
+     "STp",
+     "cov",
+     "K",
+     "R"
+    ]
+   },
+   "caveats": [
+    "A model flag, not an observed event: CREDIT-STRESS FLAG does not mean a default has happened."
+   ]
+  },
+  "guide": {
+   "title": "Guide",
+   "oneLiner": "The tour, explain mode, sources & methods and keyboard help in one place.",
+   "what": "Start the 60-second tour, switch on explain mode (a one-line explanation under every panel title), open the full list of sources and formulas, or see the keyboard shortcuts.",
+   "howToRead": [
+    "Every panel has an ⓘ button: it opens an explainer with how to read the chart, the method and formulas, and the sources.",
+    "Click or tap any number — KPI tiles, ledger rows, signposts, lane values, matrix cells, impact scores — to see where it comes from: history with its source, or the model formula that produced it.",
+    "Underlined terms show a short definition when you hover, focus or tap them."
+   ],
+   "whyItMatters": "A monitor is only useful if you can check it. Every number here can be traced to a source or a formula.",
+   "method": "All explanations come from one open file, methods.json (CC BY 4.0), that also feeds the AI assistant and the data API.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Explanations are simplified; the complete equations are in Sources & methods → Methods and in the open-source engine."
+   ]
+  },
+  "theme": {
+   "title": "Light and dark theme",
+   "oneLiner": "Switch between the dark terminal look and a light paper look.",
+   "what": "Both themes show the same data. Scenario colours are re-tuned for each background so that lines keep their contrast.",
+   "howToRead": [
+    "Sun icon = switch to light; moon icon = switch to dark.",
+    "Your choice is remembered in this browser; the site owner sets the default."
+   ],
+   "whyItMatters": "Light suits printing, daylight and slides; dark suits screens and long sessions.",
+   "method": "Light-theme scenario colours were checked with a colour-vision validator so that all eight stay distinguishable.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Colour is never the only cue: legends, labels and line styles carry identity too."
+   ]
+  },
+  "layout": {
+   "title": "Layout",
+   "oneLiner": "Resize, pin, move or hide panels; pick KPI tiles and lanes; presets; Reset to default.",
+   "what": "The layout menu changes how the dashboard is arranged — never the data.",
+   "howToRead": [
+    "Customize panels: ▲▼ move a panel within its column, S/M/L/XL resize charts, pin puts a panel full width at the top, ✕ hides it.",
+    "Expand (corner icon on every panel) opens the panel full screen; Esc closes it.",
+    "Presets: Big charts, Presenter, Compact. Reset to default restores everything."
+   ],
+   "whyItMatters": "Different people need different views: an analyst wants every table, a presenter wants two big charts.",
+   "method": "The layout is stored in this browser only (no account, no server).",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Clearing the browser’s site data resets the layout."
+   ]
+  },
+  "relbar": {
+   "title": "Weekly release bar",
+   "oneLiner": "Which data release you are looking at, what changed and when the next one comes.",
+   "what": "Shows the release id (ISO week of publication, for example 2026-W43), when it was published, the date the data run to, what changed, the next release (every Friday 13:00 Swiss time) and when the official sources were last checked.",
+   "howToRead": [
+    "BASE RELEASE = the starting values checked on 17 Oct 2026; WEEKLY RELEASE = a Friday update; PREVIEW = this copy without a server.",
+    "“What changed” lists every starting value that moved, with its source, and the X watch items approved that week.",
+    "RSS: follow the weekly releases in a feed reader."
+   ],
+   "whyItMatters": "You can always tell which data a chart is based on, and cite the release.",
+   "method": "Releases are computed with the same model code as this page and published as open files (data/releases/<id>/). See Sources & methods → How we verify.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "A carried-forward release means no new build was published that week, not that nothing happened."
+   ]
+  },
+  "wire": {
+   "title": "News wire",
+   "oneLiner": "A ticker of dated events along the timeline.",
+   "what": "Real events to Q4 2026, then the selected scenario’s story, shocks you added and thresholds the model detects (⚡).",
+   "howToRead": [
+    "Events left of the cursor are bright, later ones dim.",
+    "The NEWS box shows the latest event at the cursor. Hover the ticker to pause it."
+   ],
+   "whyItMatters": "Events give the numbers a narrative and mark the moments a scenario turns.",
+   "method": "History events are dated public events (see the event log for sources). Scenario events are narrative signposts written for each scenario. ⚡ events are computed: the first quarter a measure crosses a threshold, for example credit stress above 70.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Scenario events are illustrative storytelling, not predictions."
+   ]
+  },
+  "kpis": {
+   "title": "Key figures",
+   "oneLiner": "Ten headline measures at the cursor, with the change versus today.",
+   "what": "Ten measures for the selected scenario at the cursor quarter, each with its change versus Q4 2026 and a small chart of 2023–2035. Choose other tiles in Layout → KPI tiles.",
+   "howToRead": [
+    "Big number = value at the cursor; small line = change versus today with ▲ ▼ ■. Green means the move is good for the AI build-out, red bad, grey neutral.",
+    "Small chart: grey = history, scenario colour = model path, dot = cursor; the faint vertical line is NOW.",
+    "Click or tap a tile to see its source (history) or its formula (model)."
+   ],
+   "whyItMatters": "The fastest summary of a scenario at any date.",
+   "method": "Up to Q4 2026 the values are history; from 2027 they are model outputs. Changes are shown in % for money and prices, in points for shares and indices, in months for the open-weight lag.",
+   "sources": {
+    "metrics": [
+     "K",
+     "R",
+     "ccov",
+     "VL",
+     "prem",
+     "G",
+     "DC",
+     "Ufp",
+     "Cs",
+     "GDP"
+    ]
+   },
+   "caveats": [
+    "Green and red follow the health of the AI build-out (higher credit stress is red); they are not value judgements."
+   ]
+  },
+  "brief": {
+   "title": "Scenario brief",
+   "oneLiner": "The selected scenario in words: thesis, first signs, who gains and loses.",
+   "what": "The story of the selected scenario, the first observable signs that reality is moving towards it, and the groups that gain or lose most at the cursor.",
+   "howToRead": [
+    "The bar under the title is the scenario’s colour.",
+    "First signs to watch: early indicators that would tell you this story is arriving.",
+    "Gains / loses: the four highest and lowest impact scores at the cursor (at Q4 2030 while the cursor is in history), taken from the impact matrix. Click a name for the calculation."
+   ],
+   "whyItMatters": "Turns a set of curves into a story you can check against the news.",
+   "method": "Thesis and signs are written for each scenario. Gains and losses use impact scores −100…+100 versus today (see Impact matrix).",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Impact scores are illustrative: hand-set weights on modelled factors."
+   ]
+  },
+  "drivers": {
+   "title": "Drivers",
+   "oneLiner": "Fourteen forces that steer the model; tilt them to build your own run.",
+   "what": "Each driver is on a 0–1 scale (0 = the low end, 1 = the high end). Scenarios move them from 2027; the sliders let you tilt any of them to create a CUSTOM run.",
+   "howToRead": [
+    "Mini chart: dim line = the preset scenario’s path, coloured line = your run, dot = cursor.",
+    "A slider at +20 adds 0.20 to the driver from 2027 (phased in over nine months), limited to 0–1.",
+    "Reset returns to the preset. Tap ⓘ next to a driver for its meaning and its path in the selected scenario."
+   ],
+   "whyItMatters": "Drivers are where judgement enters the model; tilting them shows how sensitive the results are.",
+   "method": "Driver path = smooth interpolation between today’s value and the scenario’s values at mid-2027, mid-2028, 2030, 2032 and 2035, plus your tilt, limited to 0–1. Drivers enter the equations shown for each measure in Sources & methods → Methods.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Driver levels are judgements, not measurements."
+   ]
+  },
+  "shocks": {
+   "title": "Shocks",
+   "oneLiner": "Optional events to add to a run; none is in the preset scenarios.",
+   "what": "Seventeen events — a bond rout, an energy price shock, a Taiwan Strait blockade, an efficiency breakthrough, a frontier-lab default and more. Each changes some drivers for a while or permanently and can jolt hype, credit stress or lab distress.",
+   "howToRead": [
+    "Tick a shock and choose its quarter; the run becomes CUSTOM (dashed line).",
+    "The shock appears on the timeline and in the event log in red."
+   ],
+   "whyItMatters": "Stress-tests a scenario against a specific event.",
+   "method": "A shock adds to drivers either fading (with a half-life in years) or permanently (phased in over six months), adds one-off jumps to indices, and in two cases changes structure directly: slow organisational conversion lowers the automation ceiling by 15 points, and the efficiency breakthrough cuts compute per token to a tenth, each phased in over a year.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Shock sizes are illustrative."
+   ]
+  },
+  "lanes": {
+   "title": "Synchronized timelines",
+   "oneLiner": "Twenty-two measures on one shared time axis, history and all scenarios.",
+   "what": "Twenty-two small charts in five groups — capital & markets, models & pricing, compute/energy/hardware, market structure, macro & work — all sharing the time axis 2023–2035 and the cursor.",
+   "howToRead": [
+    "Ink line (white in dark mode, black in light mode) = history to Q4 2026; dashed ink = an illustrative index.",
+    "Bold coloured line with a shaded area = the selected scenario from 2027; faint lines = the other scenarios; grey band = the spread of all scenarios.",
+    "Thin grey lines in the same lane are secondary measures of the selected scenario, named on the left.",
+    "Amber vertical line = NOW (Q4 2026); ink line with dot = the cursor; labelled horizontal lines are thresholds (for example the credit-stress flag at 70); a diamond marks an outside projection (IEA 2030).",
+    "Left column: name, unit (“illustrative” marks model constructs), value at the cursor and change versus today. Click a value or the ⓘ for its source and formula."
+   ],
+   "whyItMatters": "Seeing measures in sync shows cause and effect: capex runs ahead of revenue, then credit stress follows.",
+   "method": "Each lane draws one measure for all scenarios on a linear scale, or a log scale where values span orders of magnitude (marked “log”). Scales are the same for every scenario, so lines are comparable.",
+   "sources": {
+    "metrics": [
+     "K",
+     "R",
+     "CC",
+     "ccov",
+     "cov",
+     "VL",
+     "VN",
+     "S",
+     "Cs",
+     "Bs",
+     "G",
+     "Np",
+     "Pf",
+     "Pc",
+     "prem",
+     "mf",
+     "Ufp",
+     "Uopp",
+     "SVp",
+     "DC",
+     "Pp",
+     "GR",
+     "DR",
+     "LB",
+     "OS",
+     "ES",
+     "LS",
+     "AS",
+     "TC",
+     "PF",
+     "SN",
+     "GDP",
+     "AU",
+     "AUd",
+     "AUp"
+    ]
+   },
+   "caveats": [
+    "Log scales compress large moves: read the axis labels.",
+    "History between dated points is interpolated."
+   ]
+  },
+  "net": {
+   "title": "Causal map",
+   "oneLiner": "How a change in one force travels through the AI economy.",
+   "what": "Drivers on the left (investor appetite, rates, open-model catch-up, efficiency, geopolitics, trust), market variables in the middle (hype, capex, memory, power, open-weight gap, token prices, GPU rents, energy prices, valuations, revenue, AI work, local AI, agents) and stress and the economy on the right (credit, banks, lab risk, US GDP).",
+   "howToRead": [
+    "Amber particles push the target up, blue particles push it down — given the direction the source is moving at the cursor (a falling source sends the opposite push).",
+    "Particle speed and brightness show how fast the source is changing at the cursor.",
+    "Node tint and ▲ ▼ show the level versus today (amber above, blue below); grey-outlined nodes are drivers.",
+    "Hover a node for its value, what drives it and what it pushes."
+   ],
+   "whyItMatters": "Shows why the numbers move, not just that they move.",
+   "method": "The 37 signed links summarise the model’s equations. Node level: drivers (value − today) ÷ 0.3; measures ln(value ÷ today) ÷ a scale (linear for shares and indices). Particle speed follows the change of that level over the last quarter.",
+   "sources": {
+    "metrics": [
+     "S",
+     "K",
+     "DR",
+     "DC",
+     "G",
+     "GR",
+     "Pp",
+     "VL",
+     "R",
+     "AU",
+     "LS",
+     "AS",
+     "Cs",
+     "Bs",
+     "PF",
+     "GDP"
+    ]
+   },
+   "caveats": [
+    "A simplified map: the full model has more links and feedbacks than shown."
+   ]
+  },
+  "phase": {
+   "title": "Phase portrait",
+   "oneLiner": "Pricing power against valuation: the market’s path through four zones.",
+   "what": "The path of the AI market in two numbers: how much more the frontier tier costs than the good-enough tier (horizontal, pricing power) and how richly the two leading labs are valued relative to their revenue (vertical).",
+   "howToRead": [
+    "Both axes are logarithmic: frontier price premium 4×–300×, lab equity value ÷ lab revenue 1.5×–40×.",
+    "Zones split at a 25× premium and an 8× multiple: top-left BUBBLE ZONE (valuations high while pricing power is gone), top-right MOAT PREMIUM, bottom-left UTILITY, bottom-right UNDERPRICED MOAT.",
+    "Grey line = history 2023–2026; coloured line = the selected scenario (bright up to the cursor, faint after); faint lines = other scenarios; dots mark the first quarter of each year (’27, ’29…).",
+    "The large dot is the cursor quarter."
+   ],
+   "whyItMatters": "If valuations stay high after pricing power disappears, the market is in the bubble zone — the danger the commoditization thesis warns about.",
+   "method": "x = prem = frontier price ÷ good-enough price. y = Mult = (OpenAI + Anthropic equity value) ÷ (labs’ share × AI revenue); the labs’ share starts at 52% of AI revenue. Both equations are under Methods.",
+   "sources": {
+    "metrics": [
+     "prem",
+     "Mult",
+     "Pf",
+     "Pc",
+     "VL",
+     "R"
+    ],
+    "anchors": [
+     "AN3",
+     "AN5",
+     "AN6",
+     "AN2"
+    ]
+   },
+   "caveats": [
+    "The multiple uses announced post-money values, not market prices.",
+    "The labs’ revenue share is an assumption."
+   ]
+  },
+  "pools": {
+   "title": "Value migration",
+   "oneLiner": "Where AI gross profit lands: six layers of the value chain, as shares.",
+   "what": "A stylised split of the AI industry’s gross profit across chips & memory, power & data centres, cloud & GPU rental, model labs, agents & apps, and services & integration, 2023–2035.",
+   "howToRead": [
+    "The stacked areas add up to 100%; the darkest band at the bottom is chips & memory, the lightest at the top services & integration (legend below).",
+    "Labels on the right are the shares at the cursor; after the cursor the areas are dimmed; the amber line is NOW."
+   ],
+   "whyItMatters": "Commoditization moves profit along the chain — from chips and models towards agents, data and distribution.",
+   "method": "Each layer’s gross profit is a simple function of model outputs (formulas under Methods → Value migration). Negative values count as zero; shares = each layer ÷ the total.",
+   "sources": {
+    "metrics": [
+     "K",
+     "R",
+     "DC",
+     "Pp",
+     "mf",
+     "G",
+     "AS",
+     "LS",
+     "Ufp"
+    ]
+   },
+   "caveats": [
+    "Not accounting profit: an illustrative allocation with hand-set coefficients, to show direction rather than size."
+   ]
+  },
+  "lens": {
+   "title": "Sector lens",
+   "oneLiner": "What each scenario means for AECO firms, AECO software and software development.",
+   "what": "Translates the selected scenario for three sectors. Tabs switch the sector; bullets, impact scores and four sector lanes follow the scenario and the cursor.",
+   "howToRead": [
+    "Tabs: AECO firms (architecture, engineering, construction and operations), AECO software (BIM, CAD, construction management, AI tools for AECO), Software & development.",
+    "Bullets read the key sector numbers at the cursor in plain language (at Q4 2030 while the cursor is in history).",
+    "Table: impact scores −100…+100 for groups in the sector, with the two biggest reasons (helps / hurts). Click a group for the calculation.",
+    "Lanes read like the main timelines. Evidence today: dated facts with sources — context, not model inputs."
+   ],
+   "whyItMatters": "Economy-wide numbers become decisions only when translated into a sector.",
+   "method": "Sector series are stated mappings of economy-wide model outputs: US data-centre construction = a fixed share of Big-4 capex, set by the starting value AN26 (10.8% in the base release: the ratio in Census data for Aug 2025 and Aug 2026); share of AECO design & engineering work done by AI = 1 − (1 − AU)^0.6 and of software development = 1 − (1 − AU)^3.1, where AU is the share of all knowledge work done by AI; seat indices follow the work that is not automated; the cost-per-task index is the model’s cost of a completed task (today = 100).",
+   "parts": {
+    "aeco": "AECO firms: data-centre construction, power prices, design & engineering automation, cost per AI task, finance conditions.",
+    "aecosw": "AECO software: human design seats, specialised agents, platform lock-in, open models in the enterprise, model price premium.",
+    "sw": "Software & development: development work done by AI, knowledge-work seats, good-enough token price, provider concentration, signal-to-noise."
+   },
+   "sources": {
+    "metrics": [
+     "BLD",
+     "Pp",
+     "AUa",
+     "CtaskI",
+     "seatA",
+     "seatG",
+     "AS",
+     "PLAT",
+     "ES",
+     "TC",
+     "AUdev",
+     "Pc",
+     "SN"
+    ],
+    "anchors": [
+     "AN26"
+    ]
+   },
+   "caveats": [
+    "Mappings are illustrative assumptions, not sector forecasts.",
+    "Evidence items are context and are not used by the model."
+   ]
+  },
+  "heat": {
+   "title": "Impact matrix",
+   "oneLiner": "Who gains and who loses, quarter by quarter, versus today.",
+   "what": "Thirty-seven business groups and regions scored −100…+100 versus Q4 2026 for the selected scenario, for every quarter 2027–2035.",
+   "howToRead": [
+    "Blue = gains, red = losses; deeper colour = bigger effect; the neutral middle colour ≈ no change.",
+    "Rows are grouped (builders, infrastructure & finance, AECO, AECO software, software & services, users, regions); columns are quarters; the outlined column is the cursor.",
+    "Hover or tap a cell for the score and its three biggest reasons; click to move the cursor there and open the calculation.",
+    "Below: the five biggest gains and losses at the cursor (click for the calculation)."
+   ],
+   "whyItMatters": "Makes the scenarios concrete: which businesses and regions win or lose, and why.",
+   "method": "Score = 100 × tanh(Σ weight × factor ÷ 1.6). Factors are changes since Q4 2026 in modelled measures (capex, revenue, valuations, prices, credit and bank stress, power, utilisation, automation and others) and in some drivers, each scaled to a comparable size. Weights are hand-set for each row — for example architecture practices: automation −0.6, cost per AI task −0.3, US growth +0.35, credit stress −0.4.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Illustrative: the weights are judgements, not estimates from data.",
+    "Scores compare a group with itself today, not with other groups."
+   ]
+  },
+  "signs": {
+   "title": "Early-warning signposts",
+   "oneLiner": "Fifteen thresholds that would signal a turn, checked for the selected run.",
+   "what": "Measurable thresholds such as open-weight lag under 2 months, credit stress above 70 or more than 15% of compute unpowered: the value at the cursor, the status and the first quarter the run crosses each threshold.",
+   "howToRead": [
+    "TRIGGERED = crossed at the cursor (red for serious risks, amber for watch items, blue for structural shifts); WATCH = within 25% of the threshold; CLEAR = not close.",
+    "First = the first quarter from 2027 the run crosses it; “today” if already crossed in Q4 2026; — if never.",
+    "Click a signpost for its rule and the measure’s formula."
+   ],
+   "whyItMatters": "Signposts are what to watch in the real world to tell which scenario is unfolding.",
+   "method": "Each signpost compares one model measure with a fixed threshold; “capex shrinking” compares capex with the same quarter a year earlier.",
+   "sources": {
+    "metrics": [
+     "G",
+     "mf",
+     "K",
+     "ccov",
+     "Cs",
+     "STp",
+     "SVp",
+     "GR",
+     "DR",
+     "LB",
+     "TC",
+     "PF",
+     "GDP",
+     "DC"
+    ]
+   },
+   "caveats": [
+    "Thresholds are chosen to be readable, not statistically derived."
+   ]
+  },
+  "events": {
+   "title": "Event log",
+   "oneLiner": "Dated events: history, the scenario’s story, your shocks and model-detected thresholds.",
+   "what": "All events of the selected run in time order: history to Q4 2026 (amber), the scenario’s story (its colour), shocks you add (red) and threshold crossings the model detects (⚡).",
+   "howToRead": [
+    "Click an event to move the cursor there; events after the cursor are dimmed.",
+    "History events link to their source where one is recorded."
+   ],
+   "whyItMatters": "The log connects numbers to moments.",
+   "method": "History events are compiled from public reporting; scenario events are narrative; ⚡ events are computed rules (the first quarter a measure crosses a threshold).",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Scenario events are storytelling devices, not predictions."
+   ]
+  },
+  "matrix": {
+   "title": "Scenario matrix",
+   "oneLiner": "All scenarios side by side at the cursor, for 32 measures.",
+   "what": "Every scenario’s value at the cursor for 32 measures, with today’s value for reference.",
+   "howToRead": [
+    "Columns = scenarios (CUSTOM if you made one); the highlighted column is the selected scenario.",
+    "Click a measure name or a value for its formula and inputs.",
+    "Save CSV exports the selected run quarter by quarter, where saving files is allowed."
+   ],
+   "whyItMatters": "Shows how wide the range of outcomes is at any date.",
+   "method": "Each cell is the model output for that scenario and quarter; “Today” is the Q4 2026 value.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "The scenarios are not averaged: there is no single expected value."
+   ]
+  },
+  "ledger": {
+   "title": "Evidence ledger",
+   "oneLiner": "Every Q4 2026 starting value with status, source and derivation.",
+   "what": "The 26 starting values (anchors) that connect public data to the model: value, status, period, source and how it was derived — the trail behind every number.",
+   "howToRead": [
+    "Status: REPORTED (published by the company or agency), SURVEY, ESTIMATE (derived by us; the derivation is shown), FORECAST (an analyst forecast), INDEX (a model construct) and ASSUMPTION (no reliable measure).",
+    "Source links open the original page; “v2” shows the value before the latest model revision.",
+    "Click a row (or its ⓘ) for the full provenance: how the value was obtained (desk research, official API, or the AI research panel with every agent’s answer), the supporting quote, further references and the review date.",
+    "The key modelling assumptions below the table are parameters, not data."
+   ],
+   "whyItMatters": "Trust starts here: if a starting value is wrong, every scenario inherits the error.",
+   "method": "A weekly release replaces a starting value only after a person approves a reviewed candidate with its source. The model then recalibrates so that its first simulated quarter continues the new value.",
+   "sources": {
+    "metrics": [],
+    "anchors": [
+     "*"
+    ]
+   },
+   "caveats": [
+    "Ten starting values are indices or assumptions; they are labelled as such."
+   ]
+  },
+  "thesis": {
+   "title": "Thesis vs evidence",
+   "oneLiner": "The commoditization thesis in ten claims, each with a verdict and its evidence.",
+   "what": "The claims behind the monitor — models converge, price and openness decide, energy keeps costs high, investors push for returns and more — with a verdict and the evidence as of October 2026.",
+   "howToRead": [
+    "Verdicts: SUPPORTED, PARTLY, EMERGING, LATER, NOT YET; colour and word together.",
+    "Each row links to its main source."
+   ],
+   "whyItMatters": "Shows which parts of the story the data already support and which are still open.",
+   "method": "Verdicts are editorial judgements by the AI Forecast Atlas team on the cited evidence; they are not model outputs.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Judgements are dated October 2026 and may change as evidence arrives."
+   ]
+  },
+  "factors": {
+   "title": "Factor library",
+   "oneLiner": "Forces beyond the original thesis, and where each sits in the model.",
+   "what": "Eighteen forces — demand elasticity, tokens per task, unpowered chips, platform lock-in, the memory supercycle, circular financing and more — each marked in the model, via the driver dials, as a shock toggle or as context only.",
+   "howToRead": [
+    "The tag after each name tells you where the factor lives: in model, via driver dials, shock toggle, context."
+   ],
+   "whyItMatters": "Makes explicit what the model includes and what it leaves out.",
+   "method": "“In model” factors appear in the equations (see Methods); “context” factors are not modelled.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Context factors can matter a lot even though they are not modelled."
+   ]
+  },
+  "footer": {
+   "title": "Method and sources",
+   "oneLiner": "The method in one paragraph and the core sources.",
+   "what": "A short description of how the model works and the main sources used for the starting values.",
+   "howToRead": [
+    "The full list of sources, with types and dates, is in Sources & methods."
+   ],
+   "whyItMatters": "The essentials for citing or reviewing the monitor.",
+   "method": "See Sources & methods → Methods for every formula.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Not investment advice."
+   ]
+  },
+  "chat-ask": {
+   "title": "Ask the assistant",
+   "oneLiner": "Ask about any chart, scenario or number; answers cite their sources.",
+   "what": "An AI assistant that sees the view you are looking at (scenario, quarter, sector lens and key values), the evidence ledger and the latest release.",
+   "howToRead": [
+    "Citations such as [AN1] appear as chips: tap one to see the source of that starting value. [M:K] chips open the formula of a model measure.",
+    "“Sources used” under each answer lists the cited sources with links.",
+    "About you (optional): your role and country, kept in this browser, for answers that fit your situation.",
+    "[X12] chips open an item of the X watch list: a signal from X, not data."
+   ],
+   "whyItMatters": "Lets you ask “what does this mean for me?” and check every number the answer uses.",
+   "method": "On the live site answers come from the AI provider configured by Creoox (OpenAI by default); in this preview from Claude. The assistant answers from the data provided and cites ledger IDs and model measures; it never writes links itself and says when something is outside the model. It may add its own knowledge or observations, which are always marked with an “AI knowledge” chip so you can tell them apart from AI Forecast Atlas’s sourced data.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "AI answers can be wrong: check the cited sources.",
+    "Not investment, legal or tax advice."
+   ]
+  },
+  "chat-suggest": {
+   "title": "Suggest an improvement",
+   "oneLiner": "Turn an idea or a problem into a suggestion for the AI Forecast Atlas team.",
+   "what": "Describe a chart you want, a source to add or something that looks wrong. The assistant helps you write it up; then you can send it to the team.",
+   "howToRead": [
+    "Send this to the AI Forecast Atlas team stores the suggestion for review; nothing else is stored."
+   ],
+   "whyItMatters": "Corrections and ideas from readers make the monitor better and more accurate.",
+   "method": "Suggestions are reviewed by the team in the admin page; accepted corrections show up in a release’s change list.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Please do not include personal data."
+   ]
+  },
+  "subscribe": {
+   "title": "Newsletter",
+   "oneLiner": "A short email after each Friday release, only with the topics you pick.",
+   "what": "Pick topics, language (English, German, French, Polish) and weekly or monthly delivery; confirm by email.",
+   "howToRead": [
+    "Double opt-in: nothing is sent until you click the confirmation link.",
+    "Every email has a one-click unsubscribe link; there are no tracking pixels."
+   ],
+   "whyItMatters": "Brings the weekly changes to you, with their sources.",
+   "method": "Built from each Friday release: the numbers come from the release files. An AI-written introduction is checked against the release numbers before sending.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Sent with Mailjet; see the privacy notice."
+   ]
+  },
+  "share": {
+   "title": "Share and embed",
+   "oneLiner": "Link, embed or cite this exact view.",
+   "what": "A link that reopens the same scenario, quarter, sector lens and expanded panel; embed codes for a live chart or the whole monitor; a citation; chart images with a credit line.",
+   "howToRead": [
+    "Live embeds update with every weekly release; images (SVG) are refreshed every Friday.",
+    "Images and embeds carry the scenario, quarter and source line, so they stay correctly credited."
+   ],
+   "whyItMatters": "Open data is meant to be reused — with credit and with its context.",
+   "method": "Data, charts and texts are licensed CC BY 4.0: credit “AI Forecast Atlas by Creoox AG” and the release.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Third-party data keep their own terms."
+   ]
+  },
+  "data": {
+   "title": "Data & API",
+   "oneLiner": "Every number as open files, feeds and an API for people and AI tools.",
+   "what": "JSON and CSV for every weekly release, chart images, RSS/Atom/JSON feeds, an iCal of releases, an OpenAPI description, llms.txt, the explanations file (methods.json) and a read-only MCP server for AI assistants.",
+   "howToRead": [
+    "data/latest/ always holds the newest release; data/releases/<id>/ keeps every release unchanged.",
+    "dataset.json carries every starting value with its source and provenance."
+   ],
+   "whyItMatters": "Lets anyone check, chart and reuse the official AI Forecast Atlas numbers.",
+   "method": "Files are produced by the same model code as the dashboard and published every Friday.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Scenario paths are model outputs, not forecasts."
+   ]
+  },
+  "about": {
+   "title": "About & credits",
+   "oneLiner": "Who built AI Forecast Atlas, licences and version.",
+   "what": "AI Forecast Atlas is designed and built by Creoox AG in Lausanne, the team behind xeokit SDK.",
+   "howToRead": [
+    "Licences: published data and charts CC BY 4.0; code, model and design Business Source License 1.1 (source public; becomes AGPL-3.0 after four years)."
+   ],
+   "whyItMatters": "Know who stands behind the numbers.",
+   "method": "Version and release numbers identify exactly which model and data you see.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Trademarks belong to their holders; their use implies no affiliation."
+   ]
+  },
+  "sources": {
+   "title": "Sources & methods",
+   "oneLiner": "Every source, every formula, the scenario drivers and how data are verified.",
+   "what": "The full trail behind the monitor: all sources with types and dates, every measure’s definition and formula, the scenario driver paths, the verification process and this week’s changes.",
+   "howToRead": [
+    "Search or filter the sources by type; each item shows what it supports.",
+    "Methods lists every measure with its history method and model formula."
+   ],
+   "whyItMatters": "Everything you need to check, reproduce or challenge a number.",
+   "method": "Generated from the engine’s evidence ledger and the open methods.json file.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Formulas are shown in simplified notation; the engine code is authoritative."
+   ]
+  },
+  "broadcast": {
+   "title": "Broadcast view",
+   "oneLiner": "A 16:9 full-screen view for presenting and recording.",
+   "what": "Six key lanes, KPI tiles, the phase portrait and the causal map on one screen, with a caption of the latest event.",
+   "howToRead": [
+    "Play or Tour animate it; Record saves a video where the browser allows it; Esc exits."
+   ],
+   "whyItMatters": "Made for talks, calls and videos.",
+   "method": "Same data and model as the dashboard.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Always shown in the dark theme."
+   ]
+  },
+  "xwatch": {
+   "title": "X watch",
+   "oneLiner": "Posts on X the editor is watching: early signals with post links, a credibility label and an impact label — signals, not data.",
+   "what": "A short list of recent posts on X (formerly Twitter) about what this monitor tracks: AI capex, chips and memory, data-centre power, token prices, model releases, valuations and AI at work. Each item shows the post links and who posted (official account, executive, journalist, analyst, researcher or high-reach account), a summary, why it matters for the monitor, the measures and starting values it relates to, a credibility label and an impact label.",
+   "howToRead": [
+    "Credibility label: HIGH = an official company or institution account, an executive speaking for the company, or established media or analysts, ideally confirmed elsewhere; MEDIUM = a credible account, not yet confirmed; LOW or UNVERIFIED = a rumour or a single unconfirmed source, listed only because it moves the conversation.",
+    "Impact label: how widely the post spreads on X (reach, reposts, replies). High impact does not mean true.",
+    "Chips open the measure or starting value the item relates to; the arrow says which way the signal points for it.",
+    "@handle opens the post on X; “Corroboration” links lead to other pages that report the same.",
+    "Newest first; items stay on the list for about 30 days. A link ending in #x-X12 opens one item."
+   ],
+   "whyItMatters": "News often appears on X days before it reaches filings, statistics or the starting values. The watch list shows what may move the data next, with the evidence to judge it yourself.",
+   "method": "Every weekday Grok (xAI) searches X with its x_search tool for posts from the last day or two about the monitor’s topics. It looks first at credible accounts — official company and institution accounts, executives, established journalists and media, analysts and researchers — and also at accounts with heavy impact on X. For each item it returns the post links, who posted, a summary, why it matters, the related measures, a credibility label and an impact label, each with a short reason, and it may add web pages that corroborate the post; post links the search did not return are flagged. The editor reviews every item and approves, edits or rejects it. Only approved items appear here, in the Friday release and its page, and in the newsletter. X watch items are signals, not data: they never change a starting value or the model; a starting value changes only through the AI research panel and human review.",
+   "sources": {
+    "metrics": []
+   },
+   "caveats": [
+    "Posts on X can be wrong, deleted or edited after they were listed; the labels reflect the day of the review.",
+    "Grok can misjudge credibility or impact; the editor checks each item, but the labels remain judgements.",
+    "The list covers selected topics and accounts: absence from the list does not mean nothing happened."
+   ]
+  }
+ },
+ "tour": [
+  {
+   "target": "#cmd .brand",
+   "title": "AI Forecast Atlas in 60 seconds",
+   "text": "A scenario monitor of how AI turns into a commodity. History to Q4 2026 is dated public data; from 2027 a model runs eight futures. Every number can be traced to a source or a formula."
+  },
+  {
+   "target": "#tabs",
+   "title": "Pick a future",
+   "text": "Eight scenarios on the same model. Choose one (keys 1–8); faint lines on every chart show the others."
+  },
+  {
+   "target": ".scrub-wrap",
+   "title": "Move through time",
+   "text": "Drag the timeline or use ← →. The big date, every chart and every number follow the cursor. Press Play to animate 2023 → 2035."
+  },
+  {
+   "target": "#kpis",
+   "title": "Ten numbers that matter",
+   "text": "Values at the cursor and the change versus today. Click any number to see where it comes from: the source for history, the formula for the model."
+  },
+  {
+   "target": "#lanesPanel",
+   "title": "Read the timelines",
+   "text": "Ink = history; bold colour = your scenario; faint lines = the others; grey band = the spread of all eight. The amber line is NOW."
+  },
+  {
+   "target": "#phasePanel",
+   "title": "Pricing power vs valuation",
+   "text": "Top-left is the danger zone: lab valuations still high after the frontier price premium has gone."
+  },
+  {
+   "target": "#lensPanel",
+   "title": "Your sector",
+   "text": "AECO firms, AECO software, software & development: what each scenario means for them, with dated evidence."
+  },
+  {
+   "target": "#heatPanel",
+   "title": "Who gains, who loses",
+   "text": "Impact scores for 37 groups and regions, −100…+100 versus today. Hover a cell for the reasons; click it for the calculation."
+  },
+  {
+   "target": "#ledgerPanel",
+   "title": "Where the numbers come from",
+   "text": "Twenty-six starting values with status, source and derivation. Click a row for the full trail: quote, references, how it was obtained — official API or a panel of five AI agents — and when it was reviewed."
+  },
+  {
+   "target": "#bSources",
+   "title": "Sources & methods",
+   "text": "Every source, every formula, the scenario drivers and how new data are verified before each Friday release."
+  },
+  {
+   "target": "#chatFab",
+   "title": "Ask the assistant",
+   "text": "Ask what a chart means for you. Answers cite the ledger, for example [AN1]; tap a citation to check its source."
+  },
+  {
+   "target": "#bHelp",
+   "title": "Help is always here",
+   "text": "Reopen this tour, switch on explain mode (one line under every panel title) or see the keyboard shortcuts. Every panel also has an ⓘ button."
+  }
+ ],
+ "groups": {
+  "A": "Capital & markets",
+  "B": "Models & pricing",
+  "C": "Compute, energy & hardware",
+  "D": "Market structure",
+  "E": "Macro & work",
+  "S": "Sector series"
+ },
+ "metrics": {
+  "K": {
+   "definition": "Capital expenditure of the four largest US hyperscalers (Microsoft, Alphabet, Amazon, Meta), annualised: quarterly capex × 4, including finance leases where reported.",
+   "unit": "$B a year",
+   "history": {
+    "method": "Dated points are annualised quarterly capex from company reports (for example $133B in Q1 2026 × 4 = $532B); quarters between dated points are joined on a log scale. Q4 2026 is the exit-rate estimate AN1. Capex before 2021 is taken as $100B a year (the 2021 level) where the capital charge needs it.",
+    "sources": [
+     {
+      "title": "Follow the capex: Q2 2026 scoreboard",
+      "publisher": "Platformonomics",
+      "date": "2026-07-31",
+      "url": "https://platformonomics.com/2026/07/follow-the-capex-q2-2026-scoreboard/",
+      "covers": "Big-4 quarterly capex to Q2 2026 and full-year 2026 guidance"
+     },
+     {
+      "title": "Microsoft FY26 Q4 earnings call (capex, lease reclassification)",
+      "publisher": "Microsoft",
+      "date": "2026-07-29",
+      "url": "https://www.microsoft.com/en-us/investor/events/fy-2026/earnings-fy-2026-q4",
+      "covers": "Microsoft capex and guidance, mid-2026"
+     },
+     {
+      "title": "Alphabet Q2 2026 earnings call transcript",
+      "publisher": "Alphabet",
+      "date": "2026-07-22",
+      "url": "https://s206.q4cdn.com/479360582/files/doc_events/2026/Jul/22/2026_Q2_Earnings_Transcript.pdf",
+      "covers": "Alphabet capex and 2026 guidance"
+     },
+     {
+      "title": "Meta reports second quarter 2026 results",
+      "publisher": "Meta",
+      "date": "2026-07-29",
+      "url": "https://investor.atmeta.com/investor-news/press-release-details/2026/Meta-Reports-Second-Quarter-2026-Results/default.aspx",
+      "covers": "Meta capex and 2026 guidance"
+     },
+     {
+      "title": "Amazon Q2 2026 earnings call",
+      "publisher": "Amazon (transcript via roic.ai)",
+      "date": "2026-07-30",
+      "url": "https://www.roic.ai/quote/AMZN/transcripts/2026-year/2-quarter",
+      "covers": "Amazon cash capex, mid-2026"
+     },
+     {
+      "title": "Follow the CAPEX: Q1 2026 Scoreboard",
+      "publisher": "Platformonomics",
+      "date": "2026-04-30",
+      "url": "https://platformonomics.com/2026/04/follow-the-capex-q1-2026-scoreboard/",
+      "covers": "Q1 2025, Q4 2025, Q1 2026; FY2025",
+      "note": "Q1 2026 ≈ $133.2B; stated growth (+4% QoQ, +72% YoY) implies Q4 2025 ≈ $128B and Q1 2025 ≈ $77B. FY2025 $416.4B."
+     },
+     {
+      "title": "Follow the CAPEX: Q3 2025 Scoreboard",
+      "publisher": "Platformonomics",
+      "date": "2025-10-31",
+      "url": "https://platformonomics.com/2025/10/follow-the-capex-q3-2025-scoreboard/",
+      "covers": "Q2-Q3 2025",
+      "note": "Q3 2025 ≈ $114.3B, +18% QoQ (so Q2 2025 ≈ $97B)."
+     },
+     {
+      "title": "Follow the CAPEX: Cloud Table Stakes 2024 Retrospective",
+      "publisher": "Platformonomics",
+      "date": "2025-02-13",
+      "url": "https://platformonomics.com/2025/02/follow-the-capex-cloud-table-stakes-2024-retrospective/",
+      "covers": "FY2023, FY2024 (annual only)",
+      "note": "Four companies: $155B (2023), $251B (2024); finance leases included for Amazon, Meta, Microsoft."
+     }
+    ],
+    "checked": "Q2 2025 (≈$97B x 4 = 389 vs 388), Q4 2025 (≈$128B x 4 = 512 vs 510), Q1 2026 (532) and Q2 2026 (688) match. Annual sums implied by the engine curve: 2023 ≈ $159B vs $155B, 2024 ≈ $256B vs $251B, 2025 ≈ $422B vs $416B (all within 3%). Q3 2025 on the curve ≈ 445 vs 457 (-3%).",
+    "gaps": "Q1 2023 (140), Q4 2023 (180) and Q4 2024 (310) checked only through annual totals. Q4 2026 (900) is a guidance-based estimate. Pre-2023 points (2021-2022) not checked. Curve gives ≈347 for Q1 2025 vs ≈308 implied by Platformonomics (see mismatches).",
+    "note": "Q1 2025 is now an explicit point (≈$308B, from Platformonomics' growth rates) instead of an interpolation."
+   },
+   "anchor": "AN1",
+   "model": {
+    "formula": [
+     "K = max(K_floor, K(previous quarter) × e^(gK ÷ 4))",
+     "K_floor = 150 × 1.05^(t − 2022.75)   (pre-AI Big-4 capex, growing 5% a year; capex never falls below it)",
+     "gK → gK* at 2.5 a year;  gK* = max(−0.5, 0.03 + (c − 0.03)·e^(−Δt/2) + f)",
+     "f = 0.6(capital − 0.5) + 0.5(hype − 60)/40 + 1.2(utilisation − 0.9) + 0.4·min(scarcity, 0.8)·(1 − unpowered) − 8·max(0, unpowered − 3%) + 0.35·breakthrough − 0.35(rates − 0.5) − 0.9·max(0, credit stress − 60)/40 − 0.5·max(0, energy − 0.6) − 0.4·max(0, 0.3 − chip supply) − 0.35·max(0, ln(K ÷ 1.6R)) − 0.8·max(0, ln(K ÷ (p·R))) + 0.3(min(R ÷ 1.4K, 0.8) − 0.25) − 0.35·max(0, geopolitics − 0.55)",
+     "p (investor patience: tolerated capex per $ of revenue) = 1.4 + 2.6·e^(−Δt/2.5)·(0.4 + 0.8·capital)"
+    ],
+    "explanation": "Capex grows with investor appetite, hype, full data centres and scarce compute. It is braked by unpowered chips, high rates, credit stress, a power wall, chip shortages, geopolitics and — most strongly — by capex running far ahead of revenue as investors grow less patient. A maintenance-level floor keeps it from falling to zero.",
+    "drivers": [
+     "capital",
+     "rates",
+     "brk",
+     "energy",
+     "hwSupply",
+     "geo"
+    ],
+    "inputs": [
+     "S",
+     "Cs",
+     "R",
+     "Uopp",
+     "STp",
+     "SVp"
+    ]
+   },
+   "caveats": [
+    "Mixed accounting bases between companies (cash capex vs finance leases).",
+    "The Q4 2026 value is an exit-rate estimate from guidance, not a reported quarter."
+   ],
+   "group": "A"
+  },
+  "R": {
+   "definition": "Annualised final customer spending on AI models, AI apps and AI cloud services, gross basis: partner-sold usage counted once at the price the customer pays; chips and hardware excluded.",
+   "unit": "$B a year",
+   "history": {
+    "method": "Dated run-rate estimates from company statements and press reports, summed across vendors and joined on a log scale. Q4 2026 is AN2 (OpenAI ≈$70B gross-equivalent, Anthropic >$65B, all others ≈$125B).",
+    "sources": [
+     {
+      "title": "OpenAI’s $50B run-rate and revenue accounting",
+      "publisher": "Axios",
+      "date": "2026-10-08",
+      "url": "https://www.axios.com/2026/10/08/openai-50-billion-arr-anthropic-revenue-accounting",
+      "covers": "OpenAI and Anthropic revenue run-rates, gross vs net basis (Q4 2026 anchor)"
+     },
+     {
+      "title": "How Anthropic’s revenue run-rate topped $65bn",
+      "publisher": "AI Magazine (Reuters)",
+      "date": "2026-08-18",
+      "url": "https://aimagazine.com/news/how-anthropics-revenue-run-rate-topped-us-65bn",
+      "covers": "Anthropic run-rate, end of July 2026"
+     },
+     {
+      "title": "Microsoft's AI business has topped an annual revenue run rate of $13 billion",
+      "publisher": "Fortune",
+      "date": "2025-01-30",
+      "url": "https://www.fortune.com/2025/01/30/microsofts-ai-business-has-topped-an-annual-revenue-run-rate-of-13-billion",
+      "covers": "Q4 2024 (component)",
+      "note": "Nadella on the FY25 Q2 call: AI business above a $13B run-rate."
+     },
+     {
+      "title": "OpenAI hits $10 billion in annual recurring revenue fueled by ChatGPT growth",
+      "publisher": "CNBC (via NBC San Diego)",
+      "date": "2025-06-09",
+      "url": "https://www.nbcsandiego.com/news/business/money-report/openai-hits-10-billion-in-annual-recurring-revenue-fueled-by-chatgpt-growth/3843568/?os=v",
+      "covers": "Q4 2024, Q2 2025 (component)",
+      "note": "OpenAI ≈$10B ARR (Jun 2025), ≈$5.5B ARR for 2024; excludes Microsoft licensing and one-off deals."
+     },
+     {
+      "title": "OpenAI tops $25 billion in annualised revenue - report",
+      "publisher": "RTÉ (citing The Information)",
+      "date": "2026-03-05",
+      "url": "https://rte.ie/news/business/2026/0305/1561832-openai-tops-25-billion-in-annualised-revenue-report/",
+      "covers": "Q4 2025, Q1 2026 (component)",
+      "note": "OpenAI $21.4B at end-2025, >$25B at end-Feb 2026; Anthropic ≈$9B as cited. Page undated; date from URL."
+     },
+     {
+      "title": "Anthropic Series H announcement ($65B at $965B post-money)",
+      "publisher": "Anthropic",
+      "date": "2026-05-28",
+      "url": "https://www.anthropic.com/news/series-h",
+      "covers": "Q2 2026 (component)",
+      "note": "Run-rate revenue crossed $47B in May 2026 (gross basis)."
+     }
+    ],
+    "checked": "Components only, never totals. Q4 2024 (40) needs ≈$20B beyond OpenAI ≈$5.5B, Microsoft AI >$13B and Anthropic ≈$1B. Q4 2025 (95): OpenAI $21.4B + Anthropic ≈$9B ≈ $30B. Q2 2026 (160): Anthropic alone >$47B. Q4 2026 anchor rests on Axios (2026-10-08) and AI Magazine (2026-08-18).",
+    "gaps": "No public source for any total. Q1 2023 (6) and Q4 2023 (15) unsourced; OpenAI alone was ≈$1.6-2B annualised in Dec 2023 (FT/The Information via Reuters, undated page: https://tds-images.thedailystar.net/business/news/openai-hits-2-billion-revenue-milestone-3540546). The 'all others' block (≈50-70% of each total) is an assumption. Anthropic ≈$1B at start-2025 and >$5B in Aug 2025: https://www.anthropic.com/news/anthropic-raises-series-f-at-usd183b-post-money-valuation (verified)."
+   },
+   "anchor": "AN2",
+   "model": {
+    "formula": [
+     "R = VC × CR",
+     "VC (value of the work AI completes) = 40,000 × 1.035^Δt × AU ÷ 100   ($B a year; AU = realised work, %)",
+     "CR = CR₀ × [0.5 × C_task + 0.5 × V] × (1 − LS)/(1 − LS₀) × (1 − 0.3·max(0, regulation − 0.5)) × (1 − 0.35·max(0, geopolitics − 0.4)), softly capped at 25%",
+     "V (value-priced part) = (1 + 0.9·(AS − AS₀)/100) × e^(0.8·(platform − 0.6)) × (prem ÷ prem₀)^0.1",
+     "CR₀ = R₀ ÷ VC₀ (capture today; base release: $260B ÷ $1,600B ≈ 16%);  C_task = cost of a completed task relative to today"
+    ],
+    "explanation": "Revenue is the value of the knowledge work AI actually completes times the share vendors capture. Half of revenue is priced on cost and falls as a completed task gets cheaper; half is priced on value and rises with specialised agents, platform lock-in and pricing power. Work moving to local and on-prem AI is lost to vendors.",
+    "drivers": [
+     "adoption",
+     "platform",
+     "regulation",
+     "geo",
+     "elastic"
+    ],
+    "inputs": [
+     "AU",
+     "AS",
+     "LS",
+     "prem",
+     "CtaskI"
+    ]
+   },
+   "caveats": [
+    "Gross basis: OpenAI’s reported net figure is grossed up for partner sales.",
+    "“All other vendors” (≈$125B) is an assumption."
+   ],
+   "group": "A"
+  },
+  "CC": {
+   "definition": "The yearly cost of the capital already invested: depreciation plus the cost of capital on the last five years of Big-4 capex.",
+   "unit": "$B a year",
+   "history": {
+    "method": "Derived: computed from other history series with the formula below (no separate source).",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "CC = 0.24 × (capex spent in the last 20 quarters)",
+     "0.24 = 1/5 (straight-line depreciation over 5 years) + 8% × ½ (cost of capital on half the gross base)"
+    ],
+    "explanation": "Even if new capex stops, the installed base still has to be paid for; this charge is what revenue must eventually cover.",
+    "drivers": [],
+    "inputs": [
+     "K"
+    ]
+   },
+   "caveats": [
+    "A mix of 4-year chips and 20-year buildings is depreciated over 5 years."
+   ],
+   "group": "A"
+  },
+  "ccov": {
+   "definition": "AI revenue divided by the capital charge on the installed base. 100% means revenue could pay the yearly charge.",
+   "unit": "ratio (100% = covered)",
+   "history": {
+    "method": "Derived: computed from other history series with the formula below (no separate source).",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "ccov = R ÷ CC"
+    ],
+    "explanation": "The key test of whether the build-out pays for itself. Credit stress rises with the shortfall below 100%.",
+    "drivers": [],
+    "inputs": [
+     "R",
+     "CC"
+    ]
+   },
+   "caveats": [
+    "Revenue is industry-wide while the charge covers Big-4 capex only."
+   ],
+   "group": "A"
+  },
+  "cov": {
+   "definition": "Spending indicator: AI revenue divided by 1.4 × one year of Big-4 capex — the “coverage” ratio of model v2, kept for comparison only.",
+   "unit": "ratio",
+   "history": {
+    "method": "Derived: computed from other history series with the formula below (no separate source).",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "cov = R ÷ (1.4 × K)"
+    ],
+    "explanation": "A rough check of revenue against current spending; the capital-charge ratio is the better measure.",
+    "drivers": [],
+    "inputs": [
+     "R",
+     "K"
+    ]
+   },
+   "caveats": [
+    "Kept for comparison with earlier versions."
+   ],
+   "group": "A"
+  },
+  "VL": {
+   "definition": "Combined post-money equity value of OpenAI and Anthropic from their announced funding rounds (not enterprise value, not a market price).",
+   "unit": "$T",
+   "history": {
+    "method": "Announced post-money values of the two labs, summed at each round and joined on a log scale; Q4 2026 = AN3 ($852B + $965B = $1.817T).",
+    "sources": [
+     {
+      "title": "OpenAI funding round at $852B post-money",
+      "publisher": "OpenAI",
+      "date": "2026-03-31",
+      "url": "https://openai.com/index/accelerating-the-next-phase-ai/",
+      "covers": "OpenAI post-money equity value, Q1 2026"
+     },
+     {
+      "title": "Anthropic Series H",
+      "publisher": "Anthropic",
+      "date": "2026-05-28",
+      "url": "https://www.anthropic.com/news/series-h",
+      "covers": "Anthropic post-money equity value, Q2 2026"
+     },
+     {
+      "title": "OpenAI just raised a historic amount of money: here are 2 stunning numbers you shouldn't forget",
+      "publisher": "Yahoo Finance",
+      "date": "2026-04-01",
+      "url": "https://finance.yahoo.com/news/openai-just-raised-a-historic-amount-of-money-here-are-2-stunning-numbers-you-shouldnt-forget-133202041.html",
+      "covers": "OpenAI side, Apr 2023 - Apr 2026",
+      "note": "OpenAI: Apr 2023 $28B; Jan 2024 $86B; Oct 2024 $157B; Mar 2025 $300B; Oct 2025 $500B; Apr 2026 $852B (via Charlie Bilello)."
+     },
+     {
+      "title": "Anthropic raises Series E at $61.5B post-money valuation",
+      "publisher": "Anthropic",
+      "date": "2025-03-03",
+      "url": "https://www.anthropic.com/news/anthropic-raises-series-e-at-usd61-5b-post-money-valuation",
+      "covers": "Q1 2025 (Anthropic)",
+      "note": "$3.5B at $61.5B post-money."
+     },
+     {
+      "title": "Nvidia, Microsoft invest $15 billion in AI startup Anthropic",
+      "publisher": "Gulf News (AFP)",
+      "date": "2025-11-20",
+      "url": "https://gulfnews.com/technology/nvidia-microsoft-invest-15-billion-in-ai-startup-anthropic-2-1.500351452",
+      "covers": "Q4 2025 (both labs)",
+      "note": "Anthropic $350B (sources to CNBC); OpenAI 'most recently valued at $500 billion'. Date = page update."
+     }
+    ],
+    "checked": "Q1 2023 0.033 (28 + ≈4.1), Q1 2025 0.36 (300 + 61.5), Q4 2025 0.85 (500 + 350), Q1 2026 1.232 (852 + 380), Q2 2026 1.817 (852 + 965).",
+    "gaps": "Anthropic $183B (Sep 2025) and $380B (Feb 2026) confirmed on pages beyond the four-source limit: https://www.anthropic.com/news/anthropic-raises-series-f-at-usd183b-post-money-valuation and https://www.orrick.com/en/News/2026/02/Anthropic-Raises-30B-Series-G-at-380B-Post-Money-Valuation (both verified). Anthropic $4.1B (2023) not fetched; $18.4B (Dec 2023 talks) only in a search result: https://www.bloomberg.com/news/articles/2023-12-21/anthropic-in-talks-to-raise-750-million-led-by-menlo-ventures. Q4 2023, Q4 2024 and Q3 2025 use valuations announced in the following quarter (see mismatches).",
+    "note": "Points use the latest valuation reported in the quarter, including rounds reported as agreed or in talks; three of them (Q4 2023, Q4 2024, Q3 2025) closed in the following quarter. Counting only completed rounds would give $0.033T, $0.175T and $0.483T."
+   },
+   "anchor": "AN3",
+   "model": {
+    "formula": [
+     "VL → Mult × R × share ÷ 1000 at 3 a year",
+     "share (labs’ share of AI revenue) = min(0.6, 0.52 × (prem ÷ prem₀)^0.15 × (TC ÷ TC₀) × (1 − 0.4·max(0, geopolitics − 0.4)) × e^(−1.5·(platform − 0.6)))",
+     "Mult: see “Lab equity value ÷ lab revenue”"
+    ],
+    "explanation": "Lab value = a revenue multiple × the labs’ revenue. The labs’ share of AI revenue grows with pricing power and concentration, and shrinks when platforms capture the customer.",
+    "drivers": [
+     "rates",
+     "platform",
+     "geo"
+    ],
+    "inputs": [
+     "Mult",
+     "R",
+     "prem",
+     "TC"
+    ]
+   },
+   "caveats": [
+    "Funding-round values are set by a few investors and can lag the market."
+   ],
+   "group": "A"
+  },
+  "VN": {
+   "definition": "Nvidia’s equity market capitalisation.",
+   "unit": "$T",
+   "history": {
+    "method": "Closing market values at dated points, joined on a log scale; Q4 2026 = AN4 ($5.17T on 16 Oct 2026).",
+    "sources": [
+     {
+      "title": "Nvidia market capitalisation history",
+      "publisher": "StockAnalysis",
+      "date": "2026-10-16",
+      "url": "https://stockanalysis.com/stocks/nvda/market-cap/",
+      "covers": "Nvidia market value; the page also shows its history"
+     },
+     {
+      "title": "NVIDIA market cap",
+      "publisher": "FinHacker",
+      "date": "2026-10-16",
+      "url": "https://www.finhacker.cz/en/stocks/nvidia-market-cap/",
+      "covers": "Every quarter-end, Mar 2023 - Sep 2026; 16 Oct 2026",
+      "note": "0.686 (31 Mar 2023), 1.223 (29 Dec 2023), 2.226 (28 Mar 2024), 3.039 (28 Jun 2024), 3.289 (31 Dec 2024), 2.651 (31 Mar 2025), 3.853 (30 Jun 2025), 4.543 (30 Sep 2025), 4.533 (31 Dec 2025), 4.238 (31 Mar 2026), 4.846 (30 Jun 2026), 5.515 (30 Sep 2026), 5.171 (16 Oct 2026), $T."
+     }
+    ],
+    "checked": "All 11 points within 7%: 0.65 vs 0.686; 1.2 vs 1.223; 3.0 vs 3.039; 3.3 vs 3.289; 2.7 vs 2.651; 3.8 vs 3.853; 4.6 vs 4.533; 4.5 vs 4.238 (+6%); 4.8 vs 4.846; 5.2 vs 5.515 (-6%); 5.17 vs 5.171.",
+    "gaps": "None for explicit points. Curve between 2023.75 and 2024.25 gives ≈1.90 for Q1 2024 vs 2.226 actual (see mismatches).",
+    "note": "Q1 2024 is now an explicit point (close of 28 Mar 2024) instead of an interpolation."
+   },
+   "anchor": "AN4",
+   "model": {
+    "formula": [
+     "VN → e^(c + 0.7·ln(K ÷ K₀) + 0.3(gK − 0.45) + 0.4·ln(max(5, hype) ÷ 84) + 0.5·ln(gm ÷ 0.72) − 0.6(rates − 0.65) + ln(1 − 0.35·max(0, geopolitics − 0.6))) at 3 a year",
+     "gm (chip gross margin) = 0.55 + 0.25(utilisation − 0.85) + 0.5·scarcity + 0.15(1 − chip supply)"
+    ],
+    "explanation": "Chipmaker value follows the size and growth of the build-out, sentiment and chip margins, and falls with high rates and severe fragmentation.",
+    "drivers": [
+     "rates",
+     "hwSupply",
+     "geo"
+    ],
+    "inputs": [
+     "K",
+     "S"
+    ]
+   },
+   "caveats": [
+    "One company stands in for the chip layer."
+   ],
+   "group": "A"
+  },
+  "Mult": {
+   "definition": "Lab equity value divided by the labs’ revenue (OpenAI + Anthropic value ÷ their share of AI revenue).",
+   "unit": "multiple (×)",
+   "history": {
+    "method": "Derived from history: VL ÷ (0.52 × R).",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "Mult = clamp(e^(c + 0.7(gR − 1.0) + ln(max(5, hype) ÷ 84) + 0.2·ln(prem ÷ prem₀) − 0.9(rates − 0.65)), 2, 30)",
+     "gR = revenue growth (log per year)"
+    ],
+    "explanation": "Investors pay higher multiples for fast growth, high hype and pricing power, and lower multiples when rates are high.",
+    "drivers": [
+     "rates"
+    ],
+    "inputs": [
+     "R",
+     "S",
+     "prem"
+    ]
+   },
+   "caveats": [
+    "The 52% revenue share of the two labs is an assumption."
+   ],
+   "group": "A"
+  },
+  "S": {
+   "definition": "Hype index: an illustrative 0–100 measure of market enthusiasm for AI.",
+   "unit": "index 0–100",
+   "history": {
+    "method": "Illustrative index: the history is a judgement by the AI Forecast Atlas team, drawn dashed; there is no published series.",
+    "sources": [],
+    "checked": "n/a (model construct)",
+    "gaps": "n/a"
+   },
+   "anchor": "AN24",
+   "model": {
+    "formula": [
+     "hype → S* at 1.8 a year, plus one-off jolts from the scenario story and shocks",
+     "S* = clamp(c + 16·tanh(1.3(gR − 0.45)) + 18(capital − 0.5) + 25·breakthrough − 35·max(0, trust incidents − 0.2) − 0.45·max(0, credit stress − 50) + 10(ln prem ÷ ln prem₀ − 1) + 8(R ÷ 1.4K − 0.25), 3, 96)"
+    ],
+    "explanation": "Hype rises with revenue growth, investor appetite, breakthroughs and pricing power, and falls with trust incidents and credit stress.",
+    "drivers": [
+     "capital",
+     "brk",
+     "trust"
+    ],
+    "inputs": [
+     "R",
+     "Cs",
+     "prem",
+     "cov"
+    ]
+   },
+   "caveats": [
+    "Not a survey or market statistic."
+   ],
+   "group": "A"
+  },
+  "Cs": {
+   "definition": "AI credit-stress index: an illustrative 0–100 measure of stress in the debt that finances the build-out. 70 or more is the model’s flag zone.",
+   "unit": "index 0–100 (not a probability)",
+   "history": {
+    "method": "Illustrative index: the history is a judgement by the AI Forecast Atlas team, drawn dashed; there is no published series.",
+    "sources": [
+     {
+      "title": "Global financial markets face rising risks from AI, bond yields and cyberattacks",
+      "publisher": "IMF",
+      "date": "2026-10-13",
+      "url": "https://www.imf.org/en/blogs/articles/2026/10/12/global-financial-markets-face-rising-risks-from-ai-bond-yields-and-cyberattacks",
+      "covers": "Context for the credit-stress index"
+     },
+     {
+      "title": "Financing the AI infrastructure boom: on- and off-balance-sheet borrowing",
+      "publisher": "BIS Quarterly Review",
+      "date": "2026-03",
+      "url": "https://www.bis.org/publications/qr-202603/financing-ai-infrastructure-boom-on-and-off-balance-sheet-borrowing",
+      "covers": "Debt financing of the AI build-out"
+     }
+    ],
+    "checked": "n/a (model construct)",
+    "gaps": "n/a"
+   },
+   "anchor": "AN20",
+   "model": {
+    "formula": [
+     "credit stress → Cs* at 2.2 a year, plus jolts",
+     "Cs* = clamp(c + 120·DS·(1 − min(1, ccov)) + 22(rates − 0.3) + 30·max(drawdown of lab value, drawdown of Nvidia) + 30·max(0, 0.75 − fleet in use) + 12·max(0, geopolitics − 0.5) + 10·max(0, trust incidents − 0.4) + 12·(hype ÷ 100)·(1 − min(1, ccov)) + 0.4·max(0, lab distress − its Q4 2026 value), 3, 99)",
+     "DS (debt share of financing) → clamp(0.40 + 0.35·ln((K ÷ K₀) ÷ (CF ÷ CF₀)), 0.05, 0.75) at 1.5 a year;  CF = 700 × 1.08^Δt + 0.5R (cash flow, $B)",
+     "drawdown = 1 − value ÷ its peak so far"
+    ],
+    "explanation": "Stress builds when debt finances a growing share of capex while revenue falls short of the capital charge, when rates are high, valuations fall from their peak or the fleet sits idle.",
+    "drivers": [
+     "rates",
+     "geo",
+     "trust"
+    ],
+    "inputs": [
+     "ccov",
+     "VL",
+     "VN",
+     "Ufp",
+     "S",
+     "PF",
+     "K",
+     "R"
+    ]
+   },
+   "caveats": [
+    "70 is a model flag, not an observed credit event.",
+    "Informed by IMF and BIS commentary, but not computed from market prices."
+   ],
+   "group": "A"
+  },
+  "Bs": {
+   "definition": "Bank stress index: illustrative 0–100 stress in banks and private credit exposed to AI lending.",
+   "unit": "index 0–100",
+   "history": {
+    "method": "Illustrative index: the history is a judgement by the AI Forecast Atlas team, drawn dashed; there is no published series.",
+    "sources": [],
+    "checked": "n/a (model construct)",
+    "gaps": "n/a"
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "each quarter Bs moves half-way towards 10.25 + 0.25 × credit stress + 1.8 × max(0, credit stress − 60), limited to 0–99"
+    ],
+    "explanation": "Banks are exposed mainly through lending to funds and project vehicles; their stress follows AI credit stress and rises faster above 60.",
+    "drivers": [],
+    "inputs": [
+     "Cs"
+    ]
+   },
+   "caveats": [
+    "Illustrative."
+   ],
+   "group": "A"
+  },
+  "G": {
+   "definition": "Months by which the best open-weight model trails the best closed model on the Epoch Capabilities Index.",
+   "unit": "months",
+   "history": {
+    "method": "Epoch AI’s comparison of the best open and best closed models over time; Q4 2026 = AN7 (average January–May 2026, carried forward).",
+    "sources": [
+     {
+      "title": "The gap between open and closed models (Epoch Capabilities Index)",
+      "publisher": "Epoch AI",
+      "date": "2026-05-29",
+      "url": "https://epoch.ai/data-insights/open-closed-eci-gap",
+      "covers": "Open-weight lag behind the frontier, including its history (CC BY 4.0)"
+     },
+     {
+      "title": "State of Open Source AI v1.1",
+      "publisher": "Mozilla",
+      "date": "2026-09-14",
+      "url": "https://stateofopensource.ai/",
+      "covers": "Alternative lag estimate (METR-based fit)"
+     },
+     {
+      "title": "Open models report",
+      "publisher": "Epoch AI",
+      "date": "2024-11-04",
+      "url": "https://epoch.ai/blog/open-models-report",
+      "covers": "2023-2024",
+      "note": "Lag of about one year (weighted 14 months; 5-22 months across benchmarks); Llama 3.1 405B came 16 months after GPT-4."
+     },
+     {
+      "title": "Open-weight models lag state-of-the-art by around 3 months on average",
+      "publisher": "Epoch AI",
+      "date": "2025-10-30",
+      "url": "https://epoch.ai/data-insights/open-weights-vs-closed-weights-models",
+      "covers": "2025",
+      "note": "Average 3 months (≈7 ECI points); averaging window not stated."
+     }
+    ],
+    "checked": "Q4 2023 (14) = Epoch's weighted 14-month lag; Q2 2026 (4) = Epoch's Jan-May 2026 average; Q4 2026 (4) carried forward.",
+    "gaps": "Q1 2023 (18), Q2 2024 (10), Q4 2024 (6) and Q1 2025 (4) have no dated point estimate; all lie inside Epoch's 5-22-month range. Q4 2025 (3.5) vs Epoch's 3-month average (see mismatches).",
+    "note": "Epoch reported an average of about 3 months on 30 Oct 2025 (series 3.5); Epoch does not state its averaging window, so the comparison is approximate."
+   },
+   "anchor": "AN7",
+   "model": {
+    "formula": [
+     "G → G* at 1.2 a year",
+     "G* = max(0.5, c + 0.5 + 6·(1 − catch-up)^1.5 + 14·breakthrough + 1.5·max(0, geopolitics − 0.5) − 1.0·max(0, efficiency − 0.6))"
+    ],
+    "explanation": "The gap narrows with open-model catch-up and efficiency gains and widens with a frontier breakthrough or fragmentation.",
+    "drivers": [
+     "conv",
+     "brk",
+     "geo",
+     "efficiency"
+    ],
+    "inputs": []
+   },
+   "caveats": [
+    "History before 2025 uses the lag between matching releases, a different method."
+   ],
+   "group": "B"
+  },
+  "Np": {
+   "definition": "Number of labs within one model generation of the frontier.",
+   "unit": "count",
+   "history": {
+    "method": "Illustrative index: the history is a judgement by the AI Forecast Atlas team, drawn dashed; there is no published series. The Q4 2026 value (12) is an assumption.",
+    "sources": [],
+    "checked": "n/a (assumption)",
+    "gaps": "n/a"
+   },
+   "anchor": "AN23",
+   "model": {
+    "formula": [
+     "Np → Np* at 1.2 a year, plus jolts",
+     "Np* = max(1, c + 25·(1 − e^(−3/G))·(0.3 + 0.7·catch-up) − 9·max(0, credit stress − 60)/40 − 6·max(0, regulation − 0.5) + 3·max(0, sovereignty − 0.5))"
+    ],
+    "explanation": "More labs reach parity when the gap is small and catch-up is fast; credit stress and licensing thin the field.",
+    "drivers": [
+     "conv",
+     "regulation",
+     "sovereignty"
+    ],
+    "inputs": [
+     "G",
+     "Cs"
+    ]
+   },
+   "caveats": [
+    "An assumption, not a count from a benchmark."
+   ],
+   "group": "B"
+  },
+  "Pc": {
+   "definition": "List price of the cheapest current tier from a leading lab that handles routine work, as a blend of 3 input : 1 output tokens.",
+   "unit": "$ per 1M tokens",
+   "history": {
+    "method": "Blended list prices of the cheapest capable tier at dated points (blend = (3 × input + output) ÷ 4), joined on a log scale; Q4 2026 = AN6.",
+    "sources": [
+     {
+      "title": "Introducing GPT-6 Sol and Luna (pricing)",
+      "publisher": "OpenAI",
+      "date": "2026-09-29",
+      "url": "https://openai.com/index/introducing-gpt-6-sol-and-luna/",
+      "covers": "Good-enough tier list price, Oct 2026"
+     },
+     {
+      "title": "LLM pricing statistics",
+      "publisher": "BenchLM",
+      "date": "2026-10-16",
+      "url": "https://benchlm.ai/stats/llm-pricing",
+      "covers": "Context: median open-weight vs proprietary list prices"
+     },
+     {
+      "title": "Introducing ChatGPT and Whisper APIs",
+      "publisher": "OpenAI",
+      "date": "2023-03-01",
+      "url": "https://openai.com/index/introducing-chatgpt-and-whisper-apis/",
+      "covers": "Q1 2023",
+      "note": "gpt-3.5-turbo $0.002 per 1K tokens (input and output), blend 2.0. Page shows only 'Updated 2024-04-24'."
+     },
+     {
+      "title": "Function calling and other API updates",
+      "publisher": "OpenAI",
+      "date": "2023-06-13",
+      "url": "https://openai.com/index/function-calling-and-other-api-updates",
+      "covers": "Q2-Q3 2023",
+      "note": "gpt-3.5-turbo $0.0015 input / $0.002 output per 1K, blend 1.625."
+     },
+     {
+      "title": "OpenAI announcements at its first DevDay",
+      "publisher": "InfoQ",
+      "date": "2023-11-08",
+      "url": "https://www.infoq.com/news/2023/11/openai-announcements-1stdevday/",
+      "covers": "Q4 2023",
+      "note": "GPT-3.5 Turbo $0.001 input / $0.002 output per 1K, blend 1.25."
+     },
+     {
+      "title": "GPT-4o mini: advancing cost-efficient intelligence",
+      "publisher": "OpenAI",
+      "date": "2024-07-18",
+      "url": "https://openai.com/index/gpt-4o-mini-advancing-cost-efficient-intelligence/",
+      "covers": "Q3 2024 - Q1 2025",
+      "note": "$0.15/$0.60 per M, blend 0.2625."
+     }
+    ],
+    "checked": "Q2 2024 (0.5) = Claude 3 Haiku $0.25/$1.25 (Simon Willison, 2024-03-04). Q4 2026 anchor 0.18 vs GPT-6 Luna $0.10/$0.50 = 0.20 (verified on the AN6 OpenAI page).",
+    "gaps": "Q2 2025 (0.3), Q4 2025 (0.25) and Q2 2026 (0.2) not checked against a fetched price list. Context: OpenAI cut GPT-5.6 Luna from $1/$6 to $0.20/$1.20 on 30 Jul 2026 (Tech Jack Solutions, 2026-08-16).",
+    "note": "A judgement series for a model “good enough” for routine work, not simply the cheapest model. Checked points: Q1 2023 launch price 2.0 (the series shows the June 2023 price, 1.6), Q4 2023 1.25 (series 0.9), Q4 2024 GPT-4o mini 0.26 (series 0.35; Claude 3 Haiku 0.50 was also current)."
+   },
+   "anchor": "AN6",
+   "model": {
+    "formula": [
+     "ln Pc → ln Pc* at 3 a year",
+     "Pc* = max(0.0003 × Pp ÷ Pp₀, Pc₀ × u × (1 + mc) ÷ 1.5)",
+     "u (resource cost per token vs today) = (compute per $ today ÷ now) × κ × (1 + 1.2·min(scarcity, 1.5)) ÷ 1.048 × (Pp ÷ Pp₀)^0.15 × (DRAM ÷ DRAM₀)^0.10 × (1 + 0.3·max(0, geopolitics − 0.5)) × (1 + 0.2·max(0, regulation − 0.4))",
+     "mc (markup over cost) = max(8%, 50% × e^(−1.5(catch-up − 0.55) − 0.04(Np − 12) + 0.6·max(0, geopolitics − 0.5)))",
+     "κ (compute per token vs today): ln κ falls (0.15 + 0.15·e^(−Δt/4)) × efficiency ÷ 0.55 a year"
+    ],
+    "explanation": "The good-enough tier is priced at resource cost plus a markup. Cost falls with cheaper hardware and algorithmic efficiency, rises with scarcity, power and memory prices; the markup shrinks as more labs compete.",
+    "drivers": [
+     "efficiency",
+     "hwSupply",
+     "conv",
+     "geo",
+     "regulation"
+    ],
+    "inputs": [
+     "Pp",
+     "DR",
+     "Np"
+    ]
+   },
+   "caveats": [
+    "List prices, not discounted or negotiated prices."
+   ],
+   "group": "B"
+  },
+  "Pf": {
+   "definition": "List price of the flagship tier of the leading labs, same 3 : 1 blend.",
+   "unit": "$ per 1M tokens",
+   "history": {
+    "method": "Blended flagship list prices at dated points (for example GPT-4 at $30/$60 in 2023 → $37.50), joined on a log scale; Q4 2026 = AN5 ($10, between Claude Opus 5.5 at $8 and GPT-6 Astra at $20).",
+    "sources": [
+     {
+      "title": "GPT-6 Astra (pricing)",
+      "publisher": "OpenAI",
+      "date": "2026-09",
+      "url": "https://openai.com/index/gpt-6-astra/",
+      "covers": "Frontier list price, Sep–Oct 2026"
+     },
+     {
+      "title": "Claude Opus 5.5 token pricing",
+      "publisher": "usagepricing.com",
+      "date": "2026-09-22",
+      "url": "https://www.usagepricing.com/ai-token-pricing/anthropic/claude-opus-5-5",
+      "covers": "Frontier list price, Sep 2026"
+     },
+     {
+      "title": "OpenAI releases GPT-4, a multimodal AI that it claims is state-of-the-art",
+      "publisher": "TechCrunch",
+      "date": "2023-03-14",
+      "url": "https://techcrunch.com/2023/03/14/openai-releases-gpt-4-ai-that-it-claims-is-state-of-the-art/",
+      "covers": "Q1 2023",
+      "note": "GPT-4 $0.03/1K prompt, $0.06/1K completion = $30/$60 per M, blend 37.5."
+     },
+     {
+      "title": "OpenAI announcements at its first DevDay",
+      "publisher": "InfoQ",
+      "date": "2023-11-08",
+      "url": "https://www.infoq.com/news/2023/11/openai-announcements-1stdevday/",
+      "covers": "Q4 2023",
+      "note": "GPT-4 Turbo $0.01/$0.03 per 1K, blend 15."
+     },
+     {
+      "title": "Claude 3 pricing (Opus, Sonnet, Haiku)",
+      "publisher": "Simon Willison's Weblog",
+      "date": "2024-03-04",
+      "url": "https://simonwillison.net/2024/Mar/4/claude-3",
+      "covers": "Q2 2024",
+      "note": "Claude 3 Opus $15/$75, blend 30; Haiku $0.25/$1.25, blend 0.5."
+     },
+     {
+      "title": "OpenAI priced GPT-5 so low, it may spark a price war",
+      "publisher": "TechCrunch",
+      "date": "2025-08-08",
+      "url": "https://techcrunch.com/2025/08/08/openai-priced-gpt-5-so-low-it-may-spark-a-price-war",
+      "covers": "Q3-Q4 2025",
+      "note": "GPT-5 $1.25/$10, blend 3.44 (same base price as Gemini 2.5 Pro); Claude Opus 4.1 $15/$75, blend 30."
+     }
+    ],
+    "checked": "Q1 2023 (37.5) exact. Q2 2024 (12) and Q4 2025 (7) lie inside the range of named flagship blends (3.4-30). Q4 2026 anchor: Claude Opus 5.5 $4/$20 = 8 and GPT-6 Astra $10/$50 = 20 (both verified on the AN5 pages).",
+    "gaps": "Q4 2024 (10), Q2 2025 (8) and Q2 2026 (10) are not tied to a dated price list. Context: GPT-5.6 Sol was $5/$30 (blend 11.25) until a cut to $4/$20 on 21 Aug 2026 (The Planet Tools, 2026-08-27, https://theplanettools.ai/blog/ai-api-price-moves-anthropic-openai-deepseek-google-august-2026, verified).",
+    "note": "Q4 2023 shows 20, between GPT-4 Turbo (15, from 6 Nov 2023) and the still-sold GPT-4 (37.5)."
+   },
+   "anchor": "AN5",
+   "model": {
+    "formula": [
+     "Pf = Pc × prem"
+    ],
+    "explanation": "The frontier price is the good-enough price times the frontier premium.",
+    "drivers": [
+     "brk"
+    ],
+    "inputs": [
+     "Pc",
+     "prem"
+    ]
+   },
+   "caveats": [
+    "No caching or batch discounts."
+   ],
+   "group": "B"
+  },
+  "prem": {
+   "definition": "How many times more the frontier tier costs than the good-enough tier.",
+   "unit": "multiple (×)",
+   "history": {
+    "method": "Derived from history: Pf ÷ Pc.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "ln prem → ln(Rf × Mf) at 2 a year",
+     "Rf (resource-cost ratio, frontier ÷ good-enough) = 9.6 × e^(0.7(breakthrough − 0.1)) × e^(−0.03·Δt)",
+     "Mf (markup ratio) = clamp(e^(c + 0.45·ln(1 + G) + 1.0·breakthrough − 0.09(Np − 2) + 0.7·min(scarcity, 0.6) + 0.4(regulation − 0.3) − 0.4(capital − 0.5) + 0.3(rates − 0.5) − 0.3(sovereignty − 0.35) + 0.3(platform − 0.6)), 1, 12)"
+    ],
+    "explanation": "The premium = how much more compute the frontier needs (resource-cost ratio, slowly narrowing through distillation) × how much extra margin it can charge (markup ratio, high with a big open-weight gap, breakthroughs, scarcity and lock-in; low with many labs at parity).",
+    "drivers": [
+     "brk",
+     "regulation",
+     "capital",
+     "rates",
+     "sovereignty",
+     "platform"
+    ],
+    "inputs": [
+     "G",
+     "Np"
+    ]
+   },
+   "caveats": [
+    "The 9.6× resource-cost ratio is an assumption."
+   ],
+   "group": "B"
+  },
+  "mf": {
+   "definition": "Frontier markup over resource cost: the frontier premium divided by the resource-cost ratio. 1× = priced at cost.",
+   "unit": "multiple (×)",
+   "history": {
+    "method": "Derived from history: prem ÷ 9.6.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "mf = Mf (the markup ratio in the frontier premium)"
+    ],
+    "explanation": "Pricing power in its purest form; below 1.5× the frontier is effectively a commodity.",
+    "drivers": [
+     "brk",
+     "platform"
+    ],
+    "inputs": [
+     "G",
+     "Np"
+    ]
+   },
+   "caveats": [
+    "Depends on the assumed resource-cost ratio."
+   ],
+   "group": "B"
+  },
+  "DC": {
+   "definition": "Electricity used by all data centres worldwide, annualised.",
+   "unit": "TWh a year",
+   "history": {
+    "method": "IEA estimates (about 415 TWh in 2024, 485 TWh in 2025) joined linearly; Q4 2026 = AN8 (570 TWh, interpolated on IEA’s path to 950 TWh in 2030).",
+    "sources": [
+     {
+      "title": "Energy and AI: key questions (executive summary)",
+      "publisher": "International Energy Agency",
+      "date": "2026-04",
+      "url": "https://www.iea.org/reports/key-questions-on-energy-and-ai/executive-summary",
+      "covers": "Data-centre electricity 2024–2025 and the 2030 projection (950 TWh)"
+     },
+     {
+      "title": "Energy and AI: Executive summary",
+      "publisher": "IEA",
+      "date": "2025-04-10",
+      "url": "https://www.iea.org/reports/energy-and-ai/executive-summary",
+      "covers": "2024; growth since 2017",
+      "note": "415 TWh in 2024 (≈1.5% of world use); ≈12% a year since 2017; ≈945 TWh by 2030. Release date from S&P Global."
+     },
+     {
+      "title": "Global data center power demand to double by 2030 on AI surge: IEA",
+      "publisher": "S&P Global Commodity Insights",
+      "date": "2025-04-10",
+      "url": "https://www.spglobal.com/commodity-insights/en/news-research/latest-news/electric-power/041025-global-data-center-power-demand-to-double-by-2030-on-ai-surge-iea",
+      "covers": "2024; IEA release date"
+     }
+    ],
+    "checked": "2024.5 (415) and 2025.5 (485) match IEA. Q4 2026 (570) ≈ IEA path 485 to 950 at ≈14.4% a year (≈574). Mid-2023 (375) consistent with ≈370 implied by 12% a year growth.",
+    "gaps": "No explicit IEA 2023 figure (360 at Q1 2023, 375 at Q3 2023) on the pages fetched."
+   },
+   "anchor": "AN8",
+   "model": {
+    "formula": [
+     "DC = 300 × 1.04^Δt + AI load",
+     "AI load = compute served ÷ compute per TWh;  compute per TWh improves e^(0.20 + 0.10·e^(−Δt/4)) a year",
+     "compute served = min(desired compute, available compute) — see “Purchased fleet in use”"
+    ],
+    "explanation": "Data-centre power = non-AI load (300 TWh today, +4% a year — our assumption) plus the AI load, which follows the compute actually served, less efficiency gains per kWh.",
+    "drivers": [
+     "energy"
+    ],
+    "inputs": [
+     "SVp",
+     "Uopp"
+    ]
+   },
+   "caveats": [
+    "The 300 / 270 TWh split between non-AI and AI load is an assumption."
+   ],
+   "group": "C"
+  },
+  "Pp": {
+   "definition": "US average commercial retail electricity price, as an index (2023 = 100).",
+   "unit": "index (2023 = 100)",
+   "history": {
+    "method": "EIA retail sales data (US commercial sector) against the 2023 average of 12.59¢/kWh, joined linearly; Q4 2026 = AN9 (114).",
+    "sources": [
+     {
+      "title": "Data-centre electricity prices by state (EIA retail sales data)",
+      "publisher": "startbusinessbystate (EIA data)",
+      "date": "2026-09-28",
+      "url": "https://startbusinessbystate.com/data-center-electricity-prices-by-state/",
+      "covers": "US commercial electricity price, 12 months to July 2026"
+     },
+     {
+      "title": "PJM capacity auction 2028/29",
+      "publisher": "PJM",
+      "date": "2026-07-14",
+      "url": "https://insidelines.pjm.com/pjm-capacity-auction-procures-138318-mw-of-generation-resources-as-work-continues-to-address-growing-electricity-demand/",
+      "covers": "Context: capacity price at its cap (not a retail bill)"
+     },
+     {
+      "title": "Monthly Energy Review, September 2026, Table 9.8 (average retail prices of electricity)",
+      "publisher": "US EIA",
+      "date": "2026-09",
+      "url": "https://www.eia.gov/TOTALENERGY/data/monthly/pdf/sec9_11.pdf",
+      "covers": "2022-2025 annual; Jan-Jun 2026 monthly",
+      "note": "Commercial: 12.41 (2022), 12.59 (2023), 12.75 (2024), 13.41 (2025); 2026: 13.64, 14.37, 13.92, 13.51, 13.54, 14.19 ¢/kWh (Jan-Jun)."
+     },
+     {
+      "title": "Short-Term Energy Outlook, October 2026, Table 7c (US regional electricity prices)",
+      "publisher": "US EIA",
+      "date": "2026-10",
+      "url": "https://www.eia.gov/outlooks/steo/tables/pdf/7ctab.pdf",
+      "covers": "2025-2027 by quarter (later 2026 quarters forecast)",
+      "note": "Commercial: Q1 2025 12.98; 2025 13.41; Q1 2026 13.97; Q4 2026 13.76 (forecast); 2026 14.00 ¢/kWh."
+     }
+    ],
+    "checked": "Q3 2023 (100) = 2023 average. Q1 2025 (103.9) vs 12.98 ¢ = 103.1. Q1 2026 (110) vs Jan-Mar 2026 average 13.98 ¢ = 111.0. Q4 2026 (114) vs STEO Q4 2026 13.76 ¢ = 109.3 (+4%) and 2026 average 14.00 ¢ = 111.2. The 12.59 ¢ base the AN9 calc took from the ChatGPT review is confirmed by EIA.",
+    "gaps": "Q1 2023 (99) not checked by quarter (2022 average = 98.6)."
+   },
+   "anchor": "AN9",
+   "model": {
+    "formula": [
+     "Pp → Pp* at 1.5 a year",
+     "Pp* = Pp₀ (AN9; 114 in the base release) × 1.025^Δt × (AI load ÷ AI load today)^0.15 × (1 + 0.55(energy − 0.55)) × (1 + 0.25·max(0, geopolitics − 0.5))"
+    ],
+    "explanation": "Power prices drift up 2.5% a year and rise further with AI load, a tighter grid and fragmentation.",
+    "drivers": [
+     "energy",
+     "geo"
+    ],
+    "inputs": [
+     "DC"
+    ]
+   },
+   "caveats": [
+    "A national average hides large regional differences."
+   ],
+   "group": "C"
+  },
+  "GR": {
+   "definition": "Price of renting one H100 GPU for an hour on a one-year contract.",
+   "unit": "$ per GPU-hour",
+   "history": {
+    "method": "One-year H100 contract rents: $1.70 (Oct 2025) and $2.35 (Mar 2026); Q4 2026 = AN10 ($2.80, a judgement).",
+    "sources": [
+     {
+      "title": "The great GPU shortage: rental capacity",
+      "publisher": "SemiAnalysis",
+      "date": "2026-04-02",
+      "url": "https://newsletter.semianalysis.com/p/the-great-gpu-shortage-rental-capacity",
+      "covers": "One-year H100 contract rents, Oct 2025 ($1.70) and Mar 2026 ($2.35)"
+     }
+    ],
+    "checked": "Q4 2025 (1.70) and Q1 2026 (2.35) match.",
+    "gaps": "Q4 2026 (2.80) is a judgement; no dated index value after Mar 2026 found."
+   },
+   "anchor": "AN10",
+   "model": {
+    "formula": [
+     "GR → GR* at 3 a year",
+     "GR* = max(0.25, GR₀ (AN10; $2.80 in the base release) × U^2.5 × (1 + 1.6·min(scarcity, 0.8)) ÷ 1.064 × (compute per $ today ÷ now)^0.5 × (Pp ÷ Pp₀)^0.12 × (DRAM ÷ DRAM₀)^0.12)",
+     "U = share of powered capacity in use"
+    ],
+    "explanation": "Rents follow how full the powered fleet is and how scarce compute is, fall as newer chips deliver more per dollar, and pass on power and memory costs.",
+    "drivers": [
+     "hwSupply"
+    ],
+    "inputs": [
+     "Uopp",
+     "Pp",
+     "DR"
+    ]
+   },
+   "caveats": [
+    "Contract terms differ widely; spot and marketplace prices are higher or lower."
+   ],
+   "group": "C"
+  },
+  "DR": {
+   "definition": "Conventional DRAM contract price index (Q1 2025 = 100).",
+   "unit": "index (Q1 2025 = 100)",
+   "history": {
+    "method": "Index of conventional DRAM contract prices (Q1 2025 = 100), joined linearly. The 2026 quarters are chained from TrendForce’s reported and forecast quarterly changes (Q4 2026 = AN11, 610); earlier points follow the model-v2 basis.",
+    "sources": [
+     {
+      "title": "DRAM contract prices, Q1–Q2 2026",
+      "publisher": "TrendForce",
+      "date": "2026-06-01",
+      "url": "https://www.trendforce.com/presscenter/news/20260601-13070.html",
+      "covers": "Conventional DRAM contract price changes, Q1 2026 (reported) and Q2 2026 (forecast)"
+     },
+     {
+      "title": "DRAM contract prices, Q4 2026 outlook",
+      "publisher": "TrendForce",
+      "date": "2026-09-30",
+      "url": "https://www.trendforce.com/presscenter/news/20260930-13258.html",
+      "covers": "Q3 and Q4 2026 contract price forecasts"
+     },
+     {
+      "title": "Passive Buyer Strategies Drive DRAM Contract Prices Down Across the Board in 1Q25, Says TrendForce",
+      "publisher": "TrendForce",
+      "date": "2024-12-30",
+      "url": "https://www.trendforce.com/presscenter/news/20241230-12424.html",
+      "covers": "Q1 2025 (base)",
+      "note": "Conventional DRAM -8% to -13% in 1Q25 (forecast)."
+     },
+     {
+      "title": "Price Rally Drives 4Q25 DRAM Revenue Up 29.4%; Samsung Regains No. 1 Market Share, Says TrendForce",
+      "publisher": "TrendForce",
+      "date": "2026-02-26",
+      "url": "https://www.trendforce.com/presscenter/news/20260226-12937.html",
+      "covers": "Q4 2025 (actual); Q1 2026 forecast",
+      "note": "Conventional DRAM contract prices rose 45-50% QoQ in 4Q25; 1Q26 expected +90-95%."
+     },
+     {
+      "title": "DRAM Industry Revenue Rises 59.5% QoQ in 2Q26 as Supply Expansion Continues to Lag Demand Growth, Says TrendForce",
+      "publisher": "TrendForce",
+      "date": "2026-09-07",
+      "url": "https://www.trendforce.com/presscenter/news/20260907-13219.html",
+      "covers": "Q2 2026 (qualitative); Q3 2026 forecast",
+      "note": "No 2Q26 % given; 3Q26 forecast +13-18%. The 4Q26 forecast (+10-15%) is in the 30 Sep 2026 release (AN11 URL, verified)."
+     }
+    ],
+    "checked": "Quarter-to-quarter steps from Q4 2025 on match TrendForce: x1.953 (93-98%), x1.608 (58-63%), x1.155 (13-18%), x1.121 (10-15%).",
+    "gaps": "Q3 to Q4 2025 step (+30%) is below TrendForce's reported +45-50% (see mismatches). 2023-2024 points (75, 65, 85, 105) and Q3 2025 (115) only partly checkable: TrendForce forecasts exist for 3Q23 (ASP -0-5%, 2023-07-05, https://trendforce.com/presscenter/news/20230705-11743.html), 1Q24 (+13-18%, 2024-01-08, https://trendforce.com/presscenter/news/20240108-11988.html) and 3Q24 (+8-13%, https://www.storagenewsletter.com/2024/07/02/dram-prices-expected-to-increase-by-8-13-in-3q24/), none for 2Q23, 4Q23, 2Q24, 4Q24, 2Q25, 3Q25. The Q3 2024 to Q1 2025 fall (-4.8%) looks small next to 1Q25's -8-13% plus a 4Q24 decline.",
+    "note": "Corrected 17 Oct 2026 after a source check: the Q4 2025 step now uses TrendForce's reported +45–50% (it was +30%), which raises every later point by about 13%."
+   },
+   "anchor": "AN11",
+   "model": {
+    "formula": [
+     "DRAM → DR* at 1.3 a year",
+     "DR* = e^(c + 0.7(gK − 0.05) − 1.6(chip supply − 0.4) + 2.5·max(0, geopolitics − 0.45) + 0.6·min(scarcity, 0.8))"
+    ],
+    "explanation": "Memory prices rise when capex grows fast and compute is scarce, and fall when supply catches up (new fabs, a glut).",
+    "drivers": [
+     "hwSupply",
+     "geo"
+    ],
+    "inputs": [
+     "K"
+    ]
+   },
+   "caveats": [
+    "Q3–Q4 2026 values are forecasts."
+   ],
+   "group": "C"
+  },
+  "LB": {
+   "definition": "Price of the cheapest complete system with 128 GB of memory able to run a ~120-billion-parameter open-weight model (4-bit) interactively.",
+   "unit": "$",
+   "history": {
+    "method": "Lowest street prices of 128 GB GB10-class boxes since late 2025; Q4 2026 = AN12 ($3,000).",
+    "sources": [
+     {
+      "title": "DGX Spark vs Mac Studio (2026)",
+      "publisher": "Context Studios",
+      "date": "2026-10-08",
+      "url": "https://www.contextstudios.ai/comparisons/dgx-spark-vs-mac-studio-2026",
+      "covers": "Prices of OEM 128 GB GB10-class boxes"
+     },
+     {
+      "title": "DGX Spark (NVIDIA marketplace)",
+      "publisher": "NVIDIA",
+      "date": "2026-10-17",
+      "url": "https://marketplace.nvidia.com/en-us/enterprise/personal-ai-supercomputers/dgx-spark/",
+      "covers": "List price of NVIDIA’s 128 GB desktop AI system"
+     },
+     {
+      "title": "Framework Desktop review",
+      "publisher": "PCWorld",
+      "date": "2025-08-07",
+      "url": "https://www.pcworld.com/article/2866400/framework-desktop-review.html",
+      "covers": "Q3-Q4 2025",
+      "note": "Ryzen AI Max+ 395 (128 GB) from $1,999; ran Llama 4 Scout 109B at 12.6 tok/s."
+     },
+     {
+      "title": "NVIDIA starts selling DGX Spark on Oct 15, hand-delivers first unit to Elon Musk",
+      "publisher": "Maginative",
+      "date": "2025-10-13",
+      "url": "https://www.maginative.com/article/nvidia-starts-selling-dgx-spark-on-oct-15-hand-delivers-first-unit-to-elon-musk/",
+      "covers": "Q4 2025",
+      "note": "DGX Spark (128 GB) $3,999; some partner GB10 systems from ≈$3,999."
+     },
+     {
+      "title": "Framework raises prices yet again as memory costs go up",
+      "publisher": "PCWorld",
+      "date": "2026-01-13",
+      "url": "https://www.pcworld.com/article/3031562/framework-raises-prices-yet-again-as-memory-costs-go-up.html",
+      "covers": "Q1 2026",
+      "note": "128 GB Framework Desktop $1,999 to $2,459. Framework's blog logs further rises Feb-Jun 2026, without $ amounts."
+     }
+    ],
+    "checked": "Q4 2026 (3,000) plausible: Framework 128 GB was $2,459 in Jan 2026 and was raised again several times by June.",
+    "gaps": "No dated Oct 2026 price for the cheapest qualifying box. Framework blog: https://frame.work/blog/updates-on-memory-pricing-and-navigating-the-volatile-memory-market (verified).",
+    "note": "Corrected 17 Oct 2026: Q4 2025 is the Framework Desktop launch price ($1,999) and Q1 2026 its January price ($2,459); the earlier $3,000 fitted only GB10-class boxes."
+   },
+   "anchor": "AN12",
+   "model": {
+    "formula": [
+     "ln LB changes each year by −0.05 − 0.10·efficiency − 0.10·chip supply + 0.3·max(0, geopolitics − 0.45) + 0.25·breakthrough, plus 0.35 × the change in ln(DRAM index)"
+    ],
+    "explanation": "Local AI boxes get cheaper with efficiency and chip supply, and dearer with memory prices, fragmentation and a frontier breakthrough.",
+    "drivers": [
+     "efficiency",
+     "hwSupply",
+     "geo",
+     "brk"
+    ],
+    "inputs": [
+     "DR"
+    ]
+   },
+   "caveats": [
+    "NVIDIA’s own DGX Spark lists at $6,950."
+   ],
+   "group": "C"
+  },
+  "Ufp": {
+   "definition": "Share of every purchased accelerator (within its 4-year life) that is doing work.",
+   "unit": "%",
+   "history": {
+    "method": "Illustrative history: the share of powered capacity in use (97% in 2023, 80% in Q2 2025, 100% today) is a judgement by the team; no chips are counted as unpowered before 2027.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "fleet in use = compute served ÷ purchased capacity × 100",
+     "purchased capacity = chip purchases of the last 16 quarters (4-year life); purchases = capex ÷ 4 × compute per $, which improves 0.20 + 0.08·e^(−Δt/4) + 0.2(chip supply − 0.4) − 0.3·max(0, geopolitics − 0.6) a year (log)",
+     "powered capacity = power available for AI × compute per TWh; power for AI grows (0.62 − 0.6·energy)·e^(−Δt/3) + 0.05 + 0.35 × unpowered share a year (log; on-site generation responds to unpowered chips)",
+     "available = min(purchased, powered);  desired = paid work demand + other demand (training, R&D, free tiers);  served = min(desired, available), paid work first (up to 85% of what is served)"
+    ],
+    "explanation": "Low when chips are bought faster than power arrives or faster than demand grows; idle chips still have to be paid for.",
+    "drivers": [
+     "energy",
+     "hwSupply"
+    ],
+    "inputs": [
+     "K",
+     "AU"
+    ]
+   },
+   "caveats": [
+    "Model construct."
+   ],
+   "group": "C"
+  },
+  "Uopp": {
+   "definition": "Share of powered, available capacity that is in use (operating utilisation).",
+   "unit": "%",
+   "history": {
+    "method": "Illustrative history: the share of powered capacity in use (97% in 2023, 80% in Q2 2025, 100% today) is a judgement by the team; no chips are counted as unpowered before 2027.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "operating utilisation = compute served ÷ available capacity × 100",
+     "purchased capacity = chip purchases of the last 16 quarters (4-year life); purchases = capex ÷ 4 × compute per $, which improves 0.20 + 0.08·e^(−Δt/4) + 0.2(chip supply − 0.4) − 0.3·max(0, geopolitics − 0.6) a year (log)",
+     "powered capacity = power available for AI × compute per TWh; power for AI grows (0.62 − 0.6·energy)·e^(−Δt/3) + 0.05 + 0.35 × unpowered share a year (log; on-site generation responds to unpowered chips)",
+     "available = min(purchased, powered);  desired = paid work demand + other demand (training, R&D, free tiers);  served = min(desired, available), paid work first (up to 85% of what is served)"
+    ],
+    "explanation": "High when demand outruns powered supply.",
+    "drivers": [
+     "energy"
+    ],
+    "inputs": [
+     "K"
+    ]
+   },
+   "caveats": [
+    "Model construct."
+   ],
+   "group": "C"
+  },
+  "STp": {
+   "definition": "Share of purchased compute that cannot be powered.",
+   "unit": "%",
+   "history": {
+    "method": "Zero by definition before 2027.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "unpowered = max(0, 1 − powered capacity ÷ purchased capacity) × 100",
+     "purchased capacity = chip purchases of the last 16 quarters (4-year life); purchases = capex ÷ 4 × compute per $, which improves 0.20 + 0.08·e^(−Δt/4) + 0.2(chip supply − 0.4) − 0.3·max(0, geopolitics − 0.6) a year (log)",
+     "powered capacity = power available for AI × compute per TWh; power for AI grows (0.62 − 0.6·energy)·e^(−Δt/3) + 0.05 + 0.35 × unpowered share a year (log; on-site generation responds to unpowered chips)"
+    ],
+    "explanation": "The power wall in one number. Above 3% buyers start deferring chip deliveries.",
+    "drivers": [
+     "energy"
+    ],
+    "inputs": [
+     "K"
+    ]
+   },
+   "caveats": [
+    "Model construct."
+   ],
+   "group": "C"
+  },
+  "SVp": {
+   "definition": "Share of the compute people want that can be served; the rest is unmet demand.",
+   "unit": "%",
+   "history": {
+    "method": "Illustrative history: 1 ÷ (1 + scarcity index), where the scarcity index (0.40 in 2023, 0 in 2025, 0.04 today) is a judgement.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "served share = compute served ÷ desired compute × 100",
+     "purchased capacity = chip purchases of the last 16 quarters (4-year life); purchases = capex ÷ 4 × compute per $, which improves 0.20 + 0.08·e^(−Δt/4) + 0.2(chip supply − 0.4) − 0.3·max(0, geopolitics − 0.6) a year (log)",
+     "powered capacity = power available for AI × compute per TWh; power for AI grows (0.62 − 0.6·energy)·e^(−Δt/3) + 0.05 + 0.35 × unpowered share a year (log; on-site generation responds to unpowered chips)",
+     "available = min(purchased, powered);  desired = paid work demand + other demand (training, R&D, free tiers);  served = min(desired, available), paid work first (up to 85% of what is served)"
+    ],
+    "explanation": "Below 85% compute is rationed: paid work is served first and other uses wait.",
+    "drivers": [
+     "energy",
+     "hwSupply"
+    ],
+    "inputs": [
+     "AUd"
+    ]
+   },
+   "caveats": [
+    "Model construct."
+   ],
+   "group": "C"
+  },
+  "OS": {
+   "definition": "Share of all AI tokens served worldwide that come from open-weight models.",
+   "unit": "%",
+   "history": {
+    "method": "Illustrative index: the history is a judgement by the AI Forecast Atlas team, drawn dashed; there is no published series. The Q4 2026 value (35%) is an assumption; Chinese open-weight models exceeded 45% of OpenRouter tokens in Q2 2026 — one router, not the market.",
+    "sources": [],
+    "checked": "n/a (assumption)",
+    "gaps": "n/a"
+   },
+   "anchor": "AN13",
+   "model": {
+    "formula": [
+     "OS → OS* at 0.8 a year",
+     "OS* = clamp(c + 55·(1 − e^(−2.5/G))·(0.4 + 0.6·catch-up) + 15(sovereignty − 0.35) + 12·max(0, trust incidents − 0.3) − 25·max(0, regulation − 0.55) − 12·breakthrough + 10·max(0, geopolitics − 0.5), 2, 92)"
+    ],
+    "explanation": "Open weights gain share when they are close to the frontier, with sovereignty demand and trust worries, and lose it with heavy regulation or a frontier breakthrough.",
+    "drivers": [
+     "conv",
+     "sovereignty",
+     "trust",
+     "regulation",
+     "brk",
+     "geo"
+    ],
+    "inputs": [
+     "G"
+    ]
+   },
+   "caveats": [
+    "No economy-wide measure exists."
+   ],
+   "group": "D"
+  },
+  "ES": {
+   "definition": "Open-weight models’ share of enterprise LLM use (US enterprise survey).",
+   "unit": "%",
+   "history": {
+    "method": "Survey points: 19% in 2024, 11% in 2025 (Menlo Ventures), carried to Q4 2026 (AN14).",
+    "sources": [
+     {
+      "title": "2025: The State of Generative AI in the Enterprise",
+      "publisher": "Menlo Ventures",
+      "date": "2025-12-09",
+      "url": "https://menlovc.com/perspective/2025-the-state-of-generative-ai-in-the-enterprise/",
+      "covers": "Enterprise LLM API spend shares and open-weight use, 2024–2025 (survey)"
+     }
+    ],
+    "checked": "Q4 2024 (19) and Q4 2025 (11) match.",
+    "gaps": "Q4 2026 carried forward; no 2026 survey yet."
+   },
+   "anchor": "AN14",
+   "model": {
+    "formula": [
+     "ES → ES* at 0.6 a year",
+     "ES* = clamp(c + 30·(1 − e^(−2/G))·(0.3 + 0.7·catch-up) + 20(sovereignty − 0.35) + 10·max(0, trust incidents − 0.3) − 15·max(0, regulation − 0.55) − 10·breakthrough − 15(platform − 0.6), 1, 80)"
+    ],
+    "explanation": "Enterprises adopt open weights when the gap is small and sovereignty matters; platform lock-in keeps them on proprietary suites.",
+    "drivers": [
+     "conv",
+     "sovereignty",
+     "trust",
+     "regulation",
+     "brk",
+     "platform"
+    ],
+    "inputs": [
+     "G"
+    ]
+   },
+   "caveats": [
+    "A US survey sample."
+   ],
+   "group": "D"
+  },
+  "LS": {
+   "definition": "Share of AI inference running locally or on-premises rather than in public clouds.",
+   "unit": "% of inference",
+   "history": {
+    "method": "Illustrative index: the history is a judgement by the AI Forecast Atlas team, drawn dashed; there is no published series. The Q4 2026 value (9%) is an assumption.",
+    "sources": [],
+    "checked": "n/a (assumption)",
+    "gaps": "n/a"
+   },
+   "anchor": "AN17",
+   "model": {
+    "formula": [
+     "LS → LS* at 0.6 a year",
+     "LS* = clamp(c + 32·clamp(ln(3600 ÷ LB) ÷ ln 6, 0, 1)·(1 − e^(−2.5/G)) + 22(sovereignty − 0.35) + 14·max(0, trust incidents − 0.3) + 8·max(0, geopolitics − 0.4) + 6·max(0, energy − 0.6), 1, 70)"
+    ],
+    "explanation": "Local AI grows when capable boxes get cheap and open models are close to the frontier, and with sovereignty, trust and energy concerns.",
+    "drivers": [
+     "sovereignty",
+     "trust",
+     "geo",
+     "energy"
+    ],
+    "inputs": [
+     "LB",
+     "G"
+    ]
+   },
+   "caveats": [
+    "Assumption."
+   ],
+   "group": "D"
+  },
+  "AS": {
+   "definition": "Specialised agents’ share of enterprise AI spending.",
+   "unit": "% of enterprise AI spend",
+   "history": {
+    "method": "Illustrative index: the history is a judgement by the AI Forecast Atlas team, drawn dashed; there is no published series. The Q4 2026 value (18%) is an assumption; Gartner’s “agents in 40% of enterprise apps” counts applications, not spending.",
+    "sources": [],
+    "checked": "n/a (assumption)",
+    "gaps": "n/a"
+   },
+   "anchor": "AN16",
+   "model": {
+    "formula": [
+     "AS → AS* at 0.8 a year",
+     "AS* = clamp(c + 35·(1 − clamp(1 − e^(−G/4) + 0.3·breakthrough, 0, 1)) + 25(adoption − 0.3) + 15·max(0, energy − 0.4) + 10(efficiency − 0.5) + 8(regulation − 0.3) + 4·min(6, Δt), 2, 85)"
+    ],
+    "explanation": "Specialised agents grow with adoption, efficiency and cheap good-enough models, and when power is scarce (small models do more per watt).",
+    "drivers": [
+     "adoption",
+     "energy",
+     "efficiency",
+     "regulation",
+     "brk"
+    ],
+    "inputs": [
+     "G"
+    ]
+   },
+   "caveats": [
+    "Assumption."
+   ],
+   "group": "D"
+  },
+  "TC": {
+   "definition": "Share of enterprise LLM API spending held by the top three providers.",
+   "unit": "%",
+   "history": {
+    "method": "Survey estimates of the top-3 share: 69% in late 2023 and 88% in 2025 (Menlo Ventures: Anthropic 40 + OpenAI 27 + Google 21), carried to Q4 2026 (AN15).",
+    "sources": [
+     {
+      "title": "2025: The State of Generative AI in the Enterprise",
+      "publisher": "Menlo Ventures",
+      "date": "2025-12-09",
+      "url": "https://menlovc.com/perspective/2025-the-state-of-generative-ai-in-the-enterprise/",
+      "covers": "Enterprise LLM API spend shares and open-weight use, 2024–2025 (survey)"
+     },
+     {
+      "title": "Notes on Menlo Ventures' 2024 State of Generative AI in the Enterprise",
+      "publisher": "Simon Willison's Weblog",
+      "date": "2024-11-29",
+      "url": "https://simonwillison.net/2024/Nov/29/menlo-ventures",
+      "covers": "2024",
+      "note": "OpenAI 50% to 34%, Anthropic 12% to 24%; third provider not given."
+     }
+    ],
+    "checked": "Q4 2023 (69) and Q4 2025 (88) match.",
+    "gaps": "No 2024 point: the line gives 78.5% at Q4 2024, which needs a third provider at ≈20% on top of OpenAI 34% + Anthropic 24%; not confirmed. Q4 2026 carried forward."
+   },
+   "anchor": "AN15",
+   "model": {
+    "formula": [
+     "TC → TC* at 0.9 a year, plus jolts",
+     "TC* = clamp(c + 40·(1 − e^(−G/3)) + 10·breakthrough − 18·max(0, geopolitics − 0.3) − 14(sovereignty − 0.35) − 0.6(Np − 12) + 8·max(0, regulation − 0.5) + 15(platform − 0.6), 25, 98)"
+    ],
+    "explanation": "Concentration rises with a frontier lead, regulation and lock-in, and falls with fragmentation, sovereignty demand and more labs at parity.",
+    "drivers": [
+     "brk",
+     "geo",
+     "sovereignty",
+     "regulation",
+     "platform"
+    ],
+    "inputs": [
+     "G",
+     "Np"
+    ]
+   },
+   "caveats": [
+    "A survey estimate."
+   ],
+   "group": "D"
+  },
+  "PF": {
+   "definition": "Lab distress index: illustrative 0–100 pressure on the top AI labs (funding, margins, credit).",
+   "unit": "index 0–100 (not a probability)",
+   "history": {
+    "method": "Illustrative index: the history is a judgement by the AI Forecast Atlas team, drawn dashed; there is no published series.",
+    "sources": [],
+    "checked": "n/a (model construct)",
+    "gaps": "n/a"
+   },
+   "anchor": "AN21",
+   "model": {
+    "formula": [
+     "distress → 2 + 50·sigmoid(k − h) at 3 a year, plus jolts",
+     "h (lab health) = 0.4(hype − 60)/40 + 0.5(gR − 0.4) + 0.15·ln(prem ÷ prem₀) − 0.7(credit stress − 55)/30 − 0.012(Np − 12)",
+     "k is set so that Q4 2026 equals 8"
+    ],
+    "explanation": "Distress rises when hype, revenue growth and pricing power fade, credit tightens and more labs compete.",
+    "drivers": [],
+    "inputs": [
+     "S",
+     "R",
+     "prem",
+     "Cs",
+     "Np"
+    ]
+   },
+   "caveats": [
+    "Not a probability of failure."
+   ],
+   "group": "D"
+  },
+  "SN": {
+   "definition": "Signal-to-noise: an illustrative index of how easy it is to find trustworthy content and apps amid AI-generated volume (2023 = 100).",
+   "unit": "index (2023 = 100)",
+   "history": {
+    "method": "Illustrative index: the history is a judgement by the AI Forecast Atlas team, drawn dashed; there is no published series.",
+    "sources": [],
+    "checked": "n/a (model construct)",
+    "gaps": "n/a"
+   },
+   "anchor": "AN25",
+   "model": {
+    "formula": [
+     "SN → SN* at 1.2 a year",
+     "SN* = clamp(c − 25·log₁₀(Pc₀ ÷ Pc) − 40·max(0, trust incidents − 0.2) + 18(regulation − 0.35) + min(15, 3·max(0, year − 2028)·(0.6 + 0.4·regulation)), 8, 100)"
+    ],
+    "explanation": "Cheaper tokens flood channels with AI-made content (each 10× price fall costs 25 points); provenance rules and tools restore some signal after 2028.",
+    "drivers": [
+     "trust",
+     "regulation"
+    ],
+    "inputs": [
+     "Pc"
+    ]
+   },
+   "caveats": [
+    "Illustrative."
+   ],
+   "group": "D"
+  },
+  "GDP": {
+   "definition": "Contribution of AI to US real GDP growth.",
+   "unit": "percentage points",
+   "history": {
+    "method": "Built from ING’s decomposition: tech investment net of imports ≈36% of Q2 2026 growth (× 2.2% = 0.8 pp) plus a wealth effect of 0.44 pp ≈ +1.2 pp (AN18); earlier points are approximate values on the same basis.",
+    "sources": [
+     {
+      "title": "How much is AI contributing to US economic growth?",
+      "publisher": "ING",
+      "date": "2026-08-20",
+      "url": "https://think.ing.com/opinions/how-much-is-ai-contributing-to-us-economic-growth/",
+      "covers": "Share of US growth from tech investment and the wealth effect, Q2 2026"
+     },
+     {
+      "title": "Q2 2026 GDP third estimate: real GDP at 2.2%",
+      "publisher": "Advisor Perspectives (BEA data)",
+      "date": "2026-09-30",
+      "url": "https://www.advisorperspectives.com/dshort/updates/2026/09/30/q2-gdp-third-estimate-real-gdp-at-2-2",
+      "covers": "US real GDP growth, Q2 2026"
+     },
+     {
+      "title": "Tracking AI's Contribution to GDP Growth",
+      "publisher": "Federal Reserve Bank of St. Louis (On the Economy)",
+      "date": "2026-01-12",
+      "url": "https://www.stlouisfed.org/on-the-economy/2026/jan/tracking-ai-contribution-gdp-growth",
+      "covers": "Q1-Q3 2025",
+      "note": "AI-related investment (IT equipment, software, R&D, data centres) added 1.30, 1.16 and 0.48 pp (annualised, gross of imports) in 2025 Q1-Q3; average 0.97."
+     },
+     {
+      "title": "The AI Buildout and the Economy: Publicly Available Data to Assess AI's Impact",
+      "publisher": "Federal Reserve Board (FEDS Notes)",
+      "date": "2026-07-17",
+      "url": "https://www.federalreserve.gov/econres/notes/feds-notes/the-ai-buildout-and-the-economy-publicly-available-data-to-assess-ais-impact-20260717.html",
+      "covers": "2025 - Q1 2026",
+      "note": "Values only in a chart and XLSX; a secondary report reads Q1 2026 as 0.73 pp net of imports (1.18 gross) of 2.1% growth (https://letsdatascience.com/news/ai-investment-drives-third-of-us-growth-fabeb7ac, 2026-08-04)."
+     },
+     {
+      "title": "Data centers and US GDP growth in H1 2025 (Jason Furman)",
+      "publisher": "Fortune",
+      "date": "2025-10-07",
+      "url": "https://fortune.com/2025/10/07/data-centers-gdp-growth-zero-first-half-2025-jason-furman-harvard-economist",
+      "covers": "H1 2025",
+      "note": "IT equipment and software = 92% of H1 2025 growth; growth excluding them ≈0.1% annualised."
+     }
+    ],
+    "checked": "Q2 2026 (1.2) = ING 36% x 2.2% (BEA third estimate) ≈ 0.8 pp + 0.44 pp. Q1 2026 (≈1.1 on the curve) consistent with the Fed's ≈0.73 pp net investment plus a ≈0.4 pp wealth effect.",
+    "gaps": "Q1 2023 (0.1), Q4 2023 (0.25) and Q4 2024 (0.5) have no estimate on the same basis. 2025 points (0.8 at Q2, 1.0 at Q4) are not like-for-like with the St. Louis Fed figures (gross of imports, no wealth effect, quarterly annualised)."
+   },
+   "anchor": "AN18",
+   "model": {
+    "formula": [
+     "contribution → clamp(raw + gap·e^(−Δt/2), −4.5, 4.5) at 2.5 a year",
+     "raw = [0.79 × (K − K a year ago) + 0.015 × 1,000 × (W − W a year ago) + 0.175 × (VC − VC a year ago)] ÷ US GDP × 100",
+     "W (AI-linked wealth, $T) = 15 × √(VN ÷ VN₀) + 0.5 × VL;  US GDP = $31,000B × 1.04^Δt",
+     "0.79 ≈ 1.3 (all US AI builders vs the Big-4) × 0.6 (domestic share); 1.5¢ of spending per $ of wealth (ING); 0.175 = productivity pass-through of new AI work value",
+     "gap = the difference that makes Q4 2026 equal +1.2 pp; it fades over about two years"
+    ],
+    "explanation": "Growth comes from the change in investment (net of imports), the wealth effect of AI stocks and the productivity of new AI work.",
+    "drivers": [],
+    "inputs": [
+     "K",
+     "VN",
+     "VL",
+     "AU"
+    ]
+   },
+   "caveats": [
+    "A construction from ING’s components, not an official statistic."
+   ],
+   "group": "E"
+  },
+  "AUp": {
+   "definition": "Potential work: the share of knowledge-work value organisations are ready to automate (the adoption S-curve).",
+   "unit": "% of knowledge-work value",
+   "history": {
+    "method": "Equal to realised work in history.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "AUp grows logistically: each quarter AUp += ¼ × r × AUp × (1 − AUp ÷ ceiling)",
+     "ceiling = clamp(40 + 10(breakthrough − 0.1) + 10(efficiency − 0.55) − 12·max(0, regulation − 0.4) + 8(adoption − 0.6), 5, 55)   (points; a shock can lower it)",
+     "r = max(0.02, 0.30 + 0.50·e^(−Δt/2) + g − g₀);  g = 1.1(adoption − 0.6) + 0.35·breakthrough − 0.8·max(0, trust − 0.25) − 0.5·max(0, regulation − 0.45) − 0.8·max(0, credit stress − 65)/30 − 0.3·max(0, energy − 0.7) − 0.4·max(0, geopolitics − 0.6)"
+    ],
+    "explanation": "Organisations adopt along an S-curve that slows as it approaches a ceiling; adoption, breakthroughs and efficiency raise it, trust incidents, regulation and stress slow it.",
+    "drivers": [
+     "adoption",
+     "brk",
+     "efficiency",
+     "regulation",
+     "trust",
+     "energy",
+     "geo"
+    ],
+    "inputs": [
+     "Cs"
+    ]
+   },
+   "caveats": [
+    "The 40% ceiling is an assumption."
+   ],
+   "group": "E"
+  },
+  "AUd": {
+   "definition": "Work wanted: potential work after the response to the cost of a completed task.",
+   "unit": "% of knowledge-work value",
+   "history": {
+    "method": "Equal to realised work in history.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "AUd = min(60, AUp × w);  w = e^(0.2·tanh(−0.25·ε·ln C_task ÷ 0.2)) ≈ C_task^(−0.25ε), at most +22% / −18%",
+     "ε (price elasticity) = 0.5 + 1.0 × demand response",
+     "C_task (cost of a completed task vs today) = (average token price ÷ today) × τ;  average price = sf × Pf + (1 − sf) × Pc, frontier share sf = 0.12 + 0.35(1 − e^(−G/4)) + 0.15·breakthrough",
+     "τ (tokens per task vs today) grows 0.10 + 0.40·e^(−Δt/3) + 0.2(adoption − 0.6) + 0.3(breakthrough − 0.1) a year (log): agents and reasoning use more tokens"
+    ],
+    "explanation": "Cheaper completed tasks make organisations want more AI work (the Jevons effect), within limits.",
+    "drivers": [
+     "elastic",
+     "adoption",
+     "brk"
+    ],
+    "inputs": [
+     "AUp",
+     "Pf",
+     "Pc",
+     "G"
+    ]
+   },
+   "caveats": [
+    "Elasticity is a driver, not an estimate."
+   ],
+   "group": "E"
+  },
+  "AU": {
+   "definition": "Realised work: the share of knowledge-work value actually completed by AI with the compute served.",
+   "unit": "% of knowledge-work value",
+   "history": {
+    "method": "Illustrative index: the history is a judgement by the AI Forecast Atlas team, drawn dashed; there is no published series. The Q4 2026 value (4.0% of a $40T pool) is an assumption.",
+    "sources": [],
+    "checked": "n/a (assumption)",
+    "gaps": "n/a"
+   },
+   "anchor": "AN19",
+   "model": {
+    "formula": [
+     "AU = AUd × (paid compute served ÷ paid compute wanted)",
+     "paid compute wanted = k × AUd × τ × κ;  served first, up to 85% of all compute served",
+     "C_task (cost of a completed task vs today) = (average token price ÷ today) × τ;  average price = sf × Pf + (1 − sf) × Pc, frontier share sf = 0.12 + 0.35(1 − e^(−G/4)) + 0.15·breakthrough"
+    ],
+    "explanation": "When compute is short (no power, no chips), part of the work wanted cannot be done.",
+    "drivers": [
+     "energy",
+     "hwSupply"
+    ],
+    "inputs": [
+     "AUd",
+     "SVp"
+    ]
+   },
+   "caveats": [
+    "The $40T knowledge-work value pool and today’s 4% are assumptions."
+   ],
+   "group": "E"
+  },
+  "CRp": {
+   "definition": "Share of the value of AI work that is paid to vendors as revenue (capture).",
+   "unit": "%",
+   "history": {
+    "method": "Derived from history: R ÷ VC.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "CRp = 100 × CR — see AI revenue"
+    ],
+    "explanation": "Falls when completed tasks get cheaper (cost-priced revenue), rises with agents, lock-in and pricing power (value-priced revenue).",
+    "drivers": [
+     "platform"
+    ],
+    "inputs": [
+     "R"
+    ]
+   },
+   "caveats": [
+    "Soft ceiling at 25%."
+   ],
+   "group": "E"
+  },
+  "BLD": {
+   "definition": "US private construction put in place for data centres (seasonally adjusted annual rate).",
+   "unit": "$B a year",
+   "history": {
+    "method": "A stated mapping in history too: the same share of Big-4 capex (10.8% in the base release), which reproduces the Census values for Aug 2025 ($49B) and Aug 2026 ($85B).",
+    "sources": [
+     {
+      "title": "Construction spending: private, seasonally adjusted (C30)",
+      "publisher": "US Census Bureau",
+      "date": "2026-10-01",
+      "url": "https://www.census.gov/construction/c30/pdf/privsa.pdf",
+      "covers": "US data-centre construction put in place, Aug 2025 and Aug 2026"
+     }
+    ]
+   },
+   "anchor": "AN26",
+   "model": {
+    "formula": [
+     "BLD = buildShare × K, buildShare = AN26 ÷ Big-4 capex in Q4 2026 (0.108 in the base release)"
+    ],
+    "explanation": "Data-centre construction follows the build-out at the ratio observed in Census data.",
+    "drivers": [],
+    "inputs": [
+     "K"
+    ]
+   },
+   "caveats": [
+    "A fixed ratio: construction would lag capex in reality."
+   ],
+   "group": "S"
+  },
+  "AUa": {
+   "definition": "Share of AECO design and engineering work done by AI (illustrative mapping).",
+   "unit": "%",
+   "history": {
+    "method": "Mapping applied to the history of realised work.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "AUa = 100 × (1 − (1 − AU ÷ 100)^0.6)"
+    ],
+    "explanation": "Design and engineering work is assumed less exposed than knowledge work in general (exponent 0.6 < 1).",
+    "drivers": [],
+    "inputs": [
+     "AU"
+    ]
+   },
+   "caveats": [
+    "Illustrative mapping, not a sector measurement."
+   ],
+   "group": "S"
+  },
+  "AUdev": {
+   "definition": "Share of software-development work done by AI (illustrative mapping).",
+   "unit": "%",
+   "history": {
+    "method": "Mapping applied to the history of realised work.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "AUdev = 100 × (1 − (1 − AU ÷ 100)^3.1)   (4% economy-wide ≈ 12% of development work)"
+    ],
+    "explanation": "Software development is assumed far more exposed than knowledge work in general (exponent 3.1).",
+    "drivers": [],
+    "inputs": [
+     "AU"
+    ]
+   },
+   "caveats": [
+    "Illustrative mapping."
+   ],
+   "group": "S"
+  },
+  "seatG": {
+   "definition": "Knowledge-work seat index: human seats if seats track the work that is not automated (today = 100).",
+   "unit": "index (Q4 2026 = 100)",
+   "history": {
+    "method": "Mapping applied to history.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "seatG = 100 × (1 − AU ÷ 100) ÷ (1 − AU today ÷ 100)"
+    ],
+    "explanation": "A simple reading for per-seat software: fewer human seats as more work is automated.",
+    "drivers": [],
+    "inputs": [
+     "AU"
+    ]
+   },
+   "caveats": [
+    "Ignores growth in the total amount of work."
+   ],
+   "group": "S"
+  },
+  "seatA": {
+   "definition": "AECO design seat index (today = 100).",
+   "unit": "index (Q4 2026 = 100)",
+   "history": {
+    "method": "Mapping applied to history.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "seatA = 100 × (1 − AUa ÷ 100) ÷ (1 − AUa today ÷ 100)"
+    ],
+    "explanation": "The same reading for AECO design seats.",
+    "drivers": [],
+    "inputs": [
+     "AUa"
+    ]
+   },
+   "caveats": [
+    "Illustrative."
+   ],
+   "group": "S"
+  },
+  "CtaskI": {
+   "definition": "Cost of a completed AI task, as an index (today = 100): average token price × tokens per task.",
+   "unit": "index (Q4 2026 = 100)",
+   "history": {
+    "method": "Starts in Q4 2026 (= 100).",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "CtaskI = 100 × C_task",
+     "C_task (cost of a completed task vs today) = (average token price ÷ today) × τ;  average price = sf × Pf + (1 − sf) × Pc, frontier share sf = 0.12 + 0.35(1 − e^(−G/4)) + 0.15·breakthrough",
+     "τ (tokens per task vs today) grows 0.10 + 0.40·e^(−Δt/3) + 0.2(adoption − 0.6) + 0.3(breakthrough − 0.1) a year (log): agents and reasoning use more tokens"
+    ],
+    "explanation": "Token prices may fall faster than task costs, because agents and reasoning use more tokens per task.",
+    "drivers": [
+     "adoption",
+     "brk"
+    ],
+    "inputs": [
+     "Pf",
+     "Pc",
+     "G"
+    ]
+   },
+   "caveats": [
+    "Tokens-per-task growth is an assumption."
+   ],
+   "group": "S"
+  },
+  "PLAT": {
+   "definition": "Platform lock-in: the scenario’s driver path, shown as a series (0–100).",
+   "unit": "index 0–100 (scenario input)",
+   "history": {
+    "method": "Today’s value (60) is a judgement.",
+    "sources": []
+   },
+   "anchor": null,
+   "model": {
+    "formula": [
+     "PLAT = 100 × platform driver"
+    ],
+    "explanation": "Identity, workflow, data, distribution and governance that keep customers on one platform whatever the model quality.",
+    "drivers": [
+     "platform"
+    ],
+    "inputs": []
+   },
+   "caveats": [
+    "A scenario input, not an outcome."
+   ],
+   "group": "D"
+  }
+ },
+ "impact": {
+  "formula": "score = 100 × tanh( Σ weightₖ × factorₖ ÷ 1.6 )",
+  "explanation": "Each business group or region has hand-set weights on a set of factors. A factor is the change since Q4 2026 in a modelled measure or driver, scaled so that typical moves are of similar size. tanh keeps scores within −100…+100.",
+  "features": {
+   "cap": "AI build-out: ln(capex ÷ today)",
+   "rev": "AI revenue: ln(revenue ÷ today) ÷ 1.5",
+   "val": "lab valuations: ln(lab value ÷ today) ÷ 1.5",
+   "nv": "chip valuations: ln(Nvidia value ÷ today) ÷ 1.5",
+   "prem": "frontier pricing power: ln(premium ÷ today) ÷ 1.5",
+   "price": "cost of AI tokens: ln(average token price ÷ today) ÷ 3",
+   "task": "cost per completed task: ln(task cost ÷ today) ÷ 3",
+   "credit": "credit stress: (index − today) ÷ 40",
+   "bank": "bank stress: (index − today) ÷ 40",
+   "power": "data-centre power use: ln(TWh ÷ today)",
+   "pprice": "power prices: ln(price index ÷ today) ÷ 0.5",
+   "util": "compute utilisation: (share in use − today) ÷ 0.25",
+   "gpu": "GPU rents: ln(rent ÷ today)",
+   "dram": "memory prices: ln(DRAM index ÷ today)",
+   "local": "local AI share: (share − today) ÷ 20 points",
+   "open": "open-weight token share: (share − today) ÷ 25 points",
+   "ent": "enterprise open-weight use: (share − today) ÷ 15 points",
+   "agents": "specialised agents: (share − today) ÷ 25 points",
+   "conc": "provider concentration: (top-3 share − today) ÷ 20 points",
+   "fail": "lab distress: (index − today) ÷ 20",
+   "sn": "signal-to-noise: ln(index ÷ today) ÷ 0.7",
+   "auto": "automation of work: ln(realised work ÷ today) ÷ 2",
+   "gdp": "US growth from AI: (pp − today) ÷ 1",
+   "trust": "trust incidents: driver − 0.20",
+   "geo": "fragmentation: driver − 0.35",
+   "reg": "regulation: driver − 0.35",
+   "sov": "sovereignty demand: driver − 0.35",
+   "energy": "energy constraint: driver − 0.55",
+   "plat": "platform lock-in: (driver − 0.60) ÷ 0.4",
+   "idle": "unpowered chips: (share − today) ÷ 0.25",
+   "unmet": "unserved demand: (share − today) ÷ 0.2"
+  }
+ },
+ "pools": {
+  "formula": [
+   "Chips & memory = 0.55 × capex × chip margin, margin = clamp(0.65 + 0.25(utilisation − 0.85) + 0.5 × scarcity, 0.25, 0.85)",
+   "Power & data centres = DC TWh × ($60 per MWh × power index ÷ 100) ÷ 1000 × 0.3 + 0.35 × capex × 18%",
+   "Cloud & GPU rental = max(0, 0.45 × revenue × (0.25 + 0.6(utilisation − 0.8) + 0.5 × scarcity)) + 0.04 × capex × max(0, utilisation − 0.6)",
+   "Model labs = max(0, 0.55 × revenue × m ÷ (1 + m) − 0.08 × capex × (0.5 + 0.5·min(1, lag ÷ 6))), m = frontier share × (markup − 1) + (1 − frontier share) × 0.25",
+   "Agents & apps = value of AI work × (0.03 + 0.10 × agent share) × 0.25",
+   "Services & integration = value of AI work × 1.5% × (1 + local share ÷ 30) × 0.2",
+   "shares = each layer ÷ sum of layers (negative layers count as zero)"
+  ],
+  "explanation": "A stylised allocation of gross margin by layer — not accounting profit."
+ },
+ "drivers": {
+  "capital": {
+   "affects": [
+    "K",
+    "S",
+    "prem",
+    "Cs"
+   ]
+  },
+  "rates": {
+   "affects": [
+    "K",
+    "Cs",
+    "Mult",
+    "VN",
+    "prem"
+   ]
+  },
+  "adoption": {
+   "affects": [
+    "AUp",
+    "CtaskI",
+    "AS",
+    "R"
+   ]
+  },
+  "conv": {
+   "affects": [
+    "G",
+    "Np",
+    "Pc",
+    "OS",
+    "ES"
+   ]
+  },
+  "brk": {
+   "affects": [
+    "G",
+    "prem",
+    "S",
+    "K",
+    "AUp",
+    "TC",
+    "OS",
+    "LB"
+   ]
+  },
+  "efficiency": {
+   "affects": [
+    "Pc",
+    "AUp",
+    "G",
+    "AS",
+    "LB"
+   ]
+  },
+  "hwSupply": {
+   "affects": [
+    "Pc",
+    "DR",
+    "GR",
+    "K",
+    "LB",
+    "VN",
+    "Ufp"
+   ]
+  },
+  "energy": {
+   "affects": [
+    "STp",
+    "Pp",
+    "K",
+    "DC",
+    "AS",
+    "LS"
+   ]
+  },
+  "geo": {
+   "affects": [
+    "DR",
+    "Pp",
+    "Pc",
+    "TC",
+    "OS",
+    "LS",
+    "Cs",
+    "VN",
+    "R"
+   ]
+  },
+  "regulation": {
+   "affects": [
+    "AUp",
+    "prem",
+    "Np",
+    "TC",
+    "OS",
+    "ES",
+    "SN",
+    "R"
+   ]
+  },
+  "trust": {
+   "affects": [
+    "S",
+    "AUp",
+    "Cs",
+    "OS",
+    "ES",
+    "LS",
+    "SN"
+   ]
+  },
+  "sovereignty": {
+   "affects": [
+    "OS",
+    "ES",
+    "LS",
+    "TC",
+    "Np",
+    "prem"
+   ]
+  },
+  "platform": {
+   "affects": [
+    "prem",
+    "TC",
+    "ES",
+    "R",
+    "VL"
+   ]
+  },
+  "elastic": {
+   "affects": [
+    "AUd",
+    "R",
+    "DC"
+   ]
+  }
+ },
+ "scenarios": {
+  "COMM": {
+   "tilts": "Open-model catch-up and chip supply rise strongly, efficiency and sovereignty demand rise; investor appetite, rates and platform lock-in fall."
+  },
+  "BUST": {
+   "tilts": "Investor appetite collapses in 2028, rates spike in 2027 then fall, adoption stalls, chips turn to a glut and the power constraint eases; trust incidents rise."
+  },
+  "BRKW": {
+   "tilts": "A frontier breakthrough (driver up to 0.85) with strong adoption and investor appetite; open-model catch-up falls behind; regulation and lock-in rise."
+  },
+  "SPLT": {
+   "tilts": "Geopolitical fragmentation and sovereignty demand surge; chip supply is cut in 2028; investor appetite falls; regulation and trust worries rise."
+  },
+  "PWR": {
+   "tilts": "The grid and energy constraint tightens hard (0.95 in 2028); efficiency, chip supply and sovereignty rise; investor appetite softens."
+  },
+  "BOOM": {
+   "tilts": "Enterprise adoption soars, demand responds strongly to falling prices, chip supply and open catch-up improve; rates and the energy constraint ease."
+  },
+  "TRST": {
+   "tilts": "A trust crisis in 2027 fades over three years; sovereignty demand and regulation jump; adoption pauses, then recovers."
+  },
+  "PLAT": {
+   "tilts": "Open-model catch-up and chip supply rise as in Commoditization, but platform lock-in deepens (0.85) instead of eroding."
+  }
+ },
+ "events": [
+  {
+   "t": 2023.0,
+   "text": "GPT-4 launches at $30/$60 per million tokens",
+   "sources": [
+    {
+     "title": "OpenAI releases GPT-4, a multimodal AI that it claims is state-of-the-art",
+     "publisher": "TechCrunch",
+     "date": "2023-03-14",
+     "url": "https://techcrunch.com/2023/03/14/openai-releases-gpt-4-ai-that-it-claims-is-state-of-the-art/"
+    }
+   ]
+  },
+  {
+   "t": 2023.5,
+   "text": "Llama 2 ships with open weights",
+   "sources": [
+    {
+     "title": "Meta releases latest AI model for commercial use",
+     "publisher": "Axios",
+     "date": "2023-07-18",
+     "url": "https://www.axios.com/2023/07/18/meta-llama-2-release-commercial-use"
+    }
+   ]
+  },
+  {
+   "t": 2024.5,
+   "text": "Llama 3.1 405B: first open model to match GPT-4, ~16 months later",
+   "sources": [
+    {
+     "title": "Introducing Llama 3.1 (405B)",
+     "publisher": "Meta",
+     "date": "2024-07-23",
+     "url": "https://ai.meta.com/blog/meta-llama-3-1/"
+    },
+    {
+     "title": "Open models report",
+     "publisher": "Epoch AI",
+     "date": "2024-11-04",
+     "url": "https://epoch.ai/blog/open-models-report"
+    }
+   ]
+  },
+  {
+   "t": 2025.0,
+   "text": "DeepSeek R1 claims o1-level results ~4 months after o1-preview; Nvidia falls 17% in a day",
+   "sources": [
+    {
+     "title": "DeepSeek-R1 release",
+     "publisher": "DeepSeek",
+     "date": "2025-01-20",
+     "url": "https://deepseek.com/en/news/deepseek-r1/"
+    },
+    {
+     "title": "DeepSeek sparks AI stock selloff; Nvidia loses record $593 bn in mcap",
+     "publisher": "Business Standard (Reuters)",
+     "date": "2025-01-28",
+     "url": "https://www.business-standard.com/amp/markets/news/deepseek-sparks-ai-stock-selloff-nvidia-loses-record-593-bn-in-mcap-125012800095_1.html"
+    }
+   ],
+   "note": "Minor: '~4 months' counts from o1-preview (12 Sep 2024, https://openai.com/index/introducing-openai-o1-preview/); 'matches' is DeepSeek's own claim. Nvidia fell 'just under 17%' on 27 Jan 2025 (-$593B)."
+  },
+  {
+   "t": 2025.5,
+   "text": "Nvidia signs a letter of intent to invest up to $100B in OpenAI, paid as each gigawatt is deployed",
+   "sources": [
+    {
+     "title": "OpenAI and NVIDIA Announce Strategic Partnership to Deploy 10 Gigawatts of NVIDIA Systems",
+     "publisher": "NVIDIA",
+     "date": "2025-09-22",
+     "url": "https://investor.nvidia.com/news/press-release-details/2025/OpenAI-and-NVIDIA-Announce-Strategic-Partnership-to-Deploy-10-Gigawatts-of-NVIDIA-Systems/default.aspx"
+    }
+   ],
+   "note": "Minor: a letter of intent; the investment comes 'progressively as each gigawatt is deployed'. The circular-financing clause is not in this source."
+  },
+  {
+   "t": 2025.75,
+   "text": "Nvidia becomes the first $5T company",
+   "sources": [
+    {
+     "title": "Nvidia Becomes the First Company to Reach a $5 Trillion Market Value, Leaving Apple and Microsoft in the Dust",
+     "publisher": "Entrepreneur",
+     "date": "2025-10-29",
+     "url": "https://www.entrepreneur.com/business-news/nvidia-becomes-the-first-to-pass-5-trillion-in-market-value"
+    }
+   ]
+  },
+  {
+   "t": 2025.75,
+   "text": "DRAM contract prices surge as AI memory crowds out PCs",
+   "sources": [
+    {
+     "title": "Global DRAM Revenue Jumps 30.9% in 3Q25, Micron's Market Share Climbs by 3.7 Percentage Points, Says TrendForce",
+     "publisher": "TrendForce",
+     "date": "2025-11-26",
+     "url": "https://www.trendforce.com/presscenter/news/20251126-12802.html"
+    },
+    {
+     "title": "DRAM Prices to Continue Rising in 4Q25, Server Demand Surges Ahead While Legacy Process Products See Steeper Increases, Says TrendForce",
+     "publisher": "TrendForce",
+     "date": "2025-09-24",
+     "url": "https://www.trendforce.com/presscenter/news/20250924-12733.html"
+    }
+   ]
+  },
+  {
+   "t": 2026.0,
+   "text": "“SaaSpocalypse”: US software & services stocks lose ~$830B in six sessions",
+   "sources": [
+    {
+     "title": "Global software stocks hit by AI disruption fears (Reuters)",
+     "publisher": "Reuters (via Yahoo Finance)",
+     "date": "2026-02-04",
+     "url": "https://finance.yahoo.com/news/global-software-stocks-hit-anthropic-120659089.html"
+    }
+   ]
+  },
+  {
+   "t": 2026.0,
+   "text": "Conventional DRAM contract prices jump 93–98% in a quarter",
+   "sources": [
+    {
+     "title": "Rapid Contract Price Surge Drives 1Q26 DRAM Industry Up 81% QoQ, Says TrendForce",
+     "publisher": "TrendForce",
+     "date": "2026-06-01",
+     "url": "https://www.trendforce.com/presscenter/news/20260601-13070.html"
+    }
+   ]
+  },
+  {
+   "t": 2026.0,
+   "text": "OpenAI raises $122B at an $852B post-money valuation",
+   "sources": [
+    {
+     "title": "OpenAI funding announcement ($122B at $852B post-money)",
+     "publisher": "OpenAI",
+     "date": "2026-03-31",
+     "url": "https://openai.com/index/accelerating-the-next-phase-ai/"
+    }
+   ]
+  },
+  {
+   "t": 2026.25,
+   "text": "Anthropic Series H at a $965B post-money valuation",
+   "sources": [
+    {
+     "title": "Anthropic Series H announcement ($65B at $965B post-money)",
+     "publisher": "Anthropic",
+     "date": "2026-05-28",
+     "url": "https://www.anthropic.com/news/series-h"
+    }
+   ]
+  },
+  {
+   "t": 2026.25,
+   "text": "BofA survey: hyperscaler capex now seen as likeliest source of a credit event",
+   "sources": [
+    {
+     "title": "AI Data Center Borrowing Rapidly Climbs Wall Street's Risk List",
+     "publisher": "Bloomberg (via Bloomberg Law)",
+     "date": "2026-05-19",
+     "url": "https://news.bloomberglaw.com/financial-accounting/ai-data-center-borrowing-rapidly-climbs-wall-streets-risk-list"
+    }
+   ]
+  },
+  {
+   "t": 2026.25,
+   "text": "Export-control order suspends access to two frontier models for ~3 weeks",
+   "sources": [
+    {
+     "title": "Statement on access to Fable 5 and Mythos 5 (US export-control directive)",
+     "publisher": "Anthropic",
+     "date": "2026-06-12",
+     "url": "https://www.anthropic.com/news/fable-mythos-access"
+    },
+    {
+     "title": "US reverses export restrictions on Anthropic's Fable 5, Mythos 5 AI models",
+     "publisher": "CIO",
+     "date": "2026-07-01",
+     "url": "https://www.cio.com/article/4191550/us-reverses-export-restrictions-on-anthropics-fable-5-mythos-5-ai-models.html"
+    }
+   ]
+  },
+  {
+   "t": 2026.5,
+   "text": "Big-4 full-year capex guidance sums to $720–745B (company guidance; Platformonomics counts $735–750B)",
+   "sources": [
+    {
+     "title": "Follow the CAPEX: Q2 2026 Scoreboard",
+     "publisher": "Platformonomics",
+     "date": "2026-07-31",
+     "url": "https://platformonomics.com/2026/07/follow-the-capex-q2-2026-scoreboard/"
+    }
+   ],
+   "note": "State the basis: company guidance (Microsoft ≈$175B after the lease reclassification, Alphabet $195-205B, Amazon ≈$220B cash, Meta $130-145B; all verified on the AN1 pages) sums to $720-745B, but Platformonomics' own table totals $735-750B because it keeps Microsoft at ≈$190B."
+  },
+  {
+   "t": 2026.5,
+   "text": "Kimi K3 open-weight model ranks #2–3 on major indices (weights scheduled for 27 Jul)",
+   "sources": [
+    {
+     "title": "Kimi K3 achieves #3 in the Artificial Analysis Intelligence Index, comparable to Opus 4.8 and GPT-5.5",
+     "publisher": "Artificial Analysis",
+     "date": "2026-07-17",
+     "url": "https://artificialanalysis.ai/articles/kimi-k3-achieves-3-in-the-artificial-analysis-intelligence-index-comparable-to-opus-4-8-and-gpt-5-5"
+    },
+    {
+     "title": "Moonshot Kimi K3 puts open weights within months of frontier",
+     "publisher": "AI Weekly",
+     "date": "2026-07-28",
+     "url": "https://aiweekly.co/alerts/moonshot-kimi-k3-puts-open-weights-within-months-of-frontier"
+    }
+   ],
+   "note": "Minor: #3 on Artificial Analysis (score 57) and #2 on Vals AI; at announcement (16 Jul 2026) the weights were not yet public (scheduled for 27 Jul)."
+  },
+  {
+   "t": 2026.5,
+   "text": "KOSPI falls almost 40% below its June peak (29 Jul), then rallies a record 17.9% in a day",
+   "sources": [
+    {
+     "title": "KOSPI Falls 40% From June Peak",
+     "publisher": "Bajaj Broking",
+     "date": "2026-07-29",
+     "url": "https://www.bajajbroking.in/share-market-news/kospi-falls-40-percent-from-june-peak"
+    },
+    {
+     "title": "Kospi Ends Wild Week Lower Despite Record 18% Rebound",
+     "publisher": "Business Today (Malaysia)",
+     "date": "2026-08-02",
+     "url": "https://www.businesstoday.com.my/2026/08/02/kospi-ends-wild-week-lower-despite-record-18-rebound/"
+    }
+   ],
+   "note": "Wrong for month-end: KOSPI closed 39.66% below its 19 Jun record (9,385) on 29 Jul (5,663.24), but a record 17.91% rally on 31 Jul lifted it to 6,595.45, ≈30% below the peak. Suggest: 'KOSPI falls almost 40% from its June peak in late July'."
+  },
+  {
+   "t": 2026.5,
+   "text": "API price war: four pricing moves in 17 days, mostly on mid and small tiers",
+   "sources": [
+    {
+     "title": "The 2026 Frontier AI Price War: Four Pricing Moves in 17 Days, Compared",
+     "publisher": "Tech Jack Solutions",
+     "date": "2026-08-16",
+     "url": "https://techjacksolutions.com/ai-tools/rankings/frontier-ai-price-war/"
+    }
+   ],
+   "note": "The four moves (30 Jul - 16 Aug 2026) were not all cuts and mostly not frontier tiers: OpenAI cut GPT-5.6 Luna 80% and Terra 20%; xAI held Grok 4.6's price; Google set an introductory Gemini 3.7 Flash rate that doubles on 1 Jan 2027; DeepSeek raised V4 prices with peak/off-peak billing. Suggest: 'API pricing war: four pricing moves in 17 days, not all cuts'."
+  },
+  {
+   "t": 2026.75,
+   "text": "OpenAI’s run-rate reported at $50B net; the earlier $70B was a gross-equivalent figure",
+   "sources": [
+    {
+     "title": "OpenAI at $50B: gross vs net revenue accounting",
+     "publisher": "Axios",
+     "date": "2026-10-08",
+     "url": "https://www.axios.com/2026/10/08/openai-50-billion-arr-anthropic-revenue-accounting"
+    }
+   ]
+  },
+  {
+   "t": 2026.75,
+   "text": "IMF names an AI-driven market correction among three rising financial risks",
+   "sources": [
+    {
+     "title": "Global markets face rising risks from AI, bond yields and cyberattacks",
+     "publisher": "IMF Blog",
+     "date": "2026-10-13",
+     "url": "https://www.imf.org/en/blogs/articles/2026/10/12/global-financial-markets-face-rising-risks-from-ai-bond-yields-and-cyberattacks"
+    }
+   ],
+   "note": "Wording: the IMF names 'an artificial intelligence-driven market correction' as one of three key risks that 'have been increasing'; it does not call it a top near-term risk. Suggest: 'IMF names an AI-driven market correction among three rising financial risks'."
+  },
+  {
+   "t": 2026.75,
+   "text": "CoreWeave bonds yield ~15%; Nvidia at $5.2T",
+   "sources": [
+    {
+     "title": "CoreWeave bonds trade like distressed debt as AI spending outpaces balance sheets",
+     "publisher": "investingLive",
+     "date": "2026-10-15",
+     "url": "https://investinglive.com/stocks/coreweave-bonds-trade-like-distressed-debt-as-ai-spending-outpaces-balance-sheets/"
+    },
+    {
+     "title": "NVIDIA market cap",
+     "publisher": "FinHacker",
+     "date": "2026-10-16",
+     "url": "https://www.finhacker.cz/en/stocks/nvidia-market-cap/"
+    }
+   ]
+  }
+ ],
+ "glossary": [
+  {
+   "term": "Big-4",
+   "def": "Microsoft, Alphabet, Amazon and Meta — the largest buyers of AI infrastructure."
+  },
+  {
+   "term": "hyperscaler",
+   "def": "A company operating cloud data centres at global scale (here: the Big-4)."
+  },
+  {
+   "term": "capex",
+   "def": "Capital expenditure: money spent on long-lived assets such as chips, servers and data centres."
+  },
+  {
+   "term": "run-rate",
+   "def": "A recent period’s revenue scaled to a full year (for example a month × 12)."
+  },
+  {
+   "term": "gross basis",
+   "def": "Revenue counted at the price the end customer pays, including sales made through partners, counted once."
+  },
+  {
+   "term": "capital charge",
+   "def": "The yearly cost of the installed base: 24% of the last five years of capex (depreciation plus the cost of capital)."
+  },
+  {
+   "term": "token",
+   "def": "A piece of text (about ¾ of a word) that AI models read and write; usage is priced per million tokens."
+  },
+  {
+   "term": "frontier tier",
+   "def": "The flagship, most capable models of the leading labs."
+  },
+  {
+   "term": "good-enough tier",
+   "def": "The cheapest current models from a leading lab that handle routine work."
+  },
+  {
+   "term": "blend",
+   "def": "One price per million tokens weighting input 3 : output 1, so tiers can be compared."
+  },
+  {
+   "term": "price premium",
+   "def": "How many times more the frontier tier costs than the good-enough tier."
+  },
+  {
+   "term": "markup",
+   "def": "Price divided by resource cost; 1× means priced at cost."
+  },
+  {
+   "term": "open-weight",
+   "def": "A model whose trained weights are published, so anyone can run it themselves."
+  },
+  {
+   "term": "open-weight lag",
+   "def": "Months by which the best open-weight model trails the best closed model on Epoch AI’s Capabilities Index."
+  },
+  {
+   "term": "Epoch Capabilities Index",
+   "def": "Epoch AI’s combined score of model capability across benchmarks."
+  },
+  {
+   "term": "frontier parity",
+   "def": "Being within one model generation of the most capable model."
+  },
+  {
+   "term": "inference",
+   "def": "Running a trained model to answer requests (as opposed to training it)."
+  },
+  {
+   "term": "on-prem",
+   "def": "Running on the organisation’s own hardware instead of a public cloud."
+  },
+  {
+   "term": "specialised agent",
+   "def": "An AI system built to complete a narrow task end to end, such as checking a drawing set or triaging tickets."
+  },
+  {
+   "term": "TWh",
+   "def": "Terawatt-hour: a billion kilowatt-hours; a yearly electricity amount."
+  },
+  {
+   "term": "DRAM",
+   "def": "Ordinary computer memory; prices rise when AI memory (HBM) takes factory capacity."
+  },
+  {
+   "term": "HBM",
+   "def": "High-bandwidth memory stacked next to AI accelerators."
+  },
+  {
+   "term": "GPU-hour",
+   "def": "One graphics processor rented for one hour."
+  },
+  {
+   "term": "unpowered",
+   "def": "Chips bought and installed but without the electricity to run them."
+  },
+  {
+   "term": "credit stress",
+   "def": "An illustrative 0–100 index of strain in the debt financing the AI build-out; 70+ is a model flag."
+  },
+  {
+   "term": "lab distress",
+   "def": "An illustrative 0–100 index of pressure on the top AI labs; not a probability of failure."
+  },
+  {
+   "term": "signal-to-noise",
+   "def": "An illustrative index of how easy it is to find trustworthy content and apps amid AI-generated volume."
+  },
+  {
+   "term": "Jevons effect",
+   "def": "When something gets cheaper, total use can rise so much that total spending grows."
+  },
+  {
+   "term": "price elasticity",
+   "def": "How strongly usage responds to price; above 1, spending rises when prices fall."
+  },
+  {
+   "term": "system dynamics",
+   "def": "A modelling method where stocks change quarter by quarter through feedback loops."
+  },
+  {
+   "term": "scenario",
+   "def": "A coherent, internally consistent story of the future — not a forecast and not a probability."
+  },
+  {
+   "term": "driver",
+   "def": "One of fourteen 0–1 forces that scenarios move to steer the model."
+  },
+  {
+   "term": "shock",
+   "def": "An optional one-off event you can add to a run."
+  },
+  {
+   "term": "regime",
+   "def": "A rule-based label for the state of the AI market in a quarter."
+  },
+  {
+   "term": "starting value",
+   "def": "A Q4 2026 value in the evidence ledger that anchors the model (also: anchor)."
+  },
+  {
+   "term": "evidence ledger",
+   "def": "The list of all starting values with status, source and derivation."
+  },
+  {
+   "term": "knowledge work",
+   "def": "Office and professional work; the model assumes a $40 trillion yearly value pool."
+  },
+  {
+   "term": "AECO",
+   "def": "Architecture, engineering, construction and operations of buildings and infrastructure."
+  },
+  {
+   "term": "BIM",
+   "def": "Building Information Modelling: digital models of buildings shared across the project."
+  },
+  {
+   "term": "MCP",
+   "def": "Model Context Protocol: a standard way for AI assistants to read data from a service."
+  },
+  {
+   "term": "AI knowledge",
+   "def": "Information an AI model provides from its training and observations, without a specific published source. AI Forecast Atlas shows it with its own label, the model and the date, after a person has reviewed it."
+  },
+  {
+   "term": "AI research panel",
+   "def": "Several AI agents (OpenAI, Anthropic Claude, Google Gemini, xAI Grok, DeepSeek) answer the same research question independently; their answers are combined by weighted median and a person reviews the result."
+  },
+  {
+   "term": "weighted median",
+   "def": "The middle answer when the answers are sorted by value and each counts with its weight: half of the total weight lies on either side. Unlike an average, one outlying answer cannot pull it far."
+  },
+  {
+   "term": "agreement (panel)",
+   "def": "The share of the panel’s weight whose answers lie within a tolerance (normally ±10%) of the published value."
+  },
+  {
+   "term": "X watch",
+   "def": "Posts on X that the editor is watching: early signals with post links, a credibility label and an impact label. Signals, not data."
+  },
+  {
+   "term": "credibility label",
+   "def": "How far an X watch item can be trusted: high (an official or established source, ideally confirmed elsewhere), medium, low or unverified."
+  },
+  {
+   "term": "impact label",
+   "def": "How widely a post spreads on X: reach, reposts and replies. High impact does not mean true."
+  }
+ ]
+}

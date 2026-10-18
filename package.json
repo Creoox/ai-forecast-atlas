@@ -1,0 +1,20 @@
+{
+  "name": "ai-forecast-atlas",
+  "version": "1.2.0",
+  "description": "AI Forecast Atlas by Creoox AG: a weekly-updated scenario model of AI commoditization (2023–2035), with open data, newsletter, AI assistant and MCP server. Runs on plain PHP hosting.",
+  "private": true,
+  "type": "module",
+  "license": "BUSL-1.1",
+  "author": "Creoox AG (https://creoox.com)",
+  "homepage": "https://aiforecastatlas.com",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node web/build.mjs",
+    "test": "node --test test/unit.test.mjs",
+    "test:e2e": "node test/integration.mjs",
+    "test:ui": "python3 test/ui/ui_test.py",
+    "release": "node tools/release.mjs"
+  }
+}

@@ -1,0 +1,10 @@
+# AI Forecast Atlas — only mod_rewrite rules, which work on both home.pl platforms (IdeaWebServer and Apache).
+RewriteEngine On
+
+# 1. Always use HTTPS. Needs the SSL certificate for this address (guide, step 4).
+#    If the site shows a certificate error before SSL is ready, put "#" in front of the next two lines.
+RewriteCond %{HTTPS} !=on
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# 2. Keep the private folder private (its data files are guarded as well).
+RewriteRule ^_private(/|$) - [F]

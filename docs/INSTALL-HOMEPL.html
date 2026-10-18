@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Forecast Atlas on home.pl — installation guide</title>
+<style>
+:root { --bg: #f6f5f1; --panel: #fff; --ink: #17171a; --ink2: #43413c; --ink3: #66635b; --rule: #dfdcd2; --a: #9c5500; --code: #f1efe9; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0b0b0c; --panel: #141416; --ink: #f1efe8; --ink2: #c9c6bc; --ink3: #8f8c83; --rule: #2a2a2e; --a: #f5a524; --code: #1d1d20; color-scheme: dark; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+.wrap { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; max-width: 1180px; margin: 0 auto; padding-block: 28px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+nav { position: sticky; top: 16px; align-self: start; font-size: 14px; }
+nav b { display: block; margin-bottom: 8px; color: var(--a); font: 700 12px/1.3 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .06em; text-transform: uppercase; }
+nav ol { margin: 0; padding-left: 18px; } nav li { margin: 4px 0; } nav a { color: var(--ink2); text-decoration: none; } nav a:hover { color: var(--a); }
+main { background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 28px 36px; min-width: 0; }
+h1 { font-size: 30px; line-height: 1.2; margin: 0 0 12px; text-wrap: balance; }
+h2 { font-size: 21px; margin: 36px 0 10px; padding-top: 14px; border-top: 2px solid var(--a); text-wrap: balance; }
+h3 { font-size: 17px; margin: 22px 0 8px; }
+p, li { color: var(--ink2); max-width: 74ch; } li { margin: 5px 0; } strong { color: var(--ink); }
+a { color: var(--a); }
+code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .88em; background: var(--code); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+pre { background: var(--code); border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; overflow-x: auto; } pre code { background: none; padding: 0; }
+.tw { overflow-x: auto; margin: 10px 0 14px; } table { border-collapse: collapse; width: 100%; font-size: 15px; } th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); } th { color: var(--ink3); font-size: 13px; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 26px 0; }
+.brand { display: inline-block; background: var(--a); color: var(--panel); font: 700 12px/1 ui-monospace, Menlo, Consolas, monospace; padding: 5px 7px 4px; border-radius: 2px; letter-spacing: .06em; margin-bottom: 14px; }
+@media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); } nav { position: static; } main { padding: 20px 18px; } }
+@media print { nav { display: none; } .wrap { display: block; } main { border: 0; padding: 0; } body { background: #fff; } h2 { break-after: avoid; } }
+</style></head><body><div class="wrap">
+<nav aria-label="Steps"><b>Steps</b><ol><li><a href="#what-is-in-the-package">What is in the package</a></li><li><a href="#step-0-gather-what-you-need">Step 0 — Gather what you need</a></li><li><a href="#step-1-bring-the-domain-to-homepl">Step 1 — Bring the domain to home.pl</a></li><li><a href="#step-2-point-the-domain-to-its-folder">Step 2 — Point the domain to its folder</a></li><li><a href="#step-3-switch-on-https-ssl">Step 3 — Switch on HTTPS (SSL)</a></li><li><a href="#step-4-upload-the-files">Step 4 — Upload the files</a></li><li><a href="#step-5-run-the-server-check">Step 5 — Run the server check</a></li><li><a href="#step-6-first-login-set-your-admin-password">Step 6 — First login: set your admin password</a></li><li><a href="#step-7-ai-agents-company-details-and-limits">Step 7 — AI agents, company details and limits</a></li><li><a href="#step-8-switch-on-the-scheduler">Step 8 — Switch on the scheduler</a></li><li><a href="#step-9-newsletter-with-mailjet">Step 9 — Newsletter with Mailjet</a></li><li><a href="#step-10-your-weekly-routine-about-5-minutes">Step 10 — Your weekly routine (about 5 minutes)</a></li><li><a href="#troubleshooting">Troubleshooting</a></li><li><a href="#updating-to-a-new-version">Updating to a new version</a></li><li><a href="#backups">Backups</a></li><li><a href="#security-in-short">Security in short</a></li><li><a href="#legal-checklist-not-legal-advice">Legal checklist (not legal advice)</a></li></ol></nav>
+<main><span class="brand">AI FORECAST ATLAS · CREOOX AG</span>
+<h1 id="publishing-ai-forecast-atlas-on-homepl-step-by-step">Publishing AI Forecast Atlas on home.pl — step by step</h1>
+<p>This guide takes you from the downloaded package to a live site at <strong>https://aiforecastatlas.com</strong> with the AI assistant, the five-agent research panel, X watch, the weekly release every Friday at 13:00 and the newsletter. No programming is needed: you click in the home.pl panel, copy two folders and paste a few keys.</p>
+<p><strong>Time:</strong> about 1–2 hours the first time, most of it waiting for the SSL certificate and Mailjet.
+<strong>Words in “quotes”</strong> are the labels you see in the home.pl panel (in Polish, with the English meaning after them).</p>
+<hr />
+<h2 id="what-is-in-the-package">What is in the package</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>What it is</th>
+<th>Where it goes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aimonitor/</code></td>
+<td>The whole site: dashboard, data, server code, admin page</td>
+<td><code>/public_html/aimonitor/</code> on your server</td>
+</tr>
+<tr>
+<td><code>cron/cron-5min.php</code>, <code>cron/cron-13.php</code></td>
+<td>Two small files that start the scheduler</td>
+<td><code>/public_html/</code> (the main folder)</td>
+</tr>
+<tr>
+<td><code>INSTALL-HOMEPL.md</code></td>
+<td>This guide</td>
+<td>keep it on your computer</td>
+</tr>
+<tr>
+<td><code>LICENSE</code></td>
+<td>The licence (Business Source License 1.1)</td>
+<td>keep it with the files</td>
+</tr>
+</tbody>
+</table></div>
+<p>How it works in one sentence: the dashboard is a normal web page; small PHP programs on your server answer the chat, handle newsletter sign-ups and run the daily data check and the Friday release; your API keys stay in a private folder on the server.</p>
+<hr />
+<h2 id="step-0-gather-what-you-need">Step 0 — Gather what you need</h2>
+<p>Have these ready (you can add the optional ones later):</p>
+<ol>
+<li><strong>home.pl login</strong> — https://panel.home.pl ("Panel klienta", client panel).</li>
+<li><strong>The domain aiforecastatlas.com and an SSL certificate for it</strong> — see steps 1–3. A certificate for the domain itself (with www) is enough; no Wildcard certificate is needed.</li>
+<li><strong>API keys of the five AI agents</strong> (each account needs a payment method; set a <strong>monthly spending limit</strong> in every one, for example $10–20, so costs can never run away):<ul>
+<li><strong>OpenAI</strong> — https://platform.openai.com → "API keys" → "Create new secret key". Also runs the visitor chat and the newsletter intro.</li>
+<li><strong>Anthropic (Claude)</strong> — https://platform.claude.com → "API keys".</li>
+<li><strong>Google Gemini</strong> — https://aistudio.google.com/app/apikey → "Create API key" in a project with billing switched on (Google Search grounding of the current Gemini models is not part of the free tier; 5,000 searches a month are free, then $14 per 1,000).</li>
+<li><strong>xAI (Grok)</strong> — https://console.x.ai → "API keys"; buy a few dollars of credit. Grok also scans X for X watch.</li>
+<li><strong>DeepSeek</strong> — https://platform.deepseek.com → "API keys"; top up a few dollars. DeepSeek has no web search here: it answers from its own knowledge, and because it processes data in China it only ever receives research questions, never visitor chats.</li>
+</ul>
+</li>
+<li><strong>Mailjet account</strong> for the newsletter — https://www.mailjet.com (the free plan sends 200 emails a day, 6,000 a month to up to 1,000 contacts). Details in step 9.</li>
+<li><strong>Company details</strong> — already filled in from the public data of Creoox AG (creoox.com imprint and the Liechtenstein commercial register); you only check them in step 7.</li>
+<li><strong>Bot protection</strong> — a free Cloudflare account for Turnstile (recommended before the site is announced). <em>Optional:</em> a free EIA key (US power prices).</li>
+</ol>
+<h3 id="which-hosting-to-use">Which hosting to use</h3>
+<p>creoox.com runs on home.pl's <strong>older platform</strong> (the server identifies itself as <em>IdeaWebServer</em>; PHP up to 8.2). AI Forecast Atlas is written to run there, so <strong>option A</strong> works:</p>
+<ul>
+<li><strong>A. Your existing hosting (fine to start).</strong> No extra cost. The site lives in its own folder next to the WordPress site. Both sites then share the hosting's small number of PHP processes (4 on the smaller plans): every assistant answer holds one for up to a minute, so AI Forecast Atlas allows only 2 answers at the same time and asks further visitors to try again a minute later. That keeps creoox.com responsive.</li>
+<li><strong>B. A new home.pl "Hosting Start" plan</strong> (Apache, PHP 8.4). Keeps AI Forecast Atlas fully separate from WordPress — <strong>recommended before you promote the site widely</strong>. The steps are the same; you pick the new hosting in step 2.</li>
+</ul>
+<hr />
+<h2 id="step-1-bring-the-domain-to-homepl">Step 1 — Bring the domain to home.pl</h2>
+<p>aiforecastatlas.com is the site's own domain (not a subdomain of creoox.com).</p>
+<ul>
+<li><strong>If the domain is registered at home.pl:</strong> it is listed under <strong>"Domeny"</strong> (domains); nothing to do here.</li>
+<li><strong>If it is registered elsewhere:</strong> either transfer it to home.pl, or keep it where it is and add it to home.pl as an external domain, then point it to home.pl as home.pl's help describes (DNS records or name servers). The home.pl panel shows the exact values when you add the domain. Ask home.pl support (BOK) if unsure: "I want to use my domain aiforecastatlas.com with my hosting".</li>
+</ul>
+<p>DNS changes can take a few hours to take effect.</p>
+<h2 id="step-2-point-the-domain-to-its-folder">Step 2 — Point the domain to its folder</h2>
+<ol>
+<li>Open <strong>"Usługi WWW"</strong> (web services) and click your hosting.</li>
+<li>In <strong>"Przypisane domeny"</strong> (assigned domains) click <strong>"Przypisz"</strong> (assign). If aiforecastatlas.com is already listed, click <strong>"Wszystkie"</strong> → <strong>"Edytuj"</strong> instead.</li>
+<li>Choose <strong>aiforecastatlas.com</strong> (and <strong>www.aiforecastatlas.com</strong>, if listed separately).</li>
+<li>In <strong>"Ustawienia WWW"</strong> (web settings) choose <strong>"Podkatalog z separacją serwisu"</strong> (subfolder with site separation). If this option is not offered, choose <strong>"Podkatalog bez separacji serwisu"</strong> — both work.</li>
+<li>As folder type <strong><code>/aimonitor</code></strong> — without <code>/public_html</code> in front (home.pl adds it). The folder keeps its technical name; visitors never see it.</li>
+<li>For mail choose what fits: no mailboxes are needed for the site itself.</li>
+<li>Click <strong>"Wyślij"</strong> (send) and wait a few minutes.</li>
+</ol>
+<p><em>Tip:</em> if the server check in step 5 later reports outgoing HTTPS as blocked, try <strong>"Podkatalog bez separacji serwisu"</strong> here before contacting support — the separated mode may restrict outgoing connections (not confirmed by home.pl).</p>
+<h2 id="step-3-switch-on-https-ssl">Step 3 — Switch on HTTPS (SSL)</h2>
+<ol>
+<li>Open <strong>"Certyfikaty SSL"</strong> (SSL certificates) and order or choose a certificate for <strong>aiforecastatlas.com</strong> (a single-domain certificate that includes www is enough).</li>
+<li>Activate it: <strong>"Opcje"</strong> → <strong>"Aktywuj certyfikat"</strong> → choose the domain → tick <strong>"Zainstaluj na serwerze, do którego jest przypisana domena"</strong> → CSR: <strong>"Generuj automatycznie"</strong> → <strong>"Aktywuj certyfikat"</strong>.</li>
+<li>When the status says <strong>"Wystawiony"</strong> (issued), open <strong>"Opcje instalacji"</strong> → <strong>"Instaluj na serwerze"</strong> → <strong>"Instaluj"</strong>.</li>
+</ol>
+<p>The package already sends every visitor to the HTTPS address. Until the certificate is installed, the browser shows a certificate warning — that is expected; just finish this step first.</p>
+<h2 id="step-4-upload-the-files">Step 4 — Upload the files</h2>
+<ol>
+<li>Unzip the package on your computer. You get the folders <code>aimonitor</code> and <code>cron</code>.</li>
+<li>Connect to your server, either:<ul>
+<li>in the browser: <strong>"Usługi WWW"</strong> → your server → <strong>"Konta FTP"</strong> (FTP accounts) → <strong>"Opcje"</strong> → <strong>"WebFTP"</strong>, or</li>
+<li>with <strong>FileZilla</strong> (free): protocol <strong>SFTP</strong>, host as shown under "Konta FTP" → <strong>"Host FTP"</strong> (looks like <code>serwer123456.home.pl</code>), port <strong>22222</strong>, user = <strong>"Główny login FTP"</strong>, your password (set a new one under "Serwer WWW" → "Ustawienia" → "Hasło dostępu" if needed). SFTP needs SSH switched on. If it is not, use <strong>FTPS</strong> instead: protocol "FTP", encryption <strong>"Require implicit FTP over TLS"</strong>, port <strong>990</strong>. Avoid plain FTP (port 21 without encryption): it sends this password — which also controls the WordPress site — unencrypted.</li>
+</ul>
+</li>
+<li>Open the folder <strong><code>/public_html</code></strong> on the server and upload the whole <strong><code>aimonitor</code></strong> folder into it. Afterwards you must see <code>/public_html/aimonitor/index.html</code>.</li>
+<li>Make sure the hidden files <code>.htaccess</code> were uploaded too (FileZilla: menu "Server" → "Force showing hidden files"). There is one in <code>aimonitor/</code>, one in <code>aimonitor/_private/</code> and one in <code>aimonitor/_private/storage/</code>.</li>
+<li><strong>Do not upload the <code>cron</code> files yet</strong> — that is step 8.</li>
+</ol>
+<h2 id="step-5-run-the-server-check">Step 5 — Run the server check</h2>
+<p>Open <strong>https://aiforecastatlas.com/check.php</strong> in your browser. Every line should say <strong>OK</strong>. Fix the lines that say <strong>PROBLEM</strong> as described below. The streaming test at the bottom is informative only: if your server buffers, chat answers appear in one piece instead of word by word.</p>
+<h3 id="if-the-php-version-is-too-old">If the PHP version is too old</h3>
+<p>AI Forecast Atlas needs PHP 8.0 or newer (8.2 recommended). Look at the line <strong>"Web server"</strong> on the check page, then open the file <code>/public_html/aimonitor/.htaccess</code> (WebFTP can edit files) and add three lines <strong>at the very top</strong>.</p>
+<p>If the check page says <strong>IdeaWebServer</strong>, add exactly these three lines:</p>
+<pre><code>:Location /*.php
+Use php82
+:Location
+</code></pre>
+<p>If it says <strong>Apache</strong>, add these three lines instead:</p>
+<pre><code>&lt;FilesMatch &quot;\.php$&quot;&gt;
+SetEnv CGI_HANDLER php84
+&lt;/FilesMatch&gt;
+</code></pre>
+<p>Do <strong>not</strong> change the PHP version for the whole server in the panel: that would also change the WordPress site. If the page shows an error 500 after your change, remove the three lines again — they were for the other platform.</p>
+<h3 id="if-outgoing-https-is-blocked">If outgoing HTTPS is blocked</h3>
+<p>OpenAI and Mailjet must be reachable from your server. If the check says they are blocked, ask home.pl support ("BOK") to allow outgoing HTTPS connections from PHP.</p>
+<h3 id="if-storage-is-not-writable">If storage is not writable</h3>
+<p>Make the folders <code>aimonitor/_private/storage</code> and <code>aimonitor/data</code> writable (WebFTP → properties → permissions 755).</p>
+<h2 id="step-6-first-login-set-your-admin-password">Step 6 — First login: set your admin password</h2>
+<p>Do this only when the browser shows the padlock for <strong>https://</strong>aiforecastatlas.com (step 3 finished) — never over a plain http:// address, because your password and keys would travel unencrypted.</p>
+<ol>
+<li>Open <strong>https://aiforecastatlas.com/admin/</strong>. It asks for a <strong>setup key</strong> (this proves you control the server).</li>
+<li>In WebFTP or FileZilla open the file <strong><code>/public_html/aimonitor/_private/storage/setup-key.php</code></strong> (it appears after you opened the admin page) and copy the <strong>last line</strong> (looks like <code>a1b2c3-d4e5f6-…</code>).</li>
+<li>Paste it, choose an <strong>admin password</strong> (at least 12 characters — keep it in a password manager), enter your email and leave the site address as <code>https://aiforecastatlas.com/</code>.</li>
+<li>Click <strong>"Finish setup"</strong>. The setup key file deletes itself and you are in the admin page.</li>
+</ol>
+<p>From now on the check page is locked; the same checks are under <strong>Admin → Overview → Health</strong>. The admin page answers only at the site address you entered (https://aiforecastatlas.com/admin/); opened through another address that shows the same folder (for example creoox.com/aimonitor/), it sends you there, so your login is never stored for the WordPress domain.</p>
+<h2 id="step-7-ai-agents-company-details-and-limits">Step 7 — AI agents, company details and limits</h2>
+<p><strong>Admin → AI agents</strong> — one card per agent:</p>
+<ol>
+<li>Paste each <strong>API key</strong>, click <strong>Save</strong> on that card, then <strong>"Test the key and model"</strong>. You should see "OpenAI: OK" and so on for all five.</li>
+<li>
+<p>Leave the <strong>models</strong> and <strong>weights</strong> as they are to start:</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Model</th>
+<th>Weight</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OpenAI</td>
+<td><code>gpt-6.1-sol</code></td>
+<td>3</td>
+<td>web research (background mode)</td>
+</tr>
+<tr>
+<td>Anthropic</td>
+<td><code>claude-sonnet-5-5</code></td>
+<td>3</td>
+<td>web research (message batch: half price, usually within the hour)</td>
+</tr>
+<tr>
+<td>Google Gemini</td>
+<td><code>gemini-3.8-flash</code></td>
+<td>2</td>
+<td>web research with Google Search</td>
+</tr>
+<tr>
+<td>xAI</td>
+<td><code>grok-4.3</code></td>
+<td>2</td>
+<td>web research; also X watch</td>
+</tr>
+<tr>
+<td>DeepSeek</td>
+<td><code>deepseek-v4-pro</code></td>
+<td>1</td>
+<td>answers from its own knowledge (counted at half weight)</td>
+</tr>
+</tbody>
+</table></div>
+<p>The weight decides how much an agent's answer counts when the answers are combined (weighted median). 0 means "show me its answer, but don't count it" — useful to try a new agent.
+3. <strong>How the answers are combined</strong> — research on, budget <strong>$25 a month</strong> for all agents and X watch together (about $10–15 is typical), knowledge factor 0.5, tolerance 0.10.
+4. <strong>X watch</strong> — on, scan days 1–5 (Monday to Friday), look back 36 hours, at most 6 items per scan. The <strong>watch list</strong> names accounts Grok should prefer (one per line, without @); it still looks beyond them. Click <strong>"Scan X now"</strong> once to see what it finds (the items wait under <strong>X watch</strong> until you approve them).
+5. <strong>Visitor assistant and newsletter writer</strong> — the defaults (OpenAI <code>gpt-6-luna</code>, about $0.001 per answer) are fine.</p>
+</li>
+</ol>
+<p><strong>Admin → Settings:</strong></p>
+<ol>
+<li><strong>Site and company</strong> — filled in from the public company data: Creoox AG, a company limited by shares under the law of Liechtenstein, Landstrasse 40, 9495 Triesen; register FL-0002.524.394-4; represented by Tomasz Basinski; contact@creoox.com; data protection contact privacy@creoox.com; supervisory authority Datenschutzstelle Liechtenstein. Check every line (for example the VAT number, which only appears on creoox.com) and <strong>Save</strong> once. These fill the imprint and the privacy notice.</li>
+<li><strong>Chat limits</strong> — daily budget $3, 20 questions per visitor per hour, 2 answers at the same time. Increase the first two later if needed; raise "answers at the same time" only on hosting option B or a bigger plan.</li>
+<li><strong>Bot protection (recommended)</strong> — at https://dash.cloudflare.com → "Turnstile" → "Add widget": name "AI Forecast Atlas", hostname <code>aiforecastatlas.com</code>, widget mode <strong>"Managed"</strong>, then copy the <strong>site key</strong> and <strong>secret key</strong> here. Free; it protects the sign-up form and the assistant from bots.</li>
+<li><strong>Data sources</strong> — leave the SEC user agent as it is (it names Creoox and an email; the SEC asks for that). Register a free EIA key at https://www.eia.gov/opendata/register.php and paste it to enable the US power-price check.</li>
+</ol>
+<p>Visit https://aiforecastatlas.com — the <strong>Ask AI</strong> button now answers questions.</p>
+<h2 id="step-8-switch-on-the-scheduler">Step 8 — Switch on the scheduler</h2>
+<p>home.pl runs scheduled jobs from specially named files in the <strong>main</strong> folder.</p>
+<ol>
+<li>Upload <strong><code>cron/cron-5min.php</code></strong> and <strong><code>cron/cron-13.php</code></strong> into <strong><code>/public_html/</code></strong> (next to the WordPress files — <strong>not</strong> into the <code>aimonitor</code> folder).</li>
+<li>If files with these names already exist there, <strong>do not overwrite them</strong>. Open the existing file and copy over the lines of our file that start with <code>define(</code> and <code>require</code> (two lines in <code>cron-5min.php</code>, three in <code>cron-13.php</code>). Paste them at the end of the existing file — but if that file ends with <code>?&gt;</code>, paste them <strong>before</strong> the <code>?&gt;</code>, otherwise they are printed as text instead of being run.</li>
+<li>Wait 10 minutes and look at <strong>Admin → Overview → Health</strong>: "Scheduler (cron) running" should be <strong>OK</strong>.</li>
+</ol>
+<p>What runs when (Swiss time):</p>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>When</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>every 5 minutes</td>
+<td>checks what is due; sends newsletter batches</td>
+</tr>
+<tr>
+<td>daily from 06:00</td>
+<td>the data check: official sources every day; the AI research panel Monday to Thursday (three questions a day, five agents each); X watch Monday to Friday</td>
+</tr>
+<tr>
+<td>Friday 13:00</td>
+<td>the weekly release, then the newsletter</td>
+</tr>
+</tbody>
+</table></div>
+<p>If your hosting cannot run these files, use a free external cron service (for example cron-job.org) to open the address shown under <strong>Admin → Overview → Scheduler</strong> every 5 minutes.</p>
+<h2 id="step-9-newsletter-with-mailjet">Step 9 — Newsletter with Mailjet</h2>
+<ol>
+<li><strong>Create the account</strong> at https://www.mailjet.com. The free plan is enough to start: 200 emails a day, 6,000 a month and up to <strong>1,000 contacts</strong>. With more than about 180 subscribers, or close to 1,000 contacts, choose a paid plan, and enter your plan's daily limit in Settings (step 5 below). AI Forecast Atlas keeps a tenth of the daily limit free for confirmation emails and spreads a large newsletter over several days.</li>
+<li><strong>Authorise your sender domain</strong> — in Mailjet: <strong>"Senders &amp; domains"</strong> → add the domain <strong>creoox.com</strong> (or the sender address you want, e.g. <code>news@creoox.com</code>; it must be a real mailbox or alias because Mailjet sends a confirmation email to it). <em>Good news: on 17 October 2026 creoox.com's DNS already contained Mailjet's SPF include, a <code>mailjet._domainkey</code> DKIM record and a DMARC record — so this may only need the check in Mailjet that the domain shows as authenticated.</em> Otherwise Mailjet shows two DNS records:<ul>
+<li><strong>SPF:</strong> add <code>include:spf.mailjet.com</code> to your <strong>existing</strong> SPF record of creoox.com (there may only be <strong>one</strong> SPF record — edit it, don't add a second one).</li>
+<li><strong>DKIM:</strong> a TXT record named <code>mailjet._domainkey</code> with the value Mailjet shows.
+   Add them in the home.pl panel under <strong>"Domeny"</strong> → creoox.com → DNS records. It can take a few hours until Mailjet shows the domain as authenticated. Recommended: also a DMARC record (<code>_dmarc</code>, <code>v=DMARC1; p=none; rua=mailto:your@address</code>) if creoox.com has none.</li>
+</ul>
+</li>
+<li><strong>Create the contact list</strong> — <strong>"Contacts"</strong> → <strong>"Contact lists"</strong> → create <strong>"AI Forecast Atlas"</strong>. Note its <strong>ID</strong> (a number, shown in the list details or its address).</li>
+<li><strong>Copy the API keys</strong> — account menu → <strong>"API Key Management"</strong>: the <strong>API key</strong> and the <strong>Secret key</strong>.</li>
+<li>In <strong>Admin → Settings → Newsletter (Mailjet)</strong> paste: API key, Secret key, Contact list ID, Sender address, Sender name "AI Forecast Atlas", Daily sending limit (200 on the free plan). <strong>Untick "Newsletter sign-up open"</strong> for now. <strong>Save</strong> — the admin page then creates the subscriber fields in Mailjet and says "Mailjet subscriber fields are ready".</li>
+<li>In <strong>Admin → Newsletter</strong> click <strong>"Check the Mailjet setup"</strong>, then <strong>"Show preview"</strong> and <strong>"Send a test email"</strong> to yourself.</li>
+<li>When the test email has arrived, go back to <strong>Settings</strong>, tick <strong>"Newsletter sign-up open"</strong> and <strong>Save</strong>.</li>
+</ol>
+<p>Visitors can now subscribe with the <strong>Subscribe</strong> button: they pick topics, language (English, German, French, Polish) and weekly or monthly, and confirm by email (double opt-in). Every email has a one-click unsubscribe; open and click tracking are switched off.</p>
+<h2 id="step-10-your-weekly-routine-about-5-minutes">Step 10 — Your weekly routine (about 5 minutes)</h2>
+<ol>
+<li><strong>Each morning</strong> the data check runs. If it finds something, you get an email "N new data points to review".</li>
+<li><strong>Admin → Review:</strong> compare the new value with the current one, open the source, then <strong>Approve</strong> (you can edit the value first) or <strong>Reject</strong>. Research items show a table with <strong>every agent's answer</strong>: value, source link (or "AI knowledge"), quote and warnings. The proposal is the weighted median — one agent's real answer with its own source; <strong>"Use this answer"</strong> publishes another agent's answer instead. A value is approved with its source link — the link, quote, references and all agents' answers are published with it, so every visitor can check where a number comes from. When an AI model gives a figure from its own knowledge (no page to cite), you can still approve it with <strong>Basis: AI knowledge</strong>: it is published with the label "AI knowledge", the model, the date and the model's explanation.</li>
+<li><strong>Admin → X watch:</strong> open each post on X, check that it says what the summary says, adjust the title or labels if needed and untick any post or confirming page you don't want to show, then <strong>Approve and publish</strong> (it appears on the dashboard at once and goes into the next release and newsletter) or <strong>Reject</strong>. Items you don't review are dropped after 14 days. <strong>Withdraw</strong> removes a published item from the dashboard, the weekly releases and the feeds (for example when an author asks).</li>
+<li><strong>Admin → Release → "Build the release"</strong> (your browser computes all eight scenarios in a second) → check the summary → <strong>"Stage for Friday 13:00"</strong>.</li>
+<li><strong>Friday 13:00</strong> the release goes live by itself and the newsletter goes out in batches. If nothing was staged, last week's release is repeated ("no new release this week"); if you had approved values but forgot to stage them, you get an email reminder.</li>
+<li><strong>Admin → Suggestions</strong> lists improvement ideas visitors sent from the assistant.</li>
+</ol>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>You see</th>
+<th>Do this</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Certificate warning in the browser</td>
+<td>SSL is not installed yet (step 3). To test before that, put <code>#</code> in front of the two <code>RewriteCond</code>/<code>RewriteRule</code> HTTPS lines in <code>aimonitor/.htaccess</code>, and remove the <code>#</code> again afterwards.</td>
+</tr>
+<tr>
+<td>"Internal Server Error" (500) after editing <code>.htaccess</code></td>
+<td>Remove the lines you added — they were for the other server platform (step 5).</td>
+</tr>
+<tr>
+<td>"AI Forecast Atlas needs PHP 8.0 or newer"</td>
+<td>Step 5, PHP version.</td>
+</tr>
+<tr>
+<td>The assistant says it is switched off</td>
+<td>Admin → AI agents → OpenAI: key missing or wrong → click "Test the key and model". Check your OpenAI billing.</td>
+</tr>
+<tr>
+<td>An agent card says "failed"</td>
+<td>Usually no credit left, a wrong key or a model name the provider retired: test it on its card, top up, or pick another model from the list. The other agents keep working.</td>
+</tr>
+<tr>
+<td>X watch scans fail with a time-out</td>
+<td>Grok searched too long for one scheduler run (it tries twice). Lower "Most items per scan" or the look-back hours under AI agents → X watch, or use "Scan X now".</td>
+</tr>
+<tr>
+<td>You want today's research done again</td>
+<td>Admin → Overview → <strong>Restart today's check</strong> (two clicks). It asks every agent again, so it costs again; "Run the daily data check now" only continues where it stopped.</td>
+</tr>
+<tr>
+<td>"The server’s security filter stopped this message"</td>
+<td>home.pl's firewall blocked a message with code or links. Rephrase it.</td>
+</tr>
+<tr>
+<td>Visitors see "Many people are asking right now"</td>
+<td>Two answers were already running. Normal at peaks; if it happens often, move to hosting option B and raise "Answers at the same time" in Settings → Chat limits.</td>
+</tr>
+<tr>
+<td>The admin page jumps to aiforecastatlas.com</td>
+<td>You opened it through another address. Use https://aiforecastatlas.com/admin/ (or change the site address in Settings → Site).</td>
+</tr>
+<tr>
+<td>Health: "Scheduler runs finish in time" says CHECK</td>
+<td>The host stopped scheduler runs before they finished. Nothing repeats endlessly (each step is retried at most twice), but if it continues, use the external cron option (step 8).</td>
+</tr>
+<tr>
+<td>Confirmation emails don't arrive</td>
+<td>Mailjet → "Logs" / "Senders &amp; domains": the sender address or domain is not validated yet; check the spam folder.</td>
+</tr>
+<tr>
+<td>"Scheduler (cron) running" stays CHECK</td>
+<td>The cron files must be directly in <code>/public_html</code> with exactly these names; the path inside them must match your folder name (<code>aimonitor</code>).</td>
+</tr>
+<tr>
+<td>Health says the scheduler files ran with an old PHP</td>
+<td>The cron files use the PHP version of the main site (WordPress). Use the external cron option instead (step 8, last paragraph); it runs with AI Forecast Atlas's own PHP version.</td>
+</tr>
+<tr>
+<td>Forgot the admin password</td>
+<td>Delete <code>aimonitor/_private/storage/admin.php</code>, open the admin page again and repeat step 6 (a new setup key appears). Your settings stay.</td>
+</tr>
+<tr>
+<td>Something else</td>
+<td>Admin → Overview → Health shows what is wrong; logs are in <code>aimonitor/_private/storage/logs/</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="updating-to-a-new-version">Updating to a new version</h2>
+<p>Use the <strong>update package</strong> (<code>aimonitor-homepl-update-&lt;version&gt;.zip</code>): it contains only program files. Upload its <code>aimonitor</code> folder over the old one. It leaves these alone on the server:</p>
+<ul>
+<li><code>aimonitor/_private/storage/</code> — your settings, keys, review queue and logs,</li>
+<li><code>aimonitor/data/</code> and <code>aimonitor/feeds/</code> — every published release and the feeds,</li>
+<li><code>aimonitor/.htaccess</code> — so the PHP-version lines you may have added in step 5 stay in place. (If a release note ever says that <code>.htaccess</code> changed, take it from the full package and add your lines again at the top.)</li>
+</ul>
+<p>Never upload the <strong>full</strong> package over a running site: it would replace your published data with the first release.</p>
+<h2 id="backups">Backups</h2>
+<p>Don't rely only on the hosting's own backups, which are short-term. Once a month, download <code>aimonitor/_private/storage/</code> and <code>aimonitor/data/</code> to your computer (WebFTP or FileZilla).</p>
+<h2 id="security-in-short">Security in short</h2>
+<ul>
+<li>API keys are stored only in <code>aimonitor/_private/storage/settings.php</code>, a file that cannot be read over the web.</li>
+<li>All private data files — including staged releases before Friday — are written so that opening them in a browser shows nothing, even if a server ignores the <code>.htaccess</code> protection.</li>
+<li>The admin page needs your password; after 6 wrong attempts it pauses for 15 minutes. It works only at the site's own address, and every action that changes something needs a signed request from the admin page itself.</li>
+<li>AI costs are booked before each call, so the daily and monthly budgets hold even when a visitor closes the page or the host stops a run.</li>
+<li>Use a strong admin password and set spending limits in all five AI accounts.</li>
+<li>Research questions and X scans contain no personal data; visitor chats go only to the chat provider you chose (never to DeepSeek).</li>
+</ul>
+<h2 id="legal-checklist-not-legal-advice">Legal checklist (not legal advice)</h2>
+<ul>
+<li>Check the company details (step 7) so the <strong>imprint</strong> and <strong>privacy notice</strong> are complete; ask your lawyer to review the privacy notice (<code>privacy.php</code>).</li>
+<li><strong>Creoox AG is registered in Liechtenstein, which is in the EEA.</strong> The GDPR therefore applies to it directly, the supervisory authority is the Datenschutzstelle Liechtenstein, and <strong>no EU representative (GDPR Art. 27) is needed</strong> — as long as Creoox AG (Liechtenstein) is the operator named in the imprint. If a Swiss company (for example a future holding SA) operated the site instead, the Polish edition would make it target EU readers, and a representative would be needed (commercial services cost roughly €150–850 a year).</li>
+<li>The newsletter already has double opt-in, an unsubscribe link in every email, no tracking and a consent record (GDPR, Swiss UWG and FADP). The deletion periods in the privacy notice are applied automatically: consent records after three years, suggestions after 24 months, newsletter address lists as soon as a send is finished.</li>
+<li>X watch shows links to public posts and the public names of their authors; the privacy notice explains the legal basis (legitimate interest) and that authors can ask for removal (Admin → X watch → Withdraw).</li>
+<li>Accept the data processing agreement (DPA) in your Mailjet account and, if you wish, the DPAs of OpenAI, Anthropic, Google and xAI. DeepSeek offers none, which is why it only receives research questions.</li>
+<li>The trademark notice (including Autodesk®) is built into the footer, the imprint and every newsletter.</li>
+</ul>
+</main></div></body></html>

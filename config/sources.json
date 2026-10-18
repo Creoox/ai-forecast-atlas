@@ -1,0 +1,45 @@
+{
+  "openrouter": {
+    "note": "Token prices from the OpenRouter model list. Each pattern picks the newest matching model. Blend = (3 × input + output) / 4, in $ per million tokens.",
+    "frontier": ["^openai/gpt-6-astra", "^anthropic/claude-opus-5", "^google/gemini-4-argon"],
+    "goodEnough": ["^openai/gpt-6-luna", "^anthropic/claude-haiku-5", "^google/gemini-3\\.1-flash-lite"],
+    "frontierRule": "median",
+    "goodEnoughRule": "min",
+    "minChange": 0.05
+  },
+  "eia": {
+    "note": "US commercial retail electricity price (EIA API v2, monthly, cents per kWh). Index 2023 = 100 uses the 2023 average of 12.59 cents.",
+    "base2023": 12.59,
+    "minChange": 1.0
+  },
+  "edgar": {
+    "note": "Quarterly capex of the Big-4 from SEC XBRL company facts; year-to-date figures are differenced into quarters.",
+    "companies": [
+      { "name": "Microsoft", "cik": "0000789019", "tags": ["PaymentsToAcquirePropertyPlantAndEquipment"] },
+      { "name": "Alphabet", "cik": "0001652044", "tags": ["PaymentsToAcquirePropertyPlantAndEquipment"] },
+      { "name": "Amazon", "cik": "0001018724", "tags": ["PaymentsToAcquireProductiveAssets", "PaymentsToAcquirePropertyPlantAndEquipment"] },
+      { "name": "Meta", "cik": "0001326801", "tags": ["PaymentsToAcquirePropertyPlantAndEquipment"] }
+    ],
+    "leaseTag": "FinanceLeasePrincipalPayments"
+  },
+  "epoch": {
+    "note": "Open-weight lag from the Epoch Capabilities Index (CC BY 4.0): months between a closed model reaching a score and the best open-weight model reaching it.",
+    "path": "/data/eci_scores.csv",
+    "windowMonths": 6,
+    "minChange": 0.3
+  },
+  "research": [
+    { "anchor": "AN3", "day": 1, "kind": "value", "unit": "$T (trillion US dollars)", "min": 0.3, "max": 20, "ask": "Sum of the latest announced post-money equity valuations of OpenAI and Anthropic (funding rounds or tender offers). Give each component with its date.", "domains": [] },
+    { "anchor": "AN4", "day": 1, "kind": "value", "unit": "$T (trillion US dollars)", "min": 0.5, "max": 30, "ask": "Nvidia's equity market capitalisation at the most recent market close.", "domains": [] },
+    { "anchor": "AN2", "day": 1, "kind": "evidence", "unit": "$B per year", "min": 50, "max": 5000, "ask": "Latest reported or credibly reported annualised revenue run-rates of the main AI model and AI cloud vendors (OpenAI, Anthropic, Google Gemini, Microsoft Azure AI, AWS Bedrock). Report the figures with dates; do not add them up unless a source does.", "domains": [] },
+    { "anchor": "AN10", "day": 2, "kind": "value", "unit": "$ per GPU-hour", "min": 0.5, "max": 10, "ask": "Typical price of one-year contracts for renting Nvidia H100 GPUs, in dollars per GPU-hour, from an index or market report.", "domains": [] },
+    { "anchor": "AN11", "day": 2, "kind": "evidence", "unit": "percent change", "min": -90, "max": 500, "ask": "Latest reported or forecast quarter-on-quarter change in conventional DRAM contract prices (TrendForce or similar), with the quarter it refers to.", "domains": [] },
+    { "anchor": "AN8", "day": 2, "kind": "evidence", "unit": "TWh per year", "min": 200, "max": 3000, "ask": "Latest estimate of global data-centre electricity consumption (IEA or comparable), with the year it refers to.", "domains": [] },
+    { "anchor": "AN12", "day": 3, "kind": "value", "unit": "US dollars", "min": 300, "max": 20000, "ask": "Lowest current retail price of a complete computer with 128 GB of unified or GPU memory able to run a ~120B-parameter open-weight model at 4-bit interactively (e.g. GB10/DGX Spark-class or AMD Strix Halo-class systems).", "domains": [] },
+    { "anchor": "AN14", "day": 3, "kind": "value", "unit": "percent", "min": 0, "max": 100, "ask": "Most recent survey estimate of the share of enterprise LLM usage that runs on open-weight models.", "domains": [] },
+    { "anchor": "AN15", "day": 3, "kind": "value", "unit": "percent", "min": 10, "max": 100, "ask": "Most recent survey estimate of the combined share of enterprise LLM API spending held by the top three providers.", "domains": [] },
+    { "anchor": "AN26", "day": 4, "kind": "value", "unit": "$B per year (seasonally adjusted annual rate)", "min": 20, "max": 600, "ask": "Latest US Census Bureau construction-spending figure for private data-centre construction put in place (seasonally adjusted annual rate), with the month.", "domains": ["census.gov"] },
+    { "anchor": "AN18", "day": 4, "kind": "evidence", "unit": "percentage points", "min": -3, "max": 5, "ask": "Latest estimates of how much AI-related investment contributed to US real GDP growth (percentage points), with the quarter and the source.", "domains": [] },
+    { "anchor": "AN1", "day": 4, "kind": "evidence", "unit": "$B per year", "min": 200, "max": 3000, "ask": "Latest full-year capital expenditure guidance from Microsoft, Alphabet, Amazon and Meta (each company, with the date of the guidance).", "domains": [] }
+  ]
+}
