@@ -143,8 +143,8 @@
    "oneLiner": "Move through 2023–2035; the big date, every number and every chart follow the cursor.",
    "what": "The quarter in the big date is the cursor. Up to Q4 2026 you see history (dated public data); after it, the scenario model. The timeline strip above the charts shows the years, the NOW line (Q4 2026), event markers and the market-regime band.",
    "howToRead": [
-    "Drag or click the timeline strip, click any chart, or use ← → for one quarter; Home and End jump to 2023 and 2035.",
-    "Play animates 2023 → 2035 (Space). Tour plays all eight scenarios in turn; Broadcast opens a 16:9 view for presenting or recording.",
+    "Drag or click the timeline strip, click any chart, or use ← → for one quarter. When the timeline has keyboard focus, Home and End jump to 2023 and 2035.",
+    "Play or Space starts and pauses the animation. Tour (T) plays all eight scenarios in turn; it is different from the Guide’s 60-second tutorial. The 2023 and Now buttons jump to Q1 2023 and Q4 2026; the speed selector changes playback speed. Broadcast opens a 16:9 view for presenting or recording.",
     "Triangles on the strip are events: amber = history, scenario colour = the scenario’s story, red = a shock you added, ink ⚡ = a threshold the model detected.",
     "The thin band at the bottom of the strip is the market regime of each quarter (see the label next to the date)."
    ],
@@ -191,7 +191,8 @@
    "howToRead": [
     "Every panel has an ⓘ button: it opens an explainer with how to read the chart, the method and formulas, and the sources.",
     "Click or tap any number — KPI tiles, ledger rows, signposts, lane values, matrix cells, impact scores — to see where it comes from: history with its source, or the model formula that produced it.",
-    "Underlined terms show a short definition when you hover, focus or tap them."
+    "Underlined terms show a short definition when you hover, focus or tap them.",
+    "Keyboard shortcuts outside text inputs: 1–8 select scenarios; 9 selects CUSTOM if it exists; Space plays or pauses; ← → move one quarter; T toggles the scenario animation tour; B toggles Broadcast; ? opens Guide. Esc closes the current overlay. Home and End jump to the first and last quarter when the timeline has focus."
    ],
    "whyItMatters": "A monitor is only useful if you can check it. Every number here can be traced to a source or a formula.",
    "method": "All explanations come from one open file, methods.json (CC BY 4.0), that also feeds the AI assistant and the data API.",
@@ -226,7 +227,7 @@
    "howToRead": [
     "Customize panels: ▲▼ move a panel within its column, S/M/L/XL resize charts, pin puts a panel full width at the top, ✕ hides it.",
     "Expand (corner icon on every panel) opens the panel full screen; Esc closes it.",
-    "Presets: Big charts, Presenter, Compact. Reset to default restores everything."
+    "Presets: Big charts, Presenter, Compact. Reset to default restores the default layout; it does not reset the scenario or theme."
    ],
    "whyItMatters": "Different people need different views: an analyst wants every table, a presenter wants two big charts.",
    "method": "The layout is stored in this browser only (no account, no server).",
@@ -833,7 +834,8 @@
    "oneLiner": "A 16:9 full-screen view for presenting and recording.",
    "what": "Six key lanes, KPI tiles, the phase portrait and the causal map on one screen, with a caption of the latest event.",
    "howToRead": [
-    "Play or Tour animate it; Record saves a video where the browser allows it; Esc exits."
+    "Open Broadcast with its button or B. Play animates the selected scenario; Tour all animates all eight. From 2023 / From today chooses the playback start. Exit, Esc or B returns to the dashboard.",
+    "Where the browser supports recording and saving files, Record captures the canvas; Stop & save downloads a local MP4 or WebM video, depending on browser support. Broadcast does not start a live stream or publish a video."
    ],
    "whyItMatters": "Made for talks, calls and videos.",
    "method": "Same data and model as the dashboard.",

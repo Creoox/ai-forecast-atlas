@@ -6,8 +6,77 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createEngine } from '../engine/engine.mjs';
 import * as RC from '../web/src/release-core.mjs';
+import { buildChatGuide, selectChatGuide } from '../web/src/chat-guide.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const chatGuide = () => buildChatGuide(createEngine(), JSON.parse(fs.readFileSync(path.join(ROOT, 'config/methods.json'), 'utf8')));
+const guideIds = selection => selection.details.map(detail => detail.id);
+
+test('chat guide keeps every preset scenario available, including Bubble bursts', () => {
+  const E = createEngine(), guide = chatGuide();
+  assert.equal(guide.schema, 'aimonitor.chat-guide/1');
+  assert.deepEqual(guide.overview.scenarios.map(s => s.key).sort(), E.SCENARIOS.map(s => s.key).sort());
+  for (const scenario of E.SCENARIOS) {
+    const summary = guide.overview.scenarios.find(s => s.key === scenario.key);
+    for (const field of ['name', 'short', 'thesis', 'first']) assert.deepEqual(summary[field], scenario[field], scenario.key + '.' + field);
+  }
+  assert.ok(guide.overview.features.some(f => /broadcast/i.test(f.title) && f.summary), 'Broadcast is discoverable without selecting its panel');
+  assert.ok(guide.overview.glossary.some(g => /^capex$/i.test(g.term) && g.def), 'capex is available in the compact glossary');
+  const selected = selectChatGuide(guide, 'What is Bubble Burst?');
+  assert.ok(guideIds(selected).includes('scenario:BUST'));
+  assert.match(JSON.stringify(selected.details), /Hype Implosion.*Credit Event/);
+});
+
+test('chat guide recognises singular and plural labels without substring matches', () => {
+  const guide = chatGuide();
+  for (const question of ['What is Bubble Burst?', 'Explain Bubble Bursts.', 'BUBBLE BURSTS?', 'What does Bubble Burst mean?']) {
+    assert.ok(guideIds(selectChatGuide(guide, question)).includes('scenario:BUST'), question);
+  }
+  assert.ok(guideIds(selectChatGuide(guide, 'What is Broadcast?')).includes('panel:broadcast'));
+  assert.deepEqual(guideIds(selectChatGuide(guide, 'Explain microbroadcasting.')), [], 'a word containing an alias is not the same feature');
+});
+
+test('chat guide answers joint questions and keeps a bounded set of relevant details', () => {
+  const guide = chatGuide();
+  const joint = guideIds(selectChatGuide(guide, 'Explain Bubble Burst and Broadcast.'));
+  assert.ok(joint.includes('scenario:BUST') && joint.includes('panel:broadcast'));
+  const many = selectChatGuide(guide, 'Explain Bubble Burst, Broadcast, capex, X watch and Tour.');
+  assert.equal(many.details.length, 3);
+  assert.equal(new Set(guideIds(many)).size, 3, 'one detail per topic');
+  const panel = guideIds(selectChatGuide(guide, 'Explain Bubble Burst and capex.', 'broadcast'));
+  assert.equal(panel[0], 'panel:broadcast', 'an explicitly opened panel takes priority');
+  assert.ok(panel.includes('scenario:BUST') && panel.includes('glossary:capex'));
+});
+
+test('chat guide distinguishes the two Tours and explains Broadcast, capex and X watch', () => {
+  const guide = chatGuide();
+  const tour = selectChatGuide(guide, 'What does Tour do?');
+  assert.ok(guideIds(tour).includes('panel:time') && guideIds(tour).includes('panel:guide'), 'scenario playback and the guided tutorial both explain bare Tour');
+  const broadcast = JSON.stringify(selectChatGuide(guide, 'What is Broadcast?').details);
+  assert.match(broadcast, /16:9/);
+  assert.match(broadcast, /\bEsc(?:ape)?\b/i);
+  assert.match(broadcast, /MP4/);
+  assert.match(broadcast, /WebM/);
+  const capex = selectChatGuide(guide, 'What is capex?');
+  assert.ok(guideIds(capex).includes('glossary:capex'));
+  assert.match(JSON.stringify(capex.details), /capital expenditure/i);
+  const xwatch = selectChatGuide(guide, 'What is X watch?');
+  assert.ok(guideIds(xwatch).includes('panel:xwatch'));
+  assert.match(JSON.stringify(xwatch.details), /signals, not data/i);
+});
+
+test('chat guide carries a referential follow-up but does not invent unknown features', () => {
+  const guide = chatGuide();
+  assert.ok(guideIds(selectChatGuide(guide, 'How do I exit it?', '', 'What is Broadcast?')).includes('panel:broadcast'));
+  const changedTopic = guideIds(selectChatGuide(guide, 'What is capex?', '', 'What is Broadcast?'));
+  assert.ok(changedTopic.includes('glossary:capex') && !changedTopic.includes('panel:broadcast'));
+  for (const question of ['What does quantum teleportation mode do?', 'What is xylophone?']) {
+    const unknown = selectChatGuide(guide, question, '', 'What is Broadcast?');
+    assert.deepEqual(unknown.details, [], question + ': unrelated questions must not inherit the previous feature');
+    assert.equal(unknown.overview.scenarios.length, 8);
+  }
+  assert.deepEqual(selectChatGuide(guide, 'What is xylophone?', '../broadcast').details, [], 'an unknown panel id cannot supply a feature');
+});
 
 test('engine instances are independent and deterministic', () => {
   const a = createEngine(), b = createEngine();

@@ -816,6 +816,14 @@ function panelText() {
   const MP = CHAT.panel && window.AIMONITOR_METHODS && window.AIMONITOR_METHODS.panels[CHAT.panel];
   return MP ? 'The visitor is asking about the “' + MP.title + '” panel. Its explainer (JSON): ' + JSON.stringify({ what: MP.what, howToRead: MP.howToRead, method: MP.method, caveats: MP.caveats }) : '';
 }
+function siteGuideText() {
+  const guide = window.AIMONITOR_CHAT_GUIDE;
+  if (!guide || !window.AIMONITOR_selectChatGuide) return panelText();
+  const questions = CHAT.turns[CHAT.mode].filter(m => m.role === 'user');
+  const current = questions[questions.length - 1], previous = questions[questions.length - 2];
+  const context = window.AIMONITOR_selectChatGuide(guide, current ? current.content : '', CHAT.panel || '', previous ? previous.content : '');
+  return guide.rules + '\n\nSite guide — product definitions, not current observations (JSON): ' + JSON.stringify(context);
+}
 const CITE_RULE = 'Citations: cite [ANxx] right after every number you take from the evidence ledger (for example “$900B a year [AN1]”) and [M:<key>] for model measures (for example [M:K] for a 2030 capex value); use only IDs and keys listed below and never write URLs — the dashboard turns the IDs into links to the sources. Your own knowledge and observations are welcome when they help: mark each such statement with [AI] right after it (for example “several labs now sell agent subscriptions [AI]”), say what period it refers to when that matters, keep it separate from AI Forecast Atlas’s data, and never present it as AI Forecast Atlas data. Posts on the X watch list (if listed below) are cited by their id, for example [X12]; call them signals from X, not data.';
 function releaseText() {
   if (!REL) return 'No weekly release yet; base dataset checked 17 Oct 2026.';
@@ -830,14 +838,14 @@ function rulesText() {
   return [
     'You are the assistant of AI Forecast Atlas (aiforecastatlas.com), a public scenario dashboard by Creoox AG that tracks how AI is becoming a commodity and what that means for capital, compute, energy, prices and work.',
     'How it works: history from Q1 2023 to Q4 2026 comes from dated public data (the evidence ledger); from 2027 to 2035 a quarterly system-dynamics model runs eight scenarios: COMM The Great Commoditization; BUST Hype Implosion & Credit Event; BRKW Frontier Breakaway; SPLT Sovereign Splinternet; PWR The Power Wall; BOOM Agentic Productivity Boom; TRST Trust Shock; PLAT Commodity Models, Concentrated Platforms. Indices (hype, credit stress, bank stress, lab distress, signal-to-noise) are illustrative, not probabilities. It is a scenario model, not a forecast.',
-    'Rules: answer from the data below and say clearly when something is outside the model. Be concrete and brief: 2–6 short paragraphs or bullets, plain words, numbers with units and the quarter they refer to. For “what does this mean for me” questions use the visitor profile if given: 2–4 implications across scenarios and what to watch. No personal investment, legal or tax advice. Write trademarks carefully: “Autodesk®” only as an adjective (e.g. “Autodesk® software”), never possessive. If the visitor proposes an improvement, thank them and point to the “Suggest an improvement” tab. Reply in the visitor’s language.',
+    'Rules: use the site guide for definitions, scenarios and interface questions, and the supplied data for dashboard figures. Explain clearly when something is outside the model or the data. Be concrete and brief: 2–6 short paragraphs or bullets, plain words, numbers with units and the quarter they refer to. For “what does this mean for me” questions use the visitor profile if given: 2–4 implications across scenarios and what to watch. No personal investment, legal or tax advice. Write trademarks carefully: “Autodesk®” only as an adjective (e.g. “Autodesk® software”), never possessive. If the visitor proposes an improvement, thank them and point to the “Suggest an improvement” tab. Reply in the visitor’s language.',
+    siteGuideText(),
     CITE_RULE,
     'Current dashboard view (JSON): ' + snapshotText(),
     'Latest weekly release (JSON): ' + releaseText(),
     xwText(),
     'Evidence ledger (JSON): ' + ledgerText(),
     'Measures (JSON): ' + measuresText(),
-    panelText(),
     'Visitor profile: ' + (CHAT.profile.role || CHAT.profile.country ? JSON.stringify(CHAT.profile) : 'not given')
   ].filter(Boolean).join('\n\n');
 }
