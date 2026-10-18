@@ -210,16 +210,33 @@ def check_reading_size(browser):
     finally:
         ctx.close()
 
-    for width in [390, 320]:
-        ctx = browser.new_context(viewport={'width': width, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, reduced_motion='reduce')
+    for width, motion, fallback_fonts in [(390, 'reduce', False), (320, 'reduce', False), (320, 'reduce', True), (320, 'no-preference', False)]:
+        label = '%d px phone (%s motion%s)' % (width, motion, ', fallback fonts' if fallback_fonts else '')
+        ctx = browser.new_context(viewport={'width': width, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True, reduced_motion=motion)
+        if fallback_fonts:
+            ctx.route(re.compile(r'https://fonts\.(googleapis|gstatic)\.com/'), lambda route: route.abort())
         ctx.add_init_script(seen_guide)
         try:
             page = ctx.new_page(); page.goto(SITE, wait_until='networkidle'); ready(page)
             mobile_normal = text_px(page)
             page.get_by_label('Text size', exact=True).select_option('150')
+            page.evaluate('() => document.fonts.ready.then(() => true)')
             dimensions = fits(page)
-            check('150% text fits a %d px phone without horizontal scrolling' % width, near(text_px(page), mobile_normal * 1.5) and dimensions['overflow'] <= 1 and dimensions['controlFits'], dimensions)
-            enlarged_chat(page, '%d px phone' % width)
+            check('150%% text fits a %d px phone without horizontal scrolling' % width, near(text_px(page), mobile_normal * 1.5) and dimensions['overflow'] <= 1 and dimensions['controlFits'], dimensions)
+            chrome = page.evaluate('''() => {
+              const header = document.querySelector('#cmd'), wire = document.querySelector('.wire'),
+                tape = document.querySelector('.tape'), fab = document.querySelector('#chatFab'),
+                b = fab.getBoundingClientRect(), hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+              return { headerOverflow: header.scrollWidth - header.clientWidth, wireHeight: wire.getBoundingClientRect().height,
+                tapeWidth: tape.clientWidth, viewport: document.documentElement.clientWidth,
+                chatUncovered: hit === fab || fab.contains(hit) };
+            }''')
+            check('header and ticker fit and Ask AI is uncovered on ' + label,
+                  chrome['headerOverflow'] <= 1 and chrome['wireHeight'] <= 150 and
+                  chrome['tapeWidth'] >= chrome['viewport'] - 1 and chrome['chatUncovered'], chrome)
+            if width == 320 and motion == 'reduce' and not fallback_fonts:
+                page.screenshot(path=os.path.join(OUT, 'reading_320.png'))
+            enlarged_chat(page, label)
         finally:
             ctx.close()
 
