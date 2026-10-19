@@ -9,7 +9,7 @@ if (PHP_VERSION_ID < 80000) {
 date_default_timezone_set('Europe/Zurich');
 @ini_set('display_errors', '0');
 error_reporting(E_ALL);
-foreach (['util', 'settings', 'http', 'security', 'i18n', 'pages', 'llm', 'chat', 'mailjet', 'subscriptions', 'publish', 'feeds', 'newsletter', 'collectors', 'review', 'xwatch', 'cron', 'admin_api', 'mcp'] as $aim_lib) {
+foreach (['util', 'settings', 'http', 'security', 'i18n', 'pages', 'llm', 'chat', 'mailjet', 'subscriptions', 'publish', 'discovery', 'feeds', 'newsletter', 'collectors', 'review', 'xwatch', 'cron', 'admin_api', 'mcp'] as $aim_lib) {
     require_once __DIR__ . '/' . $aim_lib . '.php';
 }
 unset($aim_lib);

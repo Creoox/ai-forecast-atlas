@@ -182,7 +182,7 @@ function aim_publish(string $id, string $source, ?string $stagedId = null, strin
         $idx['next'] = aim_iso($next);
         aim_write_json(aim_public('data/releases/index.json'), $idx, true);
         aim_write_feeds();
-        aim_write_sitemap();
+        aim_discovery_on_publish($rel);
         aim_state_set(['lastRelease' => $id, 'lastReleaseAt' => aim_iso($now), 'lastReleaseSource' => $source]);
         aim_write_status();
         if ($source === 'staged') aim_unstage($stagedId ?: $id);
@@ -266,8 +266,8 @@ function aim_release_page(array $r, array $files): string
             $li = '';
             foreach ($pm as $m) {
                 $what = ($m['v'] ?? '') !== '' ? $m['v'] : (!empty($m['none']) ? 'nothing newer' : '—');
-                $src = !empty($m['url']) && aim_url_ok((string)$m['url']) ? ' · <a href="' . aim_h($m['url']) . '" rel="noopener">' . aim_h($m['title'] ?? 'source') . '</a>' : (($m['basis'] ?? '') === 'knowledge' && ($m['v'] ?? '') !== '' ? ' · AI knowledge' : '');
-                $li .= '<li>' . aim_h(($m['agent'] ?? '') . ' ' . ($m['model'] ?? '')) . ' (weight ' . (int)($m['w'] ?? 0) . '): ' . aim_h($what) . $src . (!empty($m['lead']) ? ' · <b>published</b>' : (array_key_exists('agrees', $m) ? ($m['agrees'] ? ' · agrees' : ' · differs') : '')) . '</li>';
+                $memberSource = !empty($m['url']) && aim_url_ok((string)$m['url']) ? ' · <a href="' . aim_h($m['url']) . '" rel="noopener">' . aim_h($m['title'] ?? 'source') . '</a>' : (($m['basis'] ?? '') === 'knowledge' && ($m['v'] ?? '') !== '' ? ' · AI knowledge' : '');
+                $li .= '<li>' . aim_h(($m['agent'] ?? '') . ' ' . ($m['model'] ?? '')) . ' (weight ' . (int)($m['w'] ?? 0) . '): ' . aim_h($what) . $memberSource . (!empty($m['lead']) ? ' · <b>published</b>' : (array_key_exists('agrees', $m) ? ($m['agrees'] ? ' · agrees' : ' · differs') : '')) . '</li>';
             }
             $more .= '<details class="small"><summary>Answers of the AI research panel</summary><ul>' . $li . '</ul></details>';
         }
@@ -275,7 +275,7 @@ function aim_release_page(array $r, array $files): string
         $rows .= '<tr><td>' . $name . '</td><td>' . aim_h($c['fromText'] ?? '') . '</td><td>' . aim_h($c['toText'] ?? '') . '</td><td>' . $src . $more . '</td></tr>';
     }
     $dl = '';
-    foreach ($files as $f) $dl .= '<li><a href="' . aim_h($f) . '">' . aim_h($f) . '</a></li>';
+    foreach ($files as $f) if (preg_match(AIM_RELEASE_FILE_RX, $f)) $dl .= '<li><a href="' . aim_h(aim_site_url('data/releases/' . $r['id'] . '/' . $f)) . '">' . aim_h($f) . '</a></li>';
     $hl = '';
     foreach ($r['highlights'] ?? [] as $h) $hl .= '<li>' . aim_h($h) . '</li>';
     $xw = '';
@@ -288,24 +288,41 @@ function aim_release_page(array $r, array $files): string
     }
     return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Forecast Atlas release ' . aim_h($r['id']) . '</title>'
         . '<meta name="description" content="' . aim_h(mb_substr((string)($r['summary'] ?? ''), 0, 200)) . '"><link rel="icon" href="' . $H . 'favicon.svg" type="image/svg+xml">'
+        . aim_discovery_head('AI Forecast Atlas release ' . $r['id'], mb_substr((string)($r['summary'] ?? ''), 0, 200), 'releases/' . $r['id'] . '/', $r, 'Report')
         . '<style>:root{--bg:#f3f2ed;--ink:#17171a;--ink2:#43413c;--rule:#dfdcd2;--a:#9c5500;color-scheme:light}@media (prefers-color-scheme:dark){:root{--bg:#0b0b0c;--ink:#f1efe8;--ink2:#c9c6bc;--rule:#2a2a2e;--a:#f5a524;color-scheme:dark}}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}main{max-width:860px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-left,0px)) 40px max(16px,env(safe-area-inset-right,0px))}a{color:var(--a)}p,li{color:var(--ink2)}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-bottom:1px solid var(--rule);padding:6px 8px;text-align:left;vertical-align:top}.tw{overflow-x:auto}h1{text-wrap:balance}blockquote{margin:6px 0;padding-left:10px;border-left:3px solid var(--rule);color:var(--ink2);font-size:13px}.small{font-size:12.5px;margin:4px 0}</style></head><body><main>'
-        . '<p><a href="' . $H . '">AI Forecast Atlas</a> · <a href="../index.json">All releases</a> · <a href="' . $H . '#sources">All sources and methods</a></p>'
+        . '<p><a href="' . $H . '">AI Forecast Atlas</a> · ' . aim_discovery_link('releases/', 'All releases') . ' · ' . aim_discovery_link('methodology/', 'Sources and methods') . '</p>'
         . '<h1>Weekly release ' . aim_h($r['id']) . '</h1><p>Published ' . aim_h(aim_date_l($r['publishedAt'] ?? aim_iso(), 'en', true)) . ' · data to ' . aim_h((string)($r['asOf'] ?? '')) . ' · engine ' . aim_h((string)($r['engine'] ?? '')) . '</p>'
         . '<p>' . aim_h((string)($r['summary'] ?? '')) . '</p>'
+        . (!empty($r['notes']) ? '<h2>Editorial notes</h2><p>' . nl2br(aim_h((string)$r['notes'])) . '</p>' : '')
         . ($rows ? '<h2>What changed, and where it comes from</h2><div class="tw"><table><thead><tr><th>Measure</th><th>Was</th><th>Now</th><th>Source</th></tr></thead><tbody>' . $rows . '</tbody></table></div>' : '')
         . ($hl ? '<h2>How the scenarios moved</h2><ul>' . $hl . '</ul>' : '')
         . ($xw ? '<h2>X watch — posts the editor is watching</h2><p class="small">Found on X by Grok (xAI) with its X search, labelled for credibility and impact, approved by a person. Signals, not data: they do not change the model.</p><ul>' . $xw . '</ul>' : '')
-        . '<h2>How values enter the data</h2><p>Official sources are read automatically every morning. Research questions go to a panel of AI agents (OpenAI, Anthropic Claude, Google Gemini, xAI Grok and DeepSeek); each answer names its source page and quotes it, or is marked as the model’s own knowledge, and the answers are combined by weighted median. Nothing is published until a person has reviewed it (<a href="' . $H . '#verify">how we verify</a>). Every starting value, with its source, link, quote and derivation, is listed in <a href="dataset.json">dataset.json</a> and on the dashboard under <a href="' . $H . '#sources">Sources &amp; methods</a>; the formulas behind the scenario paths are under <a href="' . $H . '#method-K">Methods</a>.</p>'
+        . '<h2>How values enter the data</h2><p>Official sources are read automatically every morning. Research questions go to a panel of AI agents (OpenAI, Anthropic Claude, Google Gemini, xAI Grok and DeepSeek); each answer names its source page and quotes it, or is marked as the model’s own knowledge, and the answers are combined by weighted median. Nothing is published until a person has reviewed it (<a href="' . $H . '#verify">how we verify</a>). Every starting value, with its source, link, quote and derivation, is listed in ' . aim_discovery_link('data/releases/' . $r['id'] . '/dataset.json', 'dataset.json') . ' and on the dashboard under <a href="' . $H . '#sources">Sources &amp; methods</a>; the formulas behind the scenario paths are under <a href="' . $H . '#method-K">Methods</a>.</p>'
         . '<h2>Files</h2><ul>' . $dl . '</ul><p>Licence: CC BY 4.0 — credit “AI Forecast Atlas by Creoox AG”, aiforecastatlas.com, release ' . aim_h($r['id']) . '. A scenario model, not a forecast and not investment advice.</p>'
-        . '</main></body></html>';
+        . aim_discovery_footer($r) . '</main></body></html>';
 }
 function aim_write_sitemap(): void
 {
     $base = rtrim(aim_settings()['site']['url'], '/') . '/';
-    $urls = [$base, $base . 'privacy.php', $base . 'imprint.php'];
-    foreach (array_slice(aim_releases_index()['releases'], 0, 200) as $e) $urls[] = $base . 'data/releases/' . $e['id'] . '/';
+    $b = aim_discovery_latest();
+    $r = $b['release'] ?? [];
+    $date = aim_discovery_date($r);
+    $urls = [$base => $date];
+    foreach (['privacy.php', 'imprint.php'] as $path) if (is_file(aim_public($path))) $urls[$base . $path] = date(DATE_ATOM, filemtime(aim_public($path)));
+    $paths = ['scenarios/', 'measures/', 'releases/', 'about/', 'faq/', 'methodology/'];
+    foreach ($b['scenarios'] ?? [] as $s) $paths[] = aim_discovery_scenario_path($s['key']);
+    foreach ($b['metrics'] ?? [] as $key => $m) $paths[] = aim_discovery_measure_path($key);
+    foreach ($paths as $path) if (is_file(aim_public($path . 'index.html'))) $urls[$base . $path] = $date;
+    foreach (aim_discovery_published_ids() as $id) {
+        $path = 'releases/' . $id . '/';
+        if (!is_file(aim_public($path . 'index.html'))) continue;
+        $rel = aim_read_json(aim_public('data/releases/' . $id . '/release.json'), []);
+        $urls[$base . $path] = aim_discovery_date(is_array($rel) ? $rel : []);
+    }
     $x = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
-    foreach ($urls as $u) $x .= '  <url><loc>' . aim_h($u) . '</loc></url>' . "\n";
+    foreach ($urls as $u => $modified) $x .= '  <url><loc>' . aim_h($u) . '</loc>' . ($modified !== '' ? '<lastmod>' . aim_h($modified) . '</lastmod>' : '') . '</url>' . "\n";
     aim_write(aim_public('sitemap.xml'), $x . "</urlset>\n");
-    aim_write(aim_public('robots.txt'), "User-agent: *\nDisallow: /api/\nDisallow: /admin/\nDisallow: /_private/\nDisallow: /check.php\nSitemap: " . $base . "sitemap.xml\n");
+    $robots = '# Search and training crawlers are welcome to public content. Published data: CC BY 4.0.' . "\n";
+    foreach (['*', 'GPTBot', 'ClaudeBot', 'Google-Extended', 'CCBot', 'OAI-SearchBot', 'ChatGPT-User', 'Claude-SearchBot', 'PerplexityBot'] as $bot) $robots .= 'User-agent: ' . $bot . "\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /_private/\nDisallow: /check.php\n\n";
+    aim_write(aim_public('robots.txt'), $robots . 'Sitemap: ' . $base . "sitemap.xml\n");
 }

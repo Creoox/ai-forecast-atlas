@@ -1,0 +1,7 @@
+# Only fingerprinted build files are immutable. Stable aliases and changing data revalidate.
+<IfModule mod_headers.c>
+    <FilesMatch "\.[0-9a-f]{10}\.(?:js|css|ttf|woff2)$">
+        Header onsuccess unset Cache-Control
+        Header always set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>

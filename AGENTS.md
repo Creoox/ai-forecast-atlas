@@ -26,10 +26,10 @@ The code, model and design are licensed under the Business Source License 1.1 (s
 ## Commands
 
 ```
-npm test                         # 13 unit checks (Node 20+)
+npm test                         # unit, assistant and public-page regressions (Node 20+; PHP 8 CLI)
 node web/build.mjs --no-zip      # build
-node test/integration.mjs        # 154 end-to-end checks (needs a PHP 8 CLI on PATH)
-python3 test/ui/ui_test.py       # 103 browser checks (optional: Playwright + Chromium, run after the build)
+node test/integration.mjs        # end-to-end checks (needs a PHP 8 CLI on PATH)
+python3 test/ui/ui_test.py       # browser checks (optional: Playwright + Chromium, run after the build)
 find server test/mock -name '*.php' -print0 | xargs -0 -n1 php -l
 ```
 

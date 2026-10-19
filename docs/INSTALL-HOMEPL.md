@@ -228,10 +228,14 @@ Visitors can now subscribe with the **Subscribe** button: they pick topics, lang
 Use the **update package** (`aimonitor-homepl-update-<version>.zip`): it contains only program files. Upload its `aimonitor` folder over the old one. It leaves these alone on the server:
 
 - `aimonitor/_private/storage/` — your settings, keys, review queue and logs,
+- `aimonitor/_private/config/` — installed configuration,
 - `aimonitor/data/` and `aimonitor/feeds/` — every published release and the feeds,
+- the generated scenario, measure, release, About, FAQ and Methodology pages, sitemap, robots file and AI-readable files,
 - `aimonitor/.htaccess` — so the PHP-version lines you may have added in step 5 stay in place. (If a release note ever says that `.htaccess` changed, take it from the full package and add your lines again at the top.)
 
 Never upload the **full** package over a running site: it would replace your published data with the first release.
+
+For version 1.3.0, follow [the release checklist](RELEASE-1.3.0.md): merge the new public security and canonical-host rules into the existing `.htaccess`, keeping its PHP handler. Then use **Admin → Release → Refresh public pages** to generate the new pages from already-published releases. This does not publish working data or send a newsletter.
 
 ## Backups
 

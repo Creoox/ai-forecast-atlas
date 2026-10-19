@@ -351,10 +351,13 @@ SetEnv CGI_HANDLER php84
 <p>Use the <strong>update package</strong> (<code>aimonitor-homepl-update-&lt;version&gt;.zip</code>): it contains only program files. Upload its <code>aimonitor</code> folder over the old one. It leaves these alone on the server:</p>
 <ul>
 <li><code>aimonitor/_private/storage/</code> — your settings, keys, review queue and logs,</li>
+<li><code>aimonitor/_private/config/</code> — installed configuration,</li>
 <li><code>aimonitor/data/</code> and <code>aimonitor/feeds/</code> — every published release and the feeds,</li>
+<li>the generated scenario, measure, release, About, FAQ and Methodology pages, sitemap, robots file and AI-readable files,</li>
 <li><code>aimonitor/.htaccess</code> — so the PHP-version lines you may have added in step 5 stay in place. (If a release note ever says that <code>.htaccess</code> changed, take it from the full package and add your lines again at the top.)</li>
 </ul>
 <p>Never upload the <strong>full</strong> package over a running site: it would replace your published data with the first release.</p>
+<p>For version 1.3.0, follow <a href="RELEASE-1.3.0.md">the release checklist</a>: merge the new public security and canonical-host rules into the existing <code>.htaccess</code>, keeping its PHP handler. Then use <strong>Admin → Release → Refresh public pages</strong> to generate the new pages from already-published releases. This does not publish working data or send a newsletter.</p>
 <h2 id="backups">Backups</h2>
 <p>Don't rely only on the hosting's own backups, which are short-term. Once a month, download <code>aimonitor/_private/storage/</code> and <code>aimonitor/data/</code> to your computer (WebFTP or FileZilla).</p>
 <h2 id="security-in-short">Security in short</h2>

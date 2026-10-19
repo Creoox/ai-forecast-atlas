@@ -40,9 +40,10 @@ const siteJs = rd('web/src/site.js');
 const guideJs = rd('web/src/guide.js');
 /* explanations, formulas and source notes (CC BY 4.0): one file feeds the dashboard, the assistant, the MCP server and the data API */
 const methods = JSON.parse(rd('config/methods.json'));
+const operator = JSON.parse(rd('config/operator.json')).site;
 const methodsJson = JSON.stringify(methods);
 const methodsJs = '/* AI Forecast Atlas — explanations, formulas and source notes (CC BY 4.0). Generated from config/methods.json. */\nwindow.AIMONITOR_METHODS = ' + methodsJson.replace(/<\/(script)/gi, '<\\/$1') + ';\n';
-const chatGuide = buildChatGuide(createEngine(), methods);
+const chatGuide = buildChatGuide(createEngine(), methods, { ...operator, url: SITE, name: 'AI Forecast Atlas' });
 const chatGuideJson = JSON.stringify(chatGuide);
 const chatGuideClassic = rd('web/src/chat-guide.mjs').replace(/^export (?=function (?:buildChatGuide|selectChatGuide)\()/gm, '');
 if (/^export /m.test(chatGuideClassic)) throw new Error('chat guide: export left in the classic build');
@@ -76,39 +77,67 @@ copyDir(path.join(ROOT, 'server/cron'), path.join(DIST, 'homepl', 'cron'));
 
 const assets = { 'engine.js': engineClassic, 'engine.esm.js': engineEsm, 'release-core.js': releaseCore, 'app.js': appJs, 'site.js': siteJs, 'guide.js': guideJs, 'methods.js': methodsJs, 'methods.json': JSON.stringify(methods, null, 1) + '\n', 'chat-guide.js': chatGuideJs, 'chat-guide.json': chatGuideJson + '\n' };
 const ver = {};
-for (const [n, s] of Object.entries(assets)) { wr(path.join(OUT, 'assets', n), s); ver[n] = hash(s); }
-const desc = 'Weekly scenario monitor of AI commoditization: capex, revenue, token prices, compute, energy and work, 2023–2035. Eight scenarios, open data, by Creoox AG.';
+const assetNames = {};
+for (const [n, s] of Object.entries(assets)) {
+  // Stable aliases remain for the public API and existing integrations. Only content-addressed files are immutable.
+  wr(path.join(OUT, 'assets', n), s); ver[n] = hash(s);
+  assetNames[n] = n.replace(/\.(\w+)$/, '.' + ver[n] + '.$1');
+  wr(path.join(OUT, 'assets', assetNames[n]), s);
+}
+const fonts = [
+  { file: 'archivo-variable.ttf', family: 'Archivo', weight: '100 900', stretch: '62% 125%' },
+  { file: 'martian-mono-variable.ttf', family: 'Martian Mono', weight: '100 800', stretch: '75% 112.5%' }
+];
+const fontCss = (inline = false) => fonts.map(f => {
+  const data = fs.readFileSync(path.join(ROOT, 'web/static/fonts', f.file));
+  const name = f.file.replace('.ttf', '.' + hash(data) + '.ttf');
+  if (!inline) wr(path.join(OUT, 'assets/fonts', name), data);
+  return '@font-face{font-family:"' + f.family + '";font-style:normal;font-weight:' + f.weight + ';font-stretch:' + f.stretch
+    + ';font-display:swap;src:url("' + (inline ? 'data:font/ttf;base64,' + data.toString('base64') : 'assets/fonts/' + name) + '") format("truetype")}';
+}).join('\n');
+const localFonts = fontCss();
+for (const f of ['Archivo-OFL.txt', 'MartianMono-OFL.txt']) wr(path.join(OUT, 'assets/fonts', f), rd('web/static/fonts/' + f));
+const desc = 'Explore eight AI economy scenarios to 2035: AI capex, revenue, token prices, compute, energy and work. Weekly sourced data by Creoox AG; scenarios, not predictions.';
 const jsonld = { '@context': 'https://schema.org', '@type': 'Dataset', name: 'AI Forecast Atlas — AI Commoditization Monitor', description: desc, url: SITE, license: 'https://creativecommons.org/licenses/by/4.0/', isAccessibleForFree: true,
   creator: { '@type': 'Organization', name: 'Creoox AG', url: 'https://creoox.com' }, temporalCoverage: '2023-01-01/2035-12-31', keywords: ['AI', 'commoditization', 'scenarios', 'capex', 'token prices', 'data centres', 'AECO'],
   distribution: [{ '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: SITE + 'data/latest/series/all.csv' }, { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: SITE + 'data/latest/release.json' }] };
 const siteCfg = { mode: 'site', siteUrl: SITE, apiBase: 'api/', version: VERSION, buildDate: BUILD_DATE, defaultTheme: 'dark', newsletter: NL_PUBLIC };
+const siteBootstrap = 'window.AIMONITOR = ' + JSON.stringify(siteCfg) + ';\n';
 const head = headPart
-  .replace('<title>AI Commoditization Monitor</title>', '<title>AI Forecast Atlas — AI Commoditization Monitor</title>')
+  .replace('<title>AI Commoditization Monitor</title>', '<title>AI Forecast Atlas — AI economy scenarios to 2035 &amp; AI capex</title>')
+  .replace('<!--__FONTS__-->', '<style>' + localFonts + '</style>')
   .replace('<meta name="claude:viewport-fit-sides" content="cover">\n', '')
   .replace('<!--__HEAD__-->', [
     '<meta name="description" content="' + desc + '">',
     '<link rel="canonical" href="' + SITE + '">',
-    '<meta property="og:type" content="website"><meta property="og:site_name" content="AI Forecast Atlas"><meta property="og:title" content="AI Forecast Atlas — AI Commoditization Monitor">',
+    '<meta property="og:type" content="website"><meta property="og:site_name" content="AI Forecast Atlas"><meta property="og:title" content="AI Forecast Atlas — AI economy scenarios to 2035">',
     '<meta property="og:description" content="' + desc + '"><meta property="og:url" content="' + SITE + '"><meta property="og:image" content="' + SITE + 'og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">',
     '<meta name="twitter:card" content="summary_large_image">',
     '<meta name="theme-color" content="#0b0b0c">',
     '<link rel="icon" href="favicon.svg" type="image/svg+xml">',
+    '<link rel="icon" href="favicon.ico" sizes="any"><link rel="apple-touch-icon" href="apple-touch-icon.png">',
     '<link rel="alternate" type="application/rss+xml" title="AI Forecast Atlas weekly releases" href="feeds/releases.xml">',
     '<link rel="alternate" type="application/atom+xml" title="AI Forecast Atlas weekly releases (Atom)" href="feeds/releases-atom.xml">',
     '<link rel="alternate" type="application/feed+json" title="AI Forecast Atlas weekly releases (JSON Feed)" href="feeds/releases.json">',
-    '<script type="application/ld+json">' + JSON.stringify(jsonld) + '</script>'
+    '<!-- AIM:METADATA:START --><script type="application/ld+json">' + JSON.stringify(jsonld) + '</script><!-- AIM:METADATA:END -->'
   ].join('\n'))
   .replace('<style>', '<style>\n' + RESET + '\n');
 const index = '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n' + head + '\n</head>\n<body>\n' + bodyPart + '\n'
-  + '<noscript><p style="padding:16px">AI Forecast Atlas needs JavaScript. The data is also available as files: <a href="data/latest/release.json">latest release</a>, <a href="data/latest/series/all.csv">all series (CSV)</a>.</p></noscript>\n'
-  + '<script>window.AIMONITOR = ' + JSON.stringify(siteCfg) + ';</script>\n'
-  + '<script>(function(){var h=Math.floor(Date.now()/36e5);document.write(\'<script src="data/site-config.js?h=\'+h+\'"><\\/script><script src="data/latest/release.js?h=\'+h+\'"><\\/script>\');})();</script>\n'
+  + '<noscript><p style="padding:16px">The interactive charts need JavaScript. Read the <a href="scenarios/">scenario pages</a>, <a href="methodology/">methodology</a> or download <a href="data/latest/series/all.csv">all series (CSV)</a>.</p></noscript>\n'
+  + '<script src="assets/site-bootstrap.' + hash(siteBootstrap) + '.js"></script>\n'
+  + '<script src="data/site-config.js"></script><script src="data/latest/release.js"></script>\n'
   + '<script src="assets/methods.js?v=' + ver['methods.js'] + '"></script>\n'
   + '<script src="assets/chat-guide.js?v=' + ver['chat-guide.js'] + '"></script>\n'
   + '<script src="assets/engine.js?v=' + ver['engine.js'] + '"></script>\n<script src="assets/app.js?v=' + ver['app.js'] + '"></script>\n<script src="assets/site.js?v=' + ver['site.js'] + '"></script>\n<script src="assets/guide.js?v=' + ver['guide.js'] + '"></script>\n</body>\n</html>\n';
-wr(path.join(OUT, 'index.html'), index);
-wr(path.join(OUT, 'embed/index.html'), rd('web/src/embed.html'));
-for (const f of ['favicon.svg', 'og.png']) if (fs.existsSync(path.join(ROOT, 'web/static', f))) fs.copyFileSync(path.join(ROOT, 'web/static', f), path.join(OUT, f));
+wr(path.join(OUT, 'assets', 'site-bootstrap.' + hash(siteBootstrap) + '.js'), siteBootstrap);
+const versionAssets = html => html.replace(/assets\/([\w.-]+)\?v=[a-f0-9]+/g, (all, name) => 'assets/' + (assetNames[name] || name));
+wr(path.join(OUT, 'index.html'), versionAssets(index));
+// Update packages must never ship the first-install release's summary over a live release.
+// Keep the generic semantic template until the administrator refreshes from published live data.
+wr(path.join(DIST, 'update-index.html'), versionAssets(index));
+wr(path.join(OUT, 'embed/index.html'), rd('web/src/embed.html').replace('../assets/engine.esm.js', '../assets/' + assetNames['engine.esm.js']).replace('../assets/release-core.js', '../assets/' + assetNames['release-core.js']));
+for (const f of ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'og.png']) if (fs.existsSync(path.join(ROOT, 'web/static', f))) fs.copyFileSync(path.join(ROOT, 'web/static', f), path.join(OUT, f));
+for (const f of ['LICENSE', 'LICENSE-DATA.md']) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
 wr(path.join(OUT, 'robots.txt'), rd('web/static/robots.txt').replaceAll('{{SITE}}', SITE));
 wr(path.join(OUT, 'llms.txt'), rd('web/static/llms.txt').replaceAll('{{SITE}}', SITE));
 wr(path.join(OUT, 'openapi.json'), JSON.stringify(openapi(SITE), null, 1) + '\n');
@@ -147,6 +176,7 @@ console.log('site     dist/homepl/aimonitor  (' + fileCount(OUT) + ' files, base
 const artCfg = { mode: 'artifact', siteUrl: SITE, version: VERSION, buildDate: BUILD_DATE, newsletter: NL_PUBLIC };
 const artifact = template
   .replace('<!--__HEAD__-->', '')
+  .replace('<!--__FONTS__-->', '<style>' + fontCss(true) + '</style>')
   .replace('/*__CONFIG__*/', () => 'window.AIMONITOR = ' + JSON.stringify(artCfg) + ';\n' + methodsJs + chatGuideJs)
   .replace('/*__ENGINE__*/', () => engineClassic)
   .replace('/*__APP__*/', () => appJs)
@@ -159,8 +189,9 @@ console.log('preview  dist/artifact/ai-monitor.html (' + Math.round(artifact.len
 if (!flag('--no-zip')) {
   const zipName = 'aimonitor-homepl-' + VERSION + '.zip';
   const py = 'import os,sys,zipfile\nroot=sys.argv[1]; out=sys.argv[2]\nwith zipfile.ZipFile(out,"w",zipfile.ZIP_DEFLATED) as z:\n  for base in ["aimonitor","cron"]:\n    for d,_,fs in os.walk(os.path.join(root,base)):\n      for f in sorted(fs):\n        p=os.path.join(d,f); z.write(p, os.path.relpath(p, root))\n  for extra in sys.argv[3:]:\n    z.write(extra, os.path.basename(extra))\n';
-  const extras = ['docs/INSTALL-HOMEPL.html', 'docs/INSTALL-HOMEPL.md', 'LICENSE', 'LICENSE-DATA.md'].map(p => path.join(ROOT, p)).filter(p => fs.existsSync(p));
-  const pyUpd = py.replace('for f in sorted(fs):', 'for f in sorted(fs):\n        rel=os.path.relpath(os.path.join(d,f), root).replace(os.sep, "/")\n        if rel.startswith(("aimonitor/data/","aimonitor/feeds/","aimonitor/_private/storage/")) or rel in ("aimonitor/sitemap.xml","aimonitor/robots.txt","aimonitor/.htaccess"): continue');
+  const extras = ['docs/INSTALL-HOMEPL.html', 'docs/INSTALL-HOMEPL.md', 'docs/RELEASE-1.3.0.md', 'LICENSE', 'LICENSE-DATA.md'].map(p => path.join(ROOT, p)).filter(p => fs.existsSync(p));
+  const pyUpd = py.replace('for f in sorted(fs):', 'for f in sorted(fs):\n        rel=os.path.relpath(os.path.join(d,f), root).replace(os.sep, "/")\n        if rel.startswith(("aimonitor/data/","aimonitor/feeds/","aimonitor/_private/storage/","aimonitor/_private/config/","aimonitor/scenarios/","aimonitor/measures/","aimonitor/releases/","aimonitor/about/","aimonitor/faq/","aimonitor/methodology/","cron/")) or rel in ("aimonitor/aim-config.php","aimonitor/sitemap.xml","aimonitor/robots.txt","aimonitor/llms.txt","aimonitor/llms-full.txt","aimonitor/.htaccess"): continue')
+    .replace('p=os.path.join(d,f); z.write(p, os.path.relpath(p, root))', 'p=os.path.join(d,f)\n        if rel == "aimonitor/index.html": z.write(os.path.join(os.path.dirname(out),"update-index.html"),rel)\n        else: z.write(p,rel)');
   const updName = 'aimonitor-homepl-update-' + VERSION + '.zip';
   try {
     execFileSync('python3', ['-c', py, path.join(DIST, 'homepl'), path.join(DIST, zipName), ...extras]); console.log('zip      dist/' + zipName + ' (' + Math.round(fs.statSync(path.join(DIST, zipName)).size / 1024) + ' KB) — first installation');

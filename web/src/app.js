@@ -21,16 +21,25 @@ const SITE = Object.assign({ mode: 'artifact' }, window.AIMONITOR || {}, window.
 const TEXT_SIZE_KEY = 'aimonitor.text-size.v1';
 const TEXT_SIZES = [100, 125, 150];
 const savedTextSize = load(TEXT_SIZE_KEY);
-let TEXT_SIZE = TEXT_SIZES.includes(savedTextSize) ? savedTextSize : 100;
+let TEXT_MODE = TEXT_SIZES.includes(savedTextSize) ? savedTextSize : 'auto';
+const automaticTextSize = () => innerWidth >= 2500 ? 150 : innerWidth >= 1900 ? 130 : innerWidth >= 1400 ? 115 : 100;
+let TEXT_SIZE = TEXT_MODE === 'auto' ? automaticTextSize() : TEXT_MODE;
 const textScale = () => TEXT_SIZE / 100;
 function applyTextSizeTokens() {
   document.documentElement.style.setProperty('--text-scale', textScale());
   document.documentElement.dataset.textSize = String(TEXT_SIZE);
-  const select = $('#textSize'); if (select) select.value = String(TEXT_SIZE);
+  document.documentElement.dataset.textMode = String(TEXT_MODE);
+  const select = $('#textSize'); if (select) select.value = String(TEXT_MODE);
 }
 applyTextSizeTokens();
 // Broadcast is a fixed 1920×1080 recording composition, independent of reading preferences.
-const chartScale = ctx => ctx.canvas.id === 'bcv' ? 1 : textScale();
+const chartScale = ctx => {
+  if (ctx.canvas.id === 'bcv') return 1;
+  const panel = ctx.canvas.closest('.is-focus');
+  const extra = panel ? clamp(Math.sqrt((ctx.canvas.clientWidth || 1) / (ctx.canvas._normalWidth || ctx.canvas.clientWidth || 1)), 1, 1.8) : 1;
+  ctx.canvas.dataset.chartScale = String(textScale() * extra);
+  return textScale() * extra;
+};
 
 /* ---------- theme: dark (default, the terminal look) or light; tokens are re-read on every switch ---------- */
 let THEME = (function () {
@@ -48,8 +57,9 @@ readTokens();
 const FD = '"Martian Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';
 const FX = '"Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif';
 function font(ctx, px, w, fam, stretch) {
+  if (ctx.canvas.id !== 'bcv') px = Math.max(px, 10.5 * chartScale(ctx));
   ctx.font = (w || 500) + ' ' + px + 'px ' + (fam || FD);
-  if ('fontStretch' in ctx) ctx.fontStretch = stretch || (fam === FX ? 'condensed' : 'condensed');
+  if ('fontStretch' in ctx) ctx.fontStretch = stretch || (ctx.canvas.id === 'bcv' ? 'condensed' : 'normal');
 }
 function hexRgb(h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); }
 function rgba(h, a) { const [r, g, b] = hexRgb(h); return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')'; }
@@ -85,8 +95,8 @@ PRE.forEach(s => { RUN[s.key] = E.simulate(s, null); });
 let CUST_COLOR = THEME === 'light' ? '#55524b' : '#d6d3c9'; // custom run: neutral, drawn dashed
 if (THEME === 'light') { RAMP = RAMP_L; DIV = DIV_L; }
 const state = {
-  key: 'COMM', custom: null, t: E.idxOf(2030.75), playing: false, speed: 1, hover: null, hoverLane: null,
-  reveal: true, tour: null, bc: false, closed: {}, from: 'start', firstPlay: true
+  key: 'COMM', custom: null, t: NOW, playing: false, speed: 1, hover: null, hoverLane: null,
+  reveal: true, tour: null, bc: false, closed: {}, from: 'now', firstPlay: true
 };
 let custRun = null;
 const runFor = k => (k === 'CUST' ? custRun : RUN[k]);
@@ -322,7 +332,7 @@ function pathSeries(ctx, get, i0, i1, X, Y, fEnd) {
 }
 function drawLane(ctx, x, y, w, h, L, o) {
   const big = (o.big || 1) * chartScale(ctx);
-  const axisW = 44 * big, top = 7 * big, bot = 6 * big;
+  const axisW = (ctx.canvas.id === 'bcv' ? 44 : 64) * big, top = 7 * big, bot = 6 * big;
   const x0 = x, x1 = x + w - axisW, y0 = y + top, y1 = y + h - bot;
   const X = i => xOfI(i, x0, x1), Y = yMap(L, y0, y1);
   ctx.save();
@@ -439,7 +449,7 @@ function drawLane(ctx, x, y, w, h, L, o) {
 /* ---------- scrubber ---------- */
 function regimeOf(i) { const r = view.to.regime[i]; return E.REGIMES[r] || E.REGIMES.STEADY; }
 function drawScrub(ctx, x, y, w, h, o) {
-  const big = (o.big || 1) * chartScale(ctx), axisW = 44 * big;
+  const big = (o.big || 1) * chartScale(ctx), axisW = (ctx.canvas.id === 'bcv' ? 44 : 64) * big;
   const x0 = x, x1 = x + w - axisW;
   const X = i => xOfI(i, x0, x1);
   ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
@@ -521,12 +531,16 @@ function nodeZ(n, f) {
   return Math.log(Math.max(1e-9, v) / Math.max(1e-9, v0)) / (n.sc || 1.2);
 }
 function nodeRate(n, f) { const a = nodeZ(n, Math.max(0, f - 1)), b = nodeZ(n, f); return b - a; }
-let netHover = null;
+let netHover = null, netSelected = null;
 function drawNet(ctx, x, y, w, h, o) {
   const big = (o.big || 1) * chartScale(ctx), f = o.f, time = o.time / 1000;
   ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
   ctx.fillStyle = o.bg || TH.panel; ctx.fillRect(x, y, w, h);
-  const padX = 40 * big;
+  const padX = (ctx.canvas.id === 'bcv' ? 40 : 68) * big;
+  const selected = netHover || netSelected;
+  const linked = e => !selected || e.a === selected || e.b === selected;
+  const activeNodes = new Set(selected ? [selected, ...EDGES.filter(linked).flatMap(e => [e.a, e.b])] : NODES.map(n => n.id));
+  ctx.canvas.dataset.highlightedNode = selected || '';
   const P = n => [x + padX + n.x * (w - 2 * padX), y + 10 * big + n.y * (h - 20 * big)];
   const geo = EDGES.map(e => {
     const [ax, ay] = P(NODE[e.a]), [bx, by] = P(NODE[e.b]);
@@ -536,11 +550,12 @@ function drawNet(ctx, x, y, w, h, o) {
   });
   // edges
   geo.forEach(g => {
-    ctx.strokeStyle = g.e.s > 0 ? 'rgba(255,162,31,0.13)' : 'rgba(106,168,255,0.13)';
-    ctx.lineWidth = 1 * big; ctx.beginPath(); ctx.moveTo(g.ax, g.ay); ctx.quadraticCurveTo(g.cx, g.cy, g.bx, g.by); ctx.stroke();
+    ctx.strokeStyle = rgba(g.e.s > 0 ? TH.amber : TH.info, selected ? (linked(g.e) ? 0.85 : 0.04) : 0.2);
+    ctx.lineWidth = (selected && linked(g.e) ? 2 : 1) * big; ctx.beginPath(); ctx.moveTo(g.ax, g.ay); ctx.quadraticCurveTo(g.cx, g.cy, g.bx, g.by); ctx.stroke();
   });
   // particles
   geo.forEach(g => {
+    if (!linked(g.e)) return;
     const src = NODE[g.e.a];
     const r = nodeRate(src, f);
     const mag = clamp(Math.abs(r) * 6, 0, 1);
@@ -560,15 +575,16 @@ function drawNet(ctx, x, y, w, h, o) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   NODES.forEach(n => {
     const [px, py] = P(n);
+    ctx.globalAlpha = activeNodes.has(n.id) ? 1 : 0.25;
     const z = clamp(nodeZ(n, f), -2.5, 2.5);
     const arrow = Math.abs(z) < 0.06 ? '' : z > 0 ? ' ▲' : ' ▼';
     const label = n.l + arrow;
-    const tw = ctx.measureText(label).width + 10 * big, th = 16 * big;
+    const tw = ctx.measureText(label).width + 10 * big, th = (ctx.canvas.id === 'bcv' ? 16 : 22) * big;
     const tint = z >= 0 ? TH.amber : TH.info;
     ctx.fillStyle = TH.panel3; ctx.fillRect(px - tw / 2, py - th / 2, tw, th);
     ctx.fillStyle = rgba(tint, clamp(Math.abs(z) * 0.35, 0, 0.6)); ctx.fillRect(px - tw / 2, py - th / 2, tw, th);
     ctx.strokeStyle = n.d ? TH.rule2 : rgba(tint, 0.35 + clamp(Math.abs(z) * 0.3, 0, 0.6)); ctx.lineWidth = 1;
-    if (netHover === n.id) { ctx.strokeStyle = TH.ink; ctx.lineWidth = 1.5; }
+    if (selected === n.id) { ctx.strokeStyle = TH.ink; ctx.lineWidth = 1.5; }
     ctx.strokeRect(px - tw / 2 + 0.5, py - th / 2 + 0.5, tw - 1, th - 1);
     ctx.fillStyle = n.d ? TH.ink2 : TH.ink;
     ctx.fillText(label, px, py + 0.5);
@@ -580,7 +596,7 @@ function drawNet(ctx, x, y, w, h, o) {
 /* ---------- phase portrait ---------- */
 function drawPhase(ctx, x, y, w, h, o) {
   const big = (o.big || 1) * chartScale(ctx), f = o.f;
-  const padL = 34 * big, padB = 24 * big, padT = 8 * big, padR = 10 * big;
+  const padL = (ctx.canvas.id === 'bcv' ? 34 : 54) * big, padB = 24 * big, padT = 8 * big, padR = 10 * big;
   const x0 = x + padL, x1 = x + w - padR, y0 = y + padT, y1 = y + h - padB;
   const lx = v => x0 + (Math.log10(clamp(v, 4, 300)) - Math.log10(4)) / (Math.log10(300) - Math.log10(4)) * (x1 - x0);
   const ly = v => y1 - (Math.log10(clamp(v, 1.5, 40)) - Math.log10(1.5)) / (Math.log10(40) - Math.log10(1.5)) * (y1 - y0);
@@ -699,7 +715,8 @@ function drawPools(ctx, x, y, w, h, o) {
 /* ---------- heatmap ---------- */
 const HEAT = { rows: [], col0: NOW, colW: 0, x0: 0, y0: 0, rowH: 17 };
 function heatLayout(w) {
-  const scale = textScale();
+  const scale = chartScale($('#heat').getContext('2d'));
+  HEAT.rowH = (HEAT_ROW[(LAYOUT.size || {}).heat || 'm'] || HEAT_ROW.m) * scale;
   const rows = []; let g = null;
   E.IMPACT_ROWS.forEach((r, idx) => { if (r.g !== g) { rows.push({ head: r.g }); g = r.g; } rows.push({ r, idx }); });
   HEAT.rows = rows;
@@ -710,7 +727,7 @@ function heatLayout(w) {
 }
 function impactsOf(run) { if (!run._imp) run._imp = E.impacts(run); return run._imp; }
 function drawHeat(ctx, w, h) {
-  const run = view.to, imp = impactsOf(run), scale = textScale();
+  const run = view.to, imp = impactsOf(run), scale = chartScale(ctx);
   ctx.fillStyle = TH.panel; ctx.fillRect(0, 0, w, h);
   const X = i => HEAT.x0 + (i - NOW) * HEAT.colW;
   font(ctx, 8.5 * scale, 600); ctx.fillStyle = TH.ink3; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -784,7 +801,7 @@ function buildKpis() {
     d.setAttribute('aria-label', (KPI_LABEL[k] || MET[k].n) + ': show where this number comes from');
     const l = el('div', 'l', KPI_LABEL[k] || MET[k].n); l.title = MET[k].n + ' · click for the source or formula';
     const v = el('div', 'v tnum', '—'); const dd = el('div', 'd', '');
-    const cv = watch(el('canvas')); cv.setAttribute('aria-hidden', 'true');
+    const cv = watch(el('canvas')); cv.setAttribute('role', 'img');
     d.append(l, v, dd, cv); box.append(d);
     DOM.kpi[k] = { v, d: dd, cv };
   });
@@ -837,7 +854,7 @@ function buildDrivers() {
     const row = el('div', 'drv');
     const lab = el('label'); lab.htmlFor = 'drv-' + D.k; lab.title = D.desc;
     const nm = el('span', '', D.name); const out = el('output', '', '0'); lab.append(nm, out);
-    const cv = watch(el('canvas')); cv.setAttribute('aria-hidden', 'true'); cv.title = 'Driver path: scenario (dim) vs your tilt (amber) · click for details'; cv.dataset.prov = 'drv:' + D.k; cv.style.cursor = 'pointer';
+    const cv = watch(el('canvas')); cv.setAttribute('role', 'img'); cv.title = 'Driver path: scenario (dim) vs your tilt (amber) · click for details'; cv.dataset.prov = 'drv:' + D.k; cv.style.cursor = 'pointer';
     const inp = el('input'); inp.type = 'range'; inp.min = '-50'; inp.max = '50'; inp.step = '5'; inp.value = '0'; inp.id = 'drv-' + D.k;
     inp.setAttribute('aria-label', D.name + ' tilt');
     inp.addEventListener('input', () => { const v = +inp.value; forkCustom(); state.custom.offsets[D.k] = v / 100; out.textContent = (v > 0 ? '+' : '') + v; out.classList.toggle('on', v !== 0); recomputeCustom(); });
@@ -1063,7 +1080,10 @@ function buildLedger() {
     const vt = a.via && (pi ? 'AI research panel' + (a.via.type === 'ai-knowledge' ? ' (AI knowledge)' : '') + ' · reviewed' : { api: 'official API · reviewed', ai: 'AI-assisted research · reviewed', 'ai-knowledge': 'AI knowledge, no specific source · reviewed', manual: 'edited by the team' }[a.via.type]);
     if (vt) src.append(el('div', 'via-s', vt + (a.reviewed ? ' ' + a.reviewed : '') + (pi && pi.valued ? ' · ' + pi.agreeN + ' of ' + pi.valued + ' agree' : '')));
     if (a.refs && a.refs.length) { const mb = el('button', 'lnk more', '+' + a.refs.length + ' more'); mb.type = 'button'; mb.dataset.prov = 'an:' + a.id; mb.title = 'Further references'; src.append(document.createTextNode(' '), mb); }
-    tr.append(src, el('td', 'calc', [a.scope ? 'Scope: ' + a.scope + '.' : '', a.calc || '', a.prev ? 'Previous value: ' + a.prev + '.' : a.was ? 'v2: ' + a.was + '.' : ''].filter(Boolean).join(' ')));
+    const derivation = [a.scope ? 'Scope: ' + a.scope + '.' : '', a.calc || '', a.prev ? 'Previous value: ' + a.prev + '.' : a.was ? 'v2: ' + a.was + '.' : ''].filter(Boolean).join(' ');
+    const cell = el('td', 'calc'), detail = el('details');
+    detail.append(el('summary', '', derivation.length > 100 ? derivation.slice(0, 100).replace(/\s+\S*$/, '') + '… More' : 'Derivation · More'), el('p', '', derivation || 'See the linked source for this anchor.'));
+    cell.append(detail); tr.append(src, cell);
     tb.append(tr);
   });
   const P = E.PARAMS, pc = x => Math.round(x * 100) + '%', gr = x => Math.round((Math.exp(x) - 1) * 100) + '%', dc = x => Math.round((1 - Math.exp(-x)) * 100) + '%';
@@ -1090,6 +1110,7 @@ function buildLedger() {
 
 /* ---------- events ---------- */
 let EVENTS = [];
+let wirePaused = REDUCED || load('aimonitor.events-paused') === true;
 const KORD = { hist: 0, scn: 1, base: 1, shock: 2, auto: 3 };
 function buildEvents() {
   const k = state.key, run = runFor(k), scn = scnFor(k);
@@ -1102,11 +1123,11 @@ function buildEvents() {
   // tape (duplicated for a seamless loop)
   const tape = $('#tape'); tape.innerHTML = '';
   for (let rep = 0; rep < 2; rep++) ev.forEach(e => {
-    const s = el('span', 'ev'); s.dataset.i = e.i;
+    const s = el('span', 'ev'); s.dataset.i = e.i; if (rep) s.setAttribute('aria-hidden', 'true');
     const tm = el('i', '', E.qLabel(e.i));
     const tx = el('em', '', (e.kind === 'auto' ? '⚡ ' : '') + e.text);
     if (e.kind !== 'hist') tx.style.color = e.kind === 'auto' ? TH.ink : e.kind === 'shock' ? TH.crit : colorFor(k);
-    s.append(tm, tx); tape.append(s);
+    s.append(el('span', 'event-kind ' + (e.kind === 'hist' ? 'history' : 'scenario'), e.kind === 'hist' ? 'Historical' : 'Scenario'), tm, tx); tape.append(s);
   });
   tape.style.animationDuration = Math.max(60, ev.length * 4.5) + 's';
   // log
@@ -1117,6 +1138,7 @@ function buildEvents() {
     dt.style.background = e.kind === 'hist' ? TH.amber : e.kind === 'auto' ? TH.ink : e.kind === 'shock' ? TH.crit : colorFor(k);
     const tx = el('span', '', e.text + (e.kind === 'base' ? ' (base story)' : ''));
     if (e.kind === 'hist') { const ms = ((window.AIMONITOR_METHODS || {}).events || []).find(x => Math.abs(x.t - E.tAt(e.i)) < 1e-6 && x.text === e.text); const s1 = ms && (ms.sources || []).find(x => x.url); if (s1) { const lk = el('a', 'evsrc', '↗ ' + (s1.publisher || 'source')); lk.href = s1.url; lk.target = '_blank'; lk.rel = 'noopener'; lk.title = s1.title || s1.url; lk.addEventListener('click', ev3 => ev3.stopPropagation()); tx.append(document.createTextNode(' '), lk); } }
+    tx.prepend(el('span', 'event-kind ' + (e.kind === 'hist' ? 'history' : 'scenario'), e.kind === 'hist' ? 'Historical' : 'Scenario'), document.createTextNode(' '));
     r.append(tm, dt, tx);
     const jump = () => jumpTo(e.i);
     r.addEventListener('click', jump); r.addEventListener('keydown', ev2 => { if (ev2.key === 'Enter') jump(); });
@@ -1134,8 +1156,8 @@ function updateEventMarks() {
   const list = $('#evlist');
   if (!list.matches(':hover')) { const rows = list.querySelectorAll('.evrow:not(.fut)'); const lr = rows[rows.length - 1]; if (lr) { const d = lr.getBoundingClientRect().top - list.getBoundingClientRect().top - list.clientHeight * 0.55; if (Math.abs(d) > 4) list.scrollTop += d; } }
   const cur = latestEvent(c);
-  const txt = cur ? E.qLabel(cur.i) + ' · ' + cur.text : '—';
-  if (txt !== lastFlash) {
+  const txt = cur ? (cur.kind === 'hist' ? 'Historical' : 'Scenario') + ' · ' + E.qLabel(cur.i) + ' · ' + cur.text : '—';
+  if (txt !== lastFlash && (!wirePaused || !lastFlash)) {
     lastFlash = txt; $('#flashTxt').textContent = txt;
     const fl = $('#flash'); fl.classList.remove('pulse'); if (state.playing) { void fl.offsetWidth; fl.classList.add('pulse'); }
   }
@@ -1190,7 +1212,7 @@ function updateSigns() {
     D.d.textContent = signHit(s, signVal(s, r, NOW)) ? 'today' : first != null ? E.qLabel(first) : '—';
   });
 }
-const MX = ['K', 'R', 'CC', 'ccov', 'cov', 'VL', 'VN', 'Mult', 'prem', 'mf', 'G', 'Pc', 'DC', 'Ufp', 'STp', 'SVp', 'GR', 'DR', 'LB', 'OS', 'ES', 'LS', 'AS', 'TC', 'PF', 'Cs', 'GDP', 'AUp', 'AU', 'BLD', 'AUa', 'AUdev'];
+const MX = Object.keys(MET).filter(k => k !== 'PLAT');
 function buildMatrix() {
   const t = $('#matrix'); t.innerHTML = '';
   const thead = el('thead'), tr = el('tr');
@@ -1226,6 +1248,7 @@ function updateBrief() {
     thesis = 'Your run starts from “' + s.name + '”' + (tilts.length ? ', tilting ' + tilts.join(', ') : '') + (sh.length ? (tilts.length ? '; ' : ', ') + 'with shocks: ' + sh.join(', ') : '') + '. Compare it with the preset in the scenario matrix below.';
   }
   $('#briefThesis').textContent = thesis;
+  $('#heroName').textContent = nameFor(k); $('#heroThesis').textContent = (thesis.match(/^[\s\S]+?[.!?](?:\s|$)/) || [thesis])[0].trim(); $('#scenarioHero').style.borderColor = colorFor(k);
   const ul = $('#briefFirst'); ul.innerHTML = ''; s.first.forEach(f => ul.append(el('li', '', f)));
 }
 let lastWL = -2;
@@ -1251,6 +1274,8 @@ function updateKpis() {
     const v = at(k, f), v0 = view.to[k][NOW];
     const D = DOM.kpi[k];
     D.v.textContent = fmt(k, v);
+    D.cv.setAttribute('aria-label', MET[k].n + ' trend; ' + E.qLabel(ci()) + ': ' + fmt(k, v));
+    D.cv.parentElement.setAttribute('aria-label', MET[k].n + ': ' + fmt(k, v) + ' at ' + E.qLabel(ci()) + '. Show source or formula.');
     if (f <= NOW + 0.01) { D.d.textContent = f >= NOW - 0.01 ? 'today' : 'history'; D.d.className = 'd'; }
     else { const dl = delta(k, v, v0); D.d.textContent = dl.txt + ' vs today'; D.d.className = 'd ' + dl.cls; }
     drawSpark(D.cv, k);
@@ -1260,6 +1285,8 @@ function updateLaneVals() {
   const f = state.hover != null ? state.hover : state.t;
   LANES.concat(LENS_LANES).forEach(L => {
     const D = DOM.lanes[L.id] || DOM.lens[L.id]; if (D.row.hidden) return;
+    D.cv.setAttribute('role', 'img');
+    D.cv.setAttribute('aria-label', L.t + ', ' + E.qLabel(Math.round(f)) + ': ' + L.s.map(S => S.n + ' ' + fmt(S.k, at(S.k, f))).join('; '));
     D.vrs.forEach((vr, j) => {
       const v = at(vr.k, f), v0 = view.to[vr.k][NOW];
       vr.vv.textContent = fmt(vr.k, v);
@@ -1281,7 +1308,7 @@ function updateClock() {
 function updateDriverMinis() {
   const f = state.t;
   E.DRIVERS.forEach(D => {
-    const cv = DOM.drv[D.k].cv; if (!cv._w) return;
+    const cv = DOM.drv[D.k].cv; cv.setAttribute('aria-label', D.name + ' driver, ' + E.qLabel(ci()) + ': ' + Math.round(lerpAt(i => view.to.drivers[D.k][i], f) * 100) + '/100'); if (!cv._w) return;
     const ctx = ctxOf(cv), w = cv._w, h = cv._h;
     ctx.clearRect(0, 0, w, h);
     ctx.fillStyle = TH.panel2; ctx.fillRect(0, 0, w, h);
@@ -1352,7 +1379,7 @@ function showTip(x, y, build) {
 }
 function hideTip() { tip.hidden = true; }
 function laneIndexAt(e, cv) {
-  const r = cv.getBoundingClientRect(); const axisW = 44 * textScale();
+  const r = cv.getBoundingClientRect(); const axisW = 64 * chartScale(cv.getContext('2d'));
   const u = clamp((e.clientX - r.left) / (r.width - axisW), 0, 1);
   return Math.round(u * (NQ - 1));
 }
@@ -1379,7 +1406,7 @@ function onLaneHover(e, L, cv) {
 /* ---------- scrubber interaction ---------- */
 function bindScrub() {
   const cv = $('#scrub');
-  const idxAt = e => { const r = cv.getBoundingClientRect(); return clamp((e.clientX - r.left) / (r.width - 44 * textScale()), 0, 1) * (NQ - 1); };
+  const idxAt = e => { const r = cv.getBoundingClientRect(); return clamp((e.clientX - r.left) / (r.width - 64 * chartScale(cv.getContext('2d'))), 0, 1) * (NQ - 1); };
   let drag = false;
   cv.addEventListener('pointerdown', e => { drag = true; cv.setPointerCapture(e.pointerId); jumpTo(Math.round(idxAt(e))); });
   cv.addEventListener('pointermove', e => {
@@ -1402,10 +1429,13 @@ function step(d) { state.firstPlay = false; stopTour(); setPlaying(false); state
 /* ---------- network & heat hover ---------- */
 function bindNet() {
   const cv = $('#net');
+  const pick = $('#netPath'); NODES.forEach(n => { const o = el('option', '', n.l); o.value = n.id; pick.append(o); });
+  pick.addEventListener('change', () => { netSelected = pick.value || null; dirty(); });
+  cv.addEventListener('click', () => { netSelected = netHover === netSelected ? null : netHover; pick.value = netSelected || ''; dirty(); });
   cv.addEventListener('pointermove', e => {
     const r = cv.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top;
     const n = NODES.find(n => n._box && x >= n._box[0] - 3 && x <= n._box[0] + n._box[2] + 3 && y >= n._box[1] - 3 && y <= n._box[1] + n._box[3] + 3);
-    netHover = n ? n.id : null;
+    netHover = n ? n.id : null; dirty();
     if (!n) { hideTip(); return; }
     const f = state.t;
     showTip(e.clientX, e.clientY, t => {
@@ -1419,7 +1449,7 @@ function bindNet() {
       if (outs.length) t.append(el('p', '', 'Pushes: ' + outs.join(', ')));
     });
   });
-  cv.addEventListener('pointerleave', () => { netHover = null; hideTip(); });
+  cv.addEventListener('pointerleave', () => { netHover = null; hideTip(); dirty(); });
 }
 function heatHit(e) {
   const cv = $('#heat'), r = cv.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top;
@@ -1454,10 +1484,8 @@ function setPlaying(p) {
   $('#bcPlay').textContent = p ? 'Pause' : 'Play';
   dirty(true);
 }
-const INIT_T = E.idxOf(2030.75);
 function togglePlay() {
   if (state.playing) { setPlaying(false); return; }
-  if (state.firstPlay && Math.round(state.t) === INIT_T) state.t = 0;
   state.firstPlay = false;
   if (state.t >= NQ - 1.01) state.t = state.bc && state.from === 'start' ? 0 : NOW;
   setPlaying(true);
@@ -1562,7 +1590,7 @@ function drawBroadcast(now) {
   let cap = ev ? (ev.kind === 'auto' ? '⚡ ' : '') + ev.text : '';
   while (ctx.measureText(cap).width > 1640 && cap.length > 10) cap = cap.slice(0, -2) + '…';
   ctx.fillText(cap, 190, 1019);
-  font(ctx, 11, 500); ctx.fillStyle = TH.ink3; ctx.textAlign = 'left'; ctx.fillText('Illustrative scenario model v3 built on dated public data to 17 Oct 2026 (company filings, Epoch AI, IEA, EIA, Census, TrendForce, ING). Not a forecast; not investment advice.', 40, 1064);
+  font(ctx, 11, 500); ctx.fillStyle = TH.ink3; ctx.textAlign = 'left'; ctx.fillText('Illustrative scenario model ' + E.VERSION + ' built on dated public data (company filings, Epoch AI, IEA, EIA, Census, TrendForce, ING). Not a forecast; not investment advice.', 40, 1064);
   ctx.textAlign = 'right'; ctx.fillText('History = dated data (dashed = index) · faint lines = other scenarios', 1880, 1064);
   // title card
   if (titleCard) {
@@ -1671,7 +1699,7 @@ function dirty(h) { isDirty = true; if (h) heavy = true; }
 let netVisible = true;
 function render(now) {
   const f = state.t;
-  updateClock(); updateKpis(); updateLaneVals(); updateEventMarks();
+  updateClock(); updateKpis(); updateLaneVals(); updateEventMarks(); updateOverview();
   if (heavy) { updateSigns(); updateMatrix(); updateWinners(); updateLens(); updateDriverMinis(); heavy = false; view.changed = false; }
   const sc = $('#scrub'); if (sc._w) drawScrub(ctxOf(sc), 0, 0, sc._w, sc._h, { f, events: EVENTS });
   const rev = state.reveal && (state.playing || !!state.tour);
@@ -1700,9 +1728,51 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
+/* Accessible current readings mirror the chart data; no separate model or assumptions. */
+function readingsFor(id) {
+  const metricRows = keys => [...new Set(keys)].map(k => [MET[k].n, fmt(k, at(k, state.t))]);
+  if (id === 'lanes' || id === 'lens') return metricRows((id === 'lanes' ? LANES : LENS_LANES).flatMap(L => L.s.map(S => S.k)));
+  if (id === 'drivers') return E.DRIVERS.map(d => [d.name, Math.round(lerpAt(i => view.to.drivers[d.k][i], state.t) * 100) + '/100']);
+  if (id === 'net') return NODES.map(n => [n.l, n.d ? Math.round(nodeVal(n, state.t) * 100) + '/100' : MET[n.k] ? fmt(n.k, nodeVal(n, state.t)) : '$' + nodeVal(n, state.t).toFixed(3) + ' per 1M tokens']);
+  if (id === 'phase') return metricRows(['prem', 'Mult']);
+  if (id === 'pools') return poolShares(ci()).map((v, i) => [POOL_SHORT[i], Math.round(v * 100) + '%']);
+  if (id === 'heat') return E.IMPACT_ROWS.map((r, i) => [r.n, Math.round(impactsOf(view.to).rows[i][ci()]) + ' (−100 to +100 impact index)']);
+  return [];
+}
+function updateReadingsTable(detail) {
+  let table = detail.querySelector('table'); if (!table) { table = el('table'); detail.append(table); }
+  table.replaceChildren(); const caption = el('caption', '', nameFor(state.key) + ' · ' + E.qLabel(ci())); table.append(caption);
+  const head = el('thead'), hr = el('tr'); hr.append(el('th', '', 'Measure'), el('th', '', 'Current reading')); head.append(hr); table.append(head);
+  const body = el('tbody'); readingsFor(detail.dataset.readingsPanel).forEach(([label, value]) => { const row = el('tr'); row.append(el('th', '', label), el('td', '', value)); body.append(row); }); table.append(body);
+}
+let lastOverview = '';
+function updateOverview() {
+  const stamp = state.key + '|' + ci() + '|' + (view.to._stamp || '') + '|' + view.p;
+  if (stamp === lastOverview) return; lastOverview = stamp;
+  $('#heroWhen').textContent = E.qLabel(ci()) + (ci() > NOW ? ' · scenario values' : ' · historical / starting values');
+  const box = $('#heroNumbers'); box.replaceChildren();
+  ['K', 'R', 'Pc'].forEach(k => { const item = el('div'); item.append(el('strong', '', fmt(k, at(k, state.t))), el('span', '', k === 'K' ? 'Big-4 capex / year' : k === 'R' ? 'AI revenue / year' : 'Good-enough price / 1M tokens')); box.append(item); });
+  ['net', 'phase', 'pools', 'heat'].forEach(id => { const cv = $('#' + id); cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', cv.closest('[data-panel]').dataset.title + ', ' + E.qLabel(ci()) + ': ' + readingsFor(id).map(r => r.join(' ')).join('; ')); });
+  $('#scrub').setAttribute('aria-label', 'Timeline scrubber, ' + E.qLabel(ci()) + '. Arrow keys move one quarter; view the scenario matrix for readings.');
+  $('#bcv').setAttribute('aria-label', 'Broadcast: ' + nameFor(state.key) + ', ' + E.qLabel(ci()) + '. ' + ['K', 'R', 'Pc'].map(k => MET[k].n + ' ' + fmt(k, at(k, state.t))).join('; '));
+  document.querySelectorAll('.chart-readings[open]').forEach(updateReadingsTable);
+}
+
 /* ---------- wiring ---------- */
 function wire() {
-  $('#textSize').addEventListener('change', e => setTextSize(Number(e.target.value)));
+  $('#textSize').addEventListener('change', e => setTextSize(e.target.value === 'auto' ? 'auto' : Number(e.target.value)));
+  window.addEventListener('resize', () => { if (TEXT_MODE === 'auto' && TEXT_SIZE !== automaticTextSize()) setTextSize('auto'); });
+  const menus = [...document.querySelectorAll('.header-menu')];
+  menus.forEach(menu => menu.addEventListener('toggle', () => { if (menu.open) menus.forEach(other => { if (other !== menu) other.open = false; }); }));
+  document.addEventListener('pointerdown', e => { if (e.target.closest('.overlay, #lmenu')) return; menus.forEach(menu => { if (!menu.contains(e.target)) menu.open = false; }); });
+  $('#introDetail').hidden = load('aimonitor.intro-dismissed') === true;
+  $('#bIntroDismiss').addEventListener('click', () => { $('#introDetail').hidden = true; store('aimonitor.intro-dismissed', true); $('#frame').focus(); });
+  $('#bIntroTour').addEventListener('click', () => { if (window.AICX_GUIDE) window.AICX_GUIDE.startTour(); });
+  $('#bIntroRead').addEventListener('click', () => { if (window.AICX_GUIDE) window.AICX_GUIDE.openExplainer('scenarios', $('#bIntroRead')); });
+  const syncWire = () => { $('.wire').classList.toggle('is-paused', wirePaused); $('#bWirePause').setAttribute('aria-pressed', String(wirePaused)); $('#bWirePause').textContent = wirePaused ? 'Resume' : 'Pause'; $('#bWirePause').setAttribute('aria-label', (wirePaused ? 'Resume' : 'Pause') + ' event ticker'); };
+  syncWire();
+  $('#bWirePause').addEventListener('click', () => { wirePaused = !wirePaused; store('aimonitor.events-paused', wirePaused); syncWire(); lastEvI = -1; dirty(); });
+  document.querySelectorAll('.section-nav a').forEach(a => a.addEventListener('click', () => { const panel = $(a.getAttribute('href')); if (panel) { panel.classList.remove('phone-collapsed'); const b = panel.querySelector('.panel-collapse'); if (b) b.setAttribute('aria-expanded', 'true'); } }));
   $('#bPlay').addEventListener('click', () => { stopTour(); togglePlay(); });
   $('#bStart').addEventListener('click', () => jumpTo(0));
   $('#bNow').addEventListener('click', () => jumpTo(NOW));
@@ -1738,7 +1808,7 @@ function wire() {
     else if (e.key === 't' || e.key === 'T') { state.tour ? (stopTour(), setPlaying(false)) : startTour(); }
     else if (e.key === '?') { if (window.AICX_GUIDE) window.AICX_GUIDE.toggleMenu(); else $('#help').hidden = false; }
   });
-  const io = new IntersectionObserver(es => { es.forEach(x => { netVisible = x.isIntersecting; }); });
+  const io = new IntersectionObserver(es => { es.forEach(x => { netVisible = x.isIntersecting; if (netVisible) dirty(); }); });
   io.observe($('#net'));
   const hdr = $('#cmd');
   new ResizeObserver(() => { document.documentElement.style.setProperty('--hdr-h', hdr.offsetHeight + 'px'); }).observe(hdr);
@@ -1746,9 +1816,10 @@ function wire() {
 
 /* ---------- text size and theme switching ---------- */
 function setTextSize(value) {
-  if (!TEXT_SIZES.includes(value)) return;
-  TEXT_SIZE = value;
-  store(TEXT_SIZE_KEY, TEXT_SIZE);
+  if (value !== 'auto' && !TEXT_SIZES.includes(value)) return;
+  TEXT_MODE = value;
+  TEXT_SIZE = value === 'auto' ? automaticTextSize() : value;
+  store(TEXT_SIZE_KEY, TEXT_MODE === 'auto' ? null : TEXT_MODE);
   applyTextSizeTokens();
   HEAT.rowH = (HEAT_ROW[(LAYOUT.size || {}).heat || 'm'] || HEAT_ROW.m) * textScale();
   hideTip();
@@ -1887,18 +1958,20 @@ function openFocus(id) {
     ov = el('div', 'focus'); ov.id = 'focus'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.addEventListener('click', e => { if (e.target === ov) closeFocus(); });
     ov.addEventListener('keydown', e => {
       if (e.key !== 'Tab') return;
-      const f = [...ov.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])')].filter(x => x.offsetParent !== null);
+      const f = [...ov.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"]):not([disabled])')].filter(x => x.offsetParent !== null);
       if (!f.length) return;
       if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
       else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
     });
+    const close = el('button', 'btn focus-close', 'Close expanded view'); close.type = 'button'; close.addEventListener('click', closeFocus); ov.append(close);
     document.body.append(ov);
   }
   focusHome = P.el.parentElement; focusNext = P.el.nextSibling;
+  P.el.querySelectorAll('canvas').forEach(cv => { cv._normalWidth = cv.clientWidth; });
   ov.setAttribute('aria-label', P.el.dataset.title + ' (expanded)');
   ov.append(P.el); ov.hidden = false; P.el.classList.add('is-focus'); focusEl = P.el;
   document.body.classList.add('focusing'); updatePanelControls(P.el);
-  const b = P.el.querySelector('.pc [data-act="focus"]'); if (b) b.focus();
+  const b = ov.querySelector('.focus-close'); if (b) b.focus();
   dirty(true);
 }
 function closeFocus() {
@@ -1921,6 +1994,7 @@ function closeTopLayer() {
   if (focusEl) { closeFocus(); return true; }
   if (customizing) { setCustomizing(false); return true; }
   if (S && S.closeChat && S.closeChat()) return true;
+  const menu = $('.header-menu[open]'); if (menu) { menu.open = false; $('summary', menu).focus(); return true; }
   return false;
 }
 
@@ -1944,11 +2018,22 @@ function addPanelControls(p) {
   mk('pin', 'Pin full width at the top', ICO.pin, 'cz');
   mk('hide', 'Hide this panel', ICO.hide, 'cz');
   mk('focus', 'Expand (Esc to close)', ICO.focus);
+  if (['drivers', 'shocks', 'net', 'phase', 'pools', 'signs', 'events', 'ledger', 'thesis', 'factors'].includes(id)) {
+    const collapsed = load('aimonitor.panel-collapsed.' + id) !== false;
+    p.classList.toggle('phone-collapsed', collapsed);
+    const toggle = mk('collapse', 'Show or collapse ' + p.dataset.title, 'Details', 'panel-collapse'); toggle.setAttribute('aria-expanded', String(!collapsed));
+  }
+  if (p.querySelector('canvas')) {
+    const details = el('details', 'chart-readings'); details.dataset.readingsPanel = id;
+    const summary = el('summary', '', 'View current readings as a table'); details.append(summary); details.addEventListener('toggle', () => { if (details.open) updateReadingsTable(details); });
+    p.append(details);
+  }
   pc.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return; e.stopPropagation();
     const a = b.dataset.act;
     if (a === 'info') { if (window.AICX_GUIDE) window.AICX_GUIDE.openExplainer(id, b); }
     else if (a === 'focus') { focusEl === p ? closeFocus() : openFocus(id); }
+    else if (a === 'collapse') { const collapsed = p.classList.toggle('phone-collapsed'); b.setAttribute('aria-expanded', String(!collapsed)); store('aimonitor.panel-collapsed.' + id, collapsed); dirty(true); }
     else if (a === 'size') cycleSize(id);
     else if (a === 'up') movePanel(id, -1);
     else if (a === 'down') movePanel(id, 1);
@@ -2067,7 +2152,7 @@ window.AICX_UI = {
   setTime: tt => { const v = parseT(tt); if (v != null) jumpTo(E.idxOf(v)); },
   setLens: sec => { if (LENS.find(x => x.id === sec)) { lensState.sec = sec; showLensSector(); dirty(true); } },
   get theme() { return THEME; }, setTheme: t => setTheme(t), toggleTheme: () => setTheme(THEME === 'light' ? 'dark' : 'light'),
-  get textSize() { return TEXT_SIZE; }, setTextSize,
+  get textSize() { return TEXT_SIZE; }, get textSizeMode() { return TEXT_MODE; }, setTextSize,
   toast, saveFile, openFocus, closeFocus, resetLayout, applyPreset, openLayoutMenu, setCustomizing, permalink,
   panels: () => Object.keys(PANELS),
   engine: E, data: DATA, metrics: MET, fmt, panelInfo,
