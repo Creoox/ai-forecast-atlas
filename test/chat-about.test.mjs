@@ -43,7 +43,9 @@ function php(code, settings = {}, op = operator) {
     fs.writeFileSync(path.join(tmp, 'data/latest/release.json'), JSON.stringify({ id: '2026-W42', summary: 'Base release' }));
     fs.writeFileSync(path.join(tmp, 'data/latest/dataset.json'), JSON.stringify({ anchors: { AN1: { name: 'Big-4 capex', v: '$900B/yr', period: 'Q4 2026', url: 'https://example.com/source' } } }));
     fs.writeFileSync(path.join(tmp, 'data/latest/metrics.json'), JSON.stringify({ metrics: { K: { name: 'Big-4 capex', unit: '$B/yr' } } }));
-    const source = '$input = json_decode(stream_get_contents(STDIN), true); define("AIM_ROOT", $input["tmp"]); define("AIM_PRIVATE", AIM_ROOT . "/_private"); '
+    // Fail on unsuppressed PHP diagnostics regardless of CLI display/log settings.
+    const source = 'error_reporting(E_ALL); set_error_handler(function ($severity, $message, $file, $line) { if (!(error_reporting() & $severity)) return false; throw new ErrorException($message, 0, $severity, $file, $line); }); '
+      + '$input = json_decode(stream_get_contents(STDIN), true); define("AIM_ROOT", $input["tmp"]); define("AIM_PRIVATE", AIM_ROOT . "/_private"); '
       + 'foreach (["util", "settings", "i18n", "llm", "chat", "subscriptions", "newsletter"] as $lib) require $input["root"] . "/server/_private/lib/" . $lib . ".php"; '
       + 'aim_store_write("settings", $input["settings"]); ' + code;
     const result = spawnSync(PHP, ['-d', 'display_errors=stderr', '-d', 'error_reporting=-1', '-r', source], { input: JSON.stringify({ root: ROOT, tmp, settings }), encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });

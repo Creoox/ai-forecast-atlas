@@ -37,18 +37,21 @@ function fixture(t) {
   release.notes = 'Editorial note </script><script>alert("note")</script>';
   release.summary += ' </script><script>alert("summary")</script>';
   release.changes = [{ id: 'AN1', name: 'Big-4 capex', fromText: '$890B', toText: '$900B', src: 'Published lead source', url: 'https://example.test/lead', quote: 'The lead quote', reviewed: '2026-10-19', via: { panel: { members: [{ agent: 'Other agent', model: 'fixture', v: '920', w: 1, url: 'https://example.test/nonlead', title: 'Nonlead source' }] } } }];
+  const releases = [];
   for (const id of ['2026-W42', '2026-W43']) {
     const r = { ...release, id, publishedAt: id === '2026-W42' ? release.publishedAt : '2026-10-23T13:00:00+02:00' };
+    releases.unshift({ id, publishedAt: r.publishedAt, asOf: r.asOf ?? null, summary: r.summary, changes: r.changes.length, carryForward: !!r.carryForward, base: !!r.base, url: 'data/releases/' + id + '/' });
     for (const [name, value] of Object.entries(built.files)) write(path.join(dir, 'data/releases', id, name), name === 'release.json' ? JSON.stringify(r) : value);
     if (id === '2026-W43') for (const [name, value] of Object.entries(built.files)) write(path.join(dir, 'data/latest', name), name === 'release.json' ? JSON.stringify(r) : value);
   }
-  write(path.join(dir, 'data/releases/index.json'), JSON.stringify({ releases: [{ id: '2026-W43' }, { id: '2026-W42' }, { id: '../private' }] }));
+  write(path.join(dir, 'data/releases/index.json'), JSON.stringify({ schema: 'aimonitor.releases/1', releases }));
   write(path.join(dir, 'data/releases/2099-W01/release.json'), JSON.stringify({ id: '2099-W01', summary: 'UNINDEXED_CONTENT_MUST_NOT_APPEAR' }));
   write(path.join(dir, '_private/storage/working.php'), '<?php http_response_code(404); exit; ?>\n' + JSON.stringify({ unpublished: 'UNAPPROVED_PRIVATE_CONTENT' }));
   write(path.join(dir, 'data/site-config.js'), 'window.AIMONITOR_SITE={preserve:"runtime-config"};');
   write(path.join(dir, '_private/storage/settings.php'), '<?php http_response_code(404); exit; ?>\n' + JSON.stringify({ site: { url: BASE }, newsletter: { enabled: false } }));
   const run = code => {
-    const script = `<?php\ndefine('AIM_ROOT', $argv[1]); define('AIM_PRIVATE', $argv[1].'/_private'); require $argv[2].'/server/_private/lib/bootstrap.php';\ntry { ${code} } catch (Throwable $e) { fwrite(STDERR, get_class($e).': '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine()); exit(1); }`;
+    // Fail on unsuppressed PHP diagnostics regardless of CLI display/log settings.
+    const script = `<?php\nerror_reporting(E_ALL); set_error_handler(function ($severity, $message, $file, $line) { if (!(error_reporting() & $severity)) return false; throw new ErrorException($message, 0, $severity, $file, $line); });\ndefine('AIM_ROOT', $argv[1]); define('AIM_PRIVATE', $argv[1].'/_private');\ntry { require $argv[2].'/server/_private/lib/bootstrap.php'; ${code} } catch (Throwable $e) { fwrite(STDERR, get_class($e).': '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine()); exit(1); }`;
     write(path.join(dir, 'run.php'), script);
     const r = spawnSync(PHP, [path.join(dir, 'run.php'), dir, ROOT], { encoding: 'utf8', timeout: 45000 });
     assert.equal(r.error, undefined, r.error?.message);
@@ -62,6 +65,10 @@ function fixture(t) {
 
 test('published pages are crawlable, escaped, sourced, canonical and rebuilt without changing data', t => {
   const { dir, run, read, release } = fixture(t);
+  // Exercise discovery's malformed-index boundary without giving feed/withdrawal tests invalid publication data.
+  const index = JSON.parse(read('data/releases/index.json'));
+  index.releases.push({ id: '../private' });
+  write(path.join(dir, 'data/releases/index.json'), JSON.stringify(index));
   const preserve = walk(path.join(dir, 'data')).concat(walk(path.join(dir, '_private/storage')));
   const hashes = new Map(preserve.map(f => [f, digest(fs.readFileSync(f))]));
   const first = run('echo aim_json_encode(aim_discovery_refresh(null, 1));');
