@@ -7,17 +7,18 @@ concurrency:   # a newer push to the same branch or pull request stops the older
   cancel-in-progress: true
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         php: ['8.0', '8.2']   # 8.0 is the oldest supported version; 8.2 is the newest on home.pl's older platform
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
+          package-manager-cache: false
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
