@@ -92,7 +92,7 @@ function aim_feedback_list(int $months = 3): array
 
 /* Actions that only read may use GET; everything that changes something needs POST with the CSRF header. */
 const AIM_ADMIN_READ = ['state', 'health', 'working', 'feedback', 'logs', 'newsletter-preview'];
-const AIM_ADMIN_WRITE = ['logout', 'password', 'settings', 'test-provider', 'mailjet-setup', 'newsletter-test', 'newsletter-stop', 'candidate', 'working-edit', 'working-reset', 'stage', 'unstage', 'publish-now', 'collect-now', 'cron-now', 'feedback-mark', 'xwatch', 'xwatch-withdraw', 'xwatch-scan'];
+const AIM_ADMIN_WRITE = ['logout', 'password', 'settings', 'test-provider', 'mailjet-setup', 'newsletter-test', 'newsletter-stop', 'candidate', 'working-edit', 'working-reset', 'stage', 'unstage', 'publish-now', 'regenerate_public_pages', 'collect-now', 'cron-now', 'feedback-mark', 'xwatch', 'xwatch-withdraw', 'xwatch-scan'];
 function aim_handle_admin(): void
 {
     $a = (string)($_GET['a'] ?? '');
@@ -184,6 +184,9 @@ function aim_handle_admin(): void
             aim_json_out(aim_stage((string)($in['id'] ?? ''), $files, 'admin')); return;
         case 'unstage': aim_unstage((string)($in['id'] ?? '')); aim_json_out(['ok' => true]); return;
         case 'publish-now': aim_json_out(aim_publish_now((string)($in['id'] ?? ''))); return;
+        case 'regenerate_public_pages':
+            if (!aim_discovery_origin_ok()) { aim_error('origin', 'Open this action from the site\'s own admin page.', 403); return; }
+            aim_json_out(aim_discovery_refresh(isset($in['cursor']) ? (string)$in['cursor'] : null, (int)($in['limit'] ?? 20))); return;
         case 'collect-now': aim_json_out(['ok' => true, 'result' => aim_collect_tick(40, !empty($in['restart']))]); return;
         case 'xwatch': aim_json_out(aim_xwatch_decide((string)($in['id'] ?? ''), ($in['action'] ?? '') === 'approve' ? 'approve' : 'reject', is_array($in['edit'] ?? null) ? $in['edit'] : [])); return;
         case 'xwatch-withdraw': aim_json_out(aim_xwatch_withdraw((string)($in['id'] ?? ''))); return;

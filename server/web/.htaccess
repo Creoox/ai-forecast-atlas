@@ -1,5 +1,9 @@
-# AI Forecast Atlas — only mod_rewrite rules, which work on both home.pl platforms (IdeaWebServer and Apache).
+# AI Forecast Atlas — shared rewrite rules and optional Apache response headers.
 RewriteEngine On
+
+# Canonical host for the official installation; other installations keep their own host.
+RewriteCond %{HTTP_HOST} ^(?:www\.aiforecastatlas\.com|aimonitor\.creoox\.com)$ [NC]
+RewriteRule ^ https://aiforecastatlas.com%{REQUEST_URI} [L,R=301,NE]
 
 # 1. Always use HTTPS. Needs the SSL certificate for this address (guide, step 4).
 #    If the site shows a certificate error before SSL is ready, put "#" in front of the next two lines.
@@ -8,3 +12,18 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # 2. Keep the private folder private (its data files are guarded as well).
 RewriteRule ^_private(/|$) - [F]
+
+# Apache hosting: PHP pages also supply their own, stricter policies.
+# No frame-ancestors restriction here: /embed/ and ?embed=1 are intentionally embeddable.
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Strict-Transport-Security "max-age=31536000" "expr=%{HTTPS} == 'on'"
+    <FilesMatch "\.(?:html|svg)$">
+        Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://challenges.cloudflare.com https://cloudflareinsights.com; frame-src 'self' https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+    </FilesMatch>
+    <FilesMatch "\.(?:html|json|js|css|xml|txt)$">
+        Header onsuccess unset Cache-Control
+        Header always set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>

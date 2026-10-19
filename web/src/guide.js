@@ -933,7 +933,7 @@ function toggleMenu() {
     item('explain', 'Explain mode', explainOn ? 'on' : 'off', () => setExplain(!explainOn), 'menuitemcheckbox').setAttribute('aria-checked', String(explainOn));
     item('sources', 'Sources & methods', 'every source and formula', () => { hideMenu(); openSources({ tab: 'sources' }); });
     item('verify', 'How we verify data', 'review and releases', () => { hideMenu(); openSources({ tab: 'verify' }); });
-    item('help', 'Controls & keyboard', '? · ← → · Space', () => { hideMenu(); const h = $('#help'); if (h) { h.hidden = false; const x = $('#bHelpX'); if (x) x.focus(); } });
+    item('help', 'Controls & keyboard', '? · ← → · Space · Ctrl + / Ctrl − to zoom', () => { hideMenu(); const h = $('#help'); if (h) { h.hidden = false; const x = $('#bHelpX'); if (x) x.focus(); } });
     if ($('#chatFab')) item('ask', 'Ask the assistant', 'answers cite sources', () => { hideMenu(); const S = window.AICX_SITE; if (S && S.openChat) S.openChat(); });
     gmenu.append(el('p', 'hint', 'Tip: every panel has an ⓘ button, and every number opens its source or formula when you click it.'));
     gmenu.addEventListener('keydown', e => {

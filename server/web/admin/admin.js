@@ -260,6 +260,22 @@ function workingTable(anchors, pub) {
 async function viewRelease() {
   const nextId = weekId(String(S.nextRelease).slice(0, 10));
   const out = h('div', {});
+  const refreshPages = h('button', { class: 'btn', type: 'button' }, 'Refresh public pages');
+  const refreshStatus = h('p', { class: 'note', role: 'status' });
+  let pageCursor = null;
+  refreshPages.onclick = busy(refreshPages, async () => {
+    let complete = false, count = 0;
+    // Small server batches fit shared hosting. Keep the last cursor if a later request fails.
+    for (let batch = 0; batch < 100 && !complete; batch++) {
+      const r = await call('regenerate_public_pages', { cursor: pageCursor, limit: 10 });
+      count += Number(r.processed) || 0;
+      complete = !!r.complete;
+      if (!complete && (!r.next || r.next === pageCursor)) throw new Error('Page refresh did not advance. Please retry.');
+      pageCursor = complete ? null : r.next;
+      refreshStatus.textContent = complete ? 'Public pages refreshed from the published data. No newsletter was sent.' : count + ' archived release pages refreshed; continuing…';
+    }
+    if (!complete) refreshStatus.textContent = 'This batch is complete. Click again to continue refreshing older release pages.';
+  });
   const build = h('button', { class: 'btn primary', type: 'button' }, 'Build the release from the working dataset');
   build.onclick = busy(build, async () => {
     WORK = await call('working');
@@ -277,6 +293,9 @@ async function viewRelease() {
     h('h2', {}, 'Build'),
     h('p', { class: 'note' }, 'Runs the model in this browser on the working dataset (' + (S.workingDiff.length ? S.workingDiff.length + ' change(s) since the last release' : 'no changes since the last release') + '), computes all eight scenarios and prepares every data file, chart and feed text. Nothing is public until it is published.'),
     h('p', {}, build), out,
+    h('h2', {}, 'Public pages'),
+    h('p', { class: 'note' }, 'Refresh the scenario, measure, About, FAQ, methodology and archived release pages, search sitemap and AI reading files using already-published data. This keeps the historical datasets and settings and does not publish working edits or send email.'),
+    h('p', {}, refreshPages), refreshStatus,
     h('h2', {}, 'Published releases'),
     h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, S.releases.map(r => h('tr', {}, h('td', { class: 'mono' }, h('a', { href: S.settings.site.url + 'data/releases/' + r.id + '/', target: '_blank', rel: 'noopener' }, r.id)), h('td', { class: 'small' }, when(r.publishedAt)), h('td', { class: 'small' }, r.summary)))))));
 }
@@ -527,6 +546,8 @@ function viewSettings() {
       field('site.url', 'Site address', 'url'), field('site.company', 'Company'), field('site.legal_form', 'Legal form'), field('site.address', 'Registered office (address)', 'textarea'), field('site.postal', 'Postal address, if different'), field('site.email', 'Contact email', 'email'), field('site.phone', 'Phone'),
       field('site.represented_by', 'Represented by'), field('site.register', 'Commercial register and number'), field('site.uid', 'Company number (UID), if any'), field('site.vat', 'VAT number'), field('site.dpo', 'Data protection contact'), field('site.authority', 'Supervisory authority for data protection'),
       field('site.eu_representative', 'EU representative (GDPR Art. 27) — only needed if the operator is outside the EEA'),
+      field('site.company_url', 'Company website', 'url'), field('site.team_location', 'Team location'), field('site.xeokit_url', 'xeokit credit website, if applicable', 'url'),
+      field('site.company_logo_url', 'Company logo URL for search metadata', 'url'), field('site.linkedin_url', 'Company LinkedIn URL', 'url'),
       field('site.repo_url', 'Source code address (GitHub), if published', 'url'), field('site.default_theme', 'Default theme', 'select', ['dark', 'light']), field('site.beacon_token', 'Cloudflare Web Analytics token (optional)'), field('site.imprint_extra', 'Extra imprint text', 'textarea')]),
     section('Chat limits', 'Protects your budget from heavy use.', [field('chat.enabled', 'Chat switched on', 'checkbox'), field('chat.daily_budget_usd', 'Daily budget (USD)', 'number'), field('chat.per_ip_hour', 'Questions per visitor per hour', 'number'), field('chat.per_ip_day', 'Questions per visitor per day', 'number'), field('chat.max_input_chars', 'Longest question (characters)', 'number'), field('chat.max_concurrent', 'Answers at the same time (keep 2 on shared hosting)', 'number'), field('chat.label', 'Provider name shown to visitors')]),
     section('Bot protection (Cloudflare Turnstile, recommended)', 'Free. In the Cloudflare dashboard open Turnstile → Add widget, enter aiforecastatlas.com, choose “Managed”, then paste both keys here.', [field('turnstile.site_key', 'Site key'), field('turnstile.secret', 'Secret key')]),

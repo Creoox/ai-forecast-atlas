@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createEngine as createChatEngine } from '../engine/engine.mjs';
@@ -69,7 +70,7 @@ try {
   console.log('Site and setup');
   let r = await req('');
   let html = await r.text();
-  ok('home page loads with release data', r.status === 200 && html.includes('data/latest/release.js') && html.includes('assets/engine.js?v='));
+  ok('home page loads with release data', r.status === 200 && html.includes('data/latest/release.js') && /assets\/engine\.[a-f0-9]{10}\.js/.test(html));
   r = await req('check.php'); ok('server check page', r.status === 200 && (await r.text()).includes('server check'));
   r = await req('admin/'); html = await r.text();
   ok('admin starts in setup mode', html.includes('content="setup"'));
@@ -116,6 +117,17 @@ try {
   r = await req('api/admin.php?a=publish-now'); j = await r.json();
   ok('changing actions refuse GET (no CSRF without POST)', r.status === 405 && j.error.code === 'method');
   r = await req('api/admin.php?a=working-reset'); ok('reset refuses GET', r.status === 405);
+  r = await req('api/admin.php?a=regenerate_public_pages');
+  ok('public-page refresh refuses GET', r.status === 405 && (await r.json()).error.code === 'method');
+  const rebuildPayload = JSON.stringify({ p: b64(JSON.stringify({ cursor: null, limit: 10 })) });
+  r = await fetch(SITE + 'api/admin.php?a=regenerate_public_pages', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: SITE.slice(0,-1) }, body: rebuildPayload });
+  ok('public-page refresh requires the admin cookie', r.status === 401 && (await r.json()).error.code === 'auth');
+  r = await req('api/admin.php?a=regenerate_public_pages', { body: rebuildPayload, headers: { 'Content-Type': 'application/json', Origin: SITE.slice(0,-1) } });
+  ok('public-page refresh requires CSRF', r.status === 403 && (await r.json()).error.code === 'csrf');
+  r = await req('api/admin.php?a=regenerate_public_pages', { body: rebuildPayload, headers: { 'Content-Type': 'application/json', 'X-AIM-CSRF': CSRF, Origin: 'https://unrelated.example' } });
+  ok('public-page refresh refuses a different origin even with CSRF', r.status === 403 && (await r.json()).error.code === 'origin');
+  r = await req('api/admin.php?a=regenerate_public_pages', { body: rebuildPayload, headers: { 'Content-Type': 'application/json', 'X-AIM-CSRF': CSRF } });
+  ok('public-page refresh requires an Origin header', r.status === 403 && (await r.json()).error.code === 'origin');
   const other = await fetch(SITE.replace('127.0.0.1', 'localhost') + 'api/admin.php?a=state', { headers: { Cookie: COOKIE } });
   ok('admin answers only on the site address', other.status === 403 && (await other.json()).error.code === 'host');
   const otherPage = await fetch(SITE.replace('127.0.0.1', 'localhost') + 'admin/', { redirect: 'manual' });
@@ -150,7 +162,10 @@ try {
 
   console.log('Chat site guide');
   const guide = JSON.parse(fs.readFileSync(path.join(WEB, 'assets/chat-guide.json'), 'utf8'));
-  assert.deepEqual(guide, buildChatGuide(createChatEngine(), JSON.parse(fs.readFileSync(methodsFile, 'utf8'))));
+  assert.deepEqual(guide, buildChatGuide(createChatEngine(), JSON.parse(fs.readFileSync(methodsFile, 'utf8')), {
+    ...JSON.parse(fs.readFileSync(path.join(ROOT, 'config/operator.json'), 'utf8')).site,
+    url: 'https://aiforecastatlas.com/', name: 'AI Forecast Atlas'
+  }));
   ok('built chat guide matches the model and methods used by the dashboard', guide.schema === 'aimonitor.chat-guide/1');
   const guideCases = [
     { name: 'singular Bubble Burst', question: 'What is Bubble Burst?', ids: ['scenario:BUST'] },
@@ -393,6 +408,16 @@ try {
   ok('Polish edition', piotr.HTMLPart.includes('Moc obliczeniowa') && piotr.HTMLPart.includes('Oprogramowanie AECO') && /[0-9],[0-9]/.test(piotr.HTMLPart));
   const q = JSON.parse(cli('echo json_encode(aim_store_read("newsletter/queue-2026-W43"));'));
   ok('send finished, addresses not kept', q.done === true && q.sent === 3 && q.failed === 1 && q.skipped === 1 && q.recipients.length === 0 && q.edition === 'monthly', JSON.stringify(q).slice(0, 300));
+  const preservationFiles = ['data','feeds','_private/storage'].flatMap(folder => fs.readdirSync(path.join(WEB,folder), { recursive: true }).map(f => path.join(folder,String(f))))
+    .filter(f => fs.statSync(path.join(WEB,f)).isFile() && !f.endsWith('.html') && !f.includes(path.join('storage','locks')));
+  const preservedHashes = new Map(preservationFiles.map(f => [f,createHash('sha256').update(fs.readFileSync(path.join(WEB,f))).digest('hex')]));
+  const callsBeforeRebuild = mockLog().length;
+  r = await req('api/admin.php?a=regenerate_public_pages', { body: rebuildPayload, headers: { 'Content-Type': 'application/json', 'X-AIM-CSRF': CSRF, Origin: SITE.slice(0,-1) } });
+  const rebuiltPages = await r.json();
+  ok('authorized public-page refresh completes from the existing published releases', r.status === 200 && rebuiltPages.ok && rebuiltPages.complete && rebuiltPages.next === null && rebuiltPages.processed === 2 && rebuiltPages.release === '2026-W43', JSON.stringify(rebuiltPages));
+  ok('public-page refresh preserves published data, configuration, state and newsletter queues', [...preservedHashes].every(([f,hash]) => createHash('sha256').update(fs.readFileSync(path.join(WEB,f))).digest('hex') === hash));
+  ok('public-page refresh sends no emails or other external requests', mockLog().length === callsBeforeRebuild);
+  ok('public-page refresh exposes crawlable approved findings and archived report pages', fs.readFileSync(path.join(WEB,'index.html'),'utf8').includes('Latest published findings') && fs.readFileSync(path.join(WEB,'releases/2026-W42/index.html'),'utf8').includes('"@type":"Report"') && fs.readFileSync(path.join(WEB,'llms-full.txt'),'utf8').includes('release 2026-W43'));
   const page = fs.readFileSync(path.join(WEB, 'data/releases/2026-W43/index.html'), 'utf8');
   ok('release page shows where each change comes from', page.includes('https://example.com/nvda') && page.includes('How it entered the data') && page.includes('#sources') && page.includes('AI knowledge without a specific source'));
   ok('release page lists the answers of the AI research panel', page.includes('Answers of the AI research panel') && page.includes('https://example.com/nvda2') && page.includes('AI research panel, reviewed by the team: 5 of 5 agents answered'));

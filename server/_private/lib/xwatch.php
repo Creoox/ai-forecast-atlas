@@ -325,7 +325,7 @@ function aim_xwatch_scrub(string $pubId): int
             aim_write_json($f, $rel, true);
             $dir = dirname($f);
             $files = array_values(array_filter(array_keys(aim_read_tree($dir)), fn($x) => $x !== 'index.html'));
-            aim_write($dir . '/index.html', aim_release_page($rel, $files));
+            aim_discovery_write_release($rel, $files);
             $n++;
         }
         $lf = aim_public('data/latest/release.json');
@@ -334,7 +334,11 @@ function aim_xwatch_scrub(string $pubId): int
             aim_write_json($lf, $lat, true);
             aim_write(aim_public('data/latest/release.js'), "window.AIMONITOR_DATA = " . aim_json_encode(['release' => aim_release_lite($lat), 'dataset' => aim_read_json(aim_public('data/latest/dataset.json'), []) ?: []]) . ";\n");
         }
-        if ($n) aim_write_feeds();
+        if ($n) {
+            aim_write_feeds();
+            $published = aim_discovery_latest();
+            if ($published) aim_discovery_indexes($published);
+        }
         return $n;
     });
 }

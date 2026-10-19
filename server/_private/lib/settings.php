@@ -10,6 +10,7 @@ function aim_defaults(): array
             'url' => 'https://aiforecastatlas.com/', 'name' => 'AI Forecast Atlas', 'company' => 'Creoox AG',
             // imprint fields: empty here; the operator's details come from config/operator.json (see aim_defaults_site())
             'legal_form' => '', 'address' => '', 'postal' => '', 'uid' => '', 'vat' => '', 'email' => '', 'phone' => '', 'repo_url' => '', 'default_theme' => 'dark',
+            'company_url' => '', 'company_logo_url' => '', 'linkedin_url' => '', 'team_location' => '', 'xeokit_url' => '',
             'beacon_token' => '', 'release_weekday' => 5, 'release_time' => '13:00', 'daily_time' => '06:00',
             'eu_representative' => '', 'dpo' => '', 'represented_by' => '', 'register' => '', 'authority' => '', 'imprint_extra' => '',
         ],
@@ -73,7 +74,14 @@ function aim_defaults(): array
 function aim_defaults_full(): array
 {
     $d = aim_defaults();
-    foreach ((aim_cfg('operator')['site'] ?? []) as $k => $v) if (array_key_exists($k, $d['site']) && is_string($v)) $d['site'][$k] = $v;
+    $operator = aim_cfg('operator')['site'] ?? [];
+    foreach ($operator as $k => $v) if (array_key_exists($k, $d['site']) && is_string($v)) $d['site'][$k] = $v;
+    // Update packages preserve operator.json. Fill these new public fields only for the known original operator.
+    if (($operator['company'] ?? '') === 'Creoox AG' && ($operator['email'] ?? '') === 'contact@creoox.com') {
+        foreach (['company_url' => 'https://creoox.com', 'company_logo_url' => 'https://creoox.com/wp-content/uploads/2024/02/creoox_logo-01-300x76.png', 'linkedin_url' => 'https://www.linkedin.com/company/creoox/posts/?feedView=all', 'team_location' => 'Lausanne, Switzerland', 'xeokit_url' => 'https://xeokit.io'] as $k => $v) {
+            if (!array_key_exists($k, $operator)) $d['site'][$k] = $v;
+        }
+    }
     return $d;
 }
 function aim_settings_file(): string { return aim_storage('settings.php'); }
@@ -98,7 +106,13 @@ function aim_settings(bool $reload = false): array
     }
     $saved = is_array($saved) ? $saved : [];
     if (defined('AIM_SETTINGS_OVERRIDE') && is_array(AIM_SETTINGS_OVERRIDE)) $saved = aim_merge($saved, AIM_SETTINGS_OVERRIDE);
-    $cache = aim_merge(aim_defaults_full(), $saved);
+    $defaults = aim_defaults_full();
+    $cache = aim_merge($defaults, $saved);
+    if ($cache['site']['company'] !== $defaults['site']['company']) {
+        foreach (['company_url', 'company_logo_url', 'linkedin_url', 'team_location', 'xeokit_url'] as $k) {
+            if (!array_key_exists($k, $saved['site'] ?? [])) $cache['site'][$k] = '';
+        }
+    }
     return $cache;
 }
 /** Persist settings (the whole array, as a guarded JSON file readable only by PHP). */
@@ -154,6 +168,11 @@ function aim_set_path(array &$a, string $path, $v): void
 function aim_apply_settings_update(array $update): array
 {
     $s = aim_settings();
+    if (isset($update['site']['company']) && trim((string)$update['site']['company']) !== $s['site']['company']) {
+        foreach (['company_url', 'company_logo_url', 'linkedin_url', 'team_location', 'xeokit_url'] as $k) {
+            if (!array_key_exists($k, $update['site'])) $s['site'][$k] = '';
+        }
+    }
     $defaults = aim_defaults();
     $secret = array_flip(aim_secret_paths());
     $walk = function (array $upd, string $prefix) use (&$walk, &$s, $defaults, $secret) {
@@ -183,6 +202,7 @@ function aim_public_config(): array
     return [
         'siteUrl' => $s['site']['url'], 'company' => $s['site']['company'], 'repoUrl' => $s['site']['repo_url'],
         'contactEmail' => $s['site']['email'], 'turnstileSiteKey' => $s['turnstile']['site_key'],
+        'chatAbout' => aim_chat_about(),
         'chatEnabled' => $chatOk, 'chatProviderLabel' => $s['chat']['label'] ?: 'OpenAI', 'newsletterEnabled' => $nlOk,
         'beaconToken' => $s['site']['beacon_token'], 'defaultTheme' => $s['site']['default_theme'],
         'privacyUrl' => 'privacy.php', 'imprintUrl' => 'imprint.php',

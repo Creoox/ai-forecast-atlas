@@ -16,11 +16,11 @@ const PANEL_TERMS = {
   heat: ['impact matrix', 'heatmap'], signs: ['signpost', 'early warning'], events: ['event log'],
   matrix: ['scenario matrix', 'save csv', 'export selected run', 'download selected scenario'], ledger: ['evidence ledger', 'anchor', 'starting values'],
   factors: ['factor library'], footer: ['method and sources'],
-  'chat-ask': ['assistant', 'chat', 'ask the assistant'],
+  'chat-ask': ['assistant', 'chat', 'ask the assistant', 'cost', 'free', 'visitor charge'],
   'chat-suggest': ['suggestion', 'suggest an improvement', 'feedback'],
   subscribe: ['subscribe', 'newsletter', 'unsubscribe'], share: ['share', 'embed', 'permalink', 'chart image', 'svg'],
   data: ['data and api', 'api', 'download', 'export', 'csv', 'json', 'rss', 'feed', 'mcp'],
-  about: ['about', 'credits', 'license', 'licence'], sources: ['sources and methods', 'source', 'formula'],
+  about: ['about', 'credits', 'license', 'licence', 'creoox', 'contact', 'email', 'phone', 'address', 'company', 'team', 'who', 'website', 'imprint', 'privacy', 'github', 'source code', 'partnership', 'press', 'hire', 'cite', 'citation'], sources: ['sources and methods', 'source', 'formula', 'where the data comes from'],
   broadcast: ['broadcast', 'record', 'recording', 'video', 'save video', 'mp4', 'webm', 'stop and save', 'presentation', 'full screen'],
   xwatch: ['x watch', 'xwatch', 'twitter']
 };
@@ -31,7 +31,30 @@ function chatGuideNormalize(value) {
     .split(/ +/).map(word => word.length > 3 && word.endsWith('s') ? word.slice(0, -1) : word).join(' ');
 }
 
-export function buildChatGuide(engine, methods) {
+// Only operator configuration reaches this builder; a visitor's message is never an input.
+function chatAbout(site) {
+  const web = value => {
+    const text = String(value || '');
+    if (!/^https?:\/\//i.test(text) || /[\s<>"'\\]/.test(text)) return '';
+    try { const u = new URL(text); return /^https?:$/.test(u.protocol) && !u.username && !u.password ? text : ''; } catch { return ''; }
+  };
+  const url = web(site.url ?? 'https://aiforecastatlas.com/').replace(/\/?$/, '/');
+  const base = url === '/' ? '' : url;
+  const repo = web(site.repo_url).replace(/\/$/, '');
+  const at = path => base ? base + path : '';
+  return {
+    site: { name: site.name || 'AI Forecast Atlas', url: base, purpose: 'Eight what-if paths for the AI economy to 2035. A scenario model, not a forecast or investment advice.' },
+    operator: { name: site.company || '', registeredAddress: site.address || '', postalAddress: site.postal || '', teamLocation: site.team_location || '', email: site.email || '', phone: site.phone || '' },
+    links: Object.fromEntries(Object.entries({ website: base, company: web(site.company_url), imprint: at('imprint.php'), privacy: at('privacy.php'), repository: repo, codeLicence: repo ? repo + '/blob/main/LICENSE' : '', dataLicence: 'https://creativecommons.org/licenses/by/4.0/', newsletter: at('#subscribe'), data: at('data/latest/dataset.json'), xeokit: web(site.xeokit_url) }).filter(([, v]) => v)),
+    licences: { code: 'Code, model and design: Business Source License 1.1 (BUSL-1.1); each version changes to AGPL-3.0 after four years. See LICENSE for the permitted uses and exact terms.', data: 'Published data, charts and texts: CC BY 4.0. Third-party source material retains its own terms.' },
+    citation: 'Credit “AI Forecast Atlas by Creoox AG”, link to the website, and name the release used. Include the measure, scenario and quarter when quoting model values. Cite the supplied evidence IDs for starting values.',
+    newsletter: { subscribe: 'Use Subscribe on the website, choose topics and weekly or monthly frequency, then confirm the email. Sign-up may be unavailable until the operator enables it.', unsubscribe: 'Use Unsubscribe in any newsletter; its link is personal. Preferences in the email changes topics or frequency. Never invent or request a personal unsubscribe token.' },
+    chat: { cost: 'The website does not charge visitors to use its assistant; the operator pays for provider requests and applies usage limits. A single-file preview uses the visitor’s own host account and its plan limits.', privacy: 'The website sends the message and current dashboard view to its configured AI provider. The application does not store chat conversations. Do not enter personal data; see the privacy notice.' }
+  };
+}
+
+export function buildChatGuide(engine, methods, site = {}) {
+  const about = chatAbout(site);
   const scenarios = engine.SCENARIOS.map(s => ({ key: s.key, name: s.name, short: s.short, thesis: s.thesis, first: s.first.slice() }));
   const features = Object.entries(methods.panels).map(([id, p]) => ({ id, title: p.title, summary: p.oneLiner }));
   const glossary = methods.glossary.map(g => ({ term: g.term, def: g.def }));
@@ -42,6 +65,7 @@ export function buildChatGuide(engine, methods) {
   for (const [id, p] of Object.entries(methods.panels)) {
     const detail = { id: 'panel:' + id, type: 'panel', title: p.title };
     for (const key of ['oneLiner', 'what', 'howToRead', 'method', 'sources', 'caveats']) if (p[key] != null) detail[key] = p[key];
+    if (id === 'about') detail.what = 'Who operates this copy, company and team locations, contact details, trusted links and licences are in the authoritative About block supplied with every request.';
     entries.push({ id: detail.id, terms: [id, p.title, ...(PANEL_TERMS[id] || [])], detail });
   }
   for (const g of glossary) {
@@ -51,7 +75,7 @@ export function buildChatGuide(engine, methods) {
   return {
     schema: 'aimonitor.chat-guide/1',
     rules: 'Use this site guide to explain dashboard labels, scenarios and controls, even when they are not selected in the current view. A short label and its formal scenario name refer to the same scenario. Answer every part of the visitor’s question. Scenario theses, drivers and early signs describe hypothetical paths, not observed events, probabilities or forecasts. This guide is product knowledge, not current market data. Use the separately supplied evidence ledger and release for dated data claims. Helpful general knowledge is allowed when clearly labelled [AI]; distinguish it from site definitions and verified data. If current data are missing, say which claim cannot be verified while still explaining the documented feature or concept. Do not invent a feature, number, citation or source.',
-    overview: { scenarios, features, glossary }, entries
+    overview: { scenarios, features, glossary }, entries, about
   };
 }
 

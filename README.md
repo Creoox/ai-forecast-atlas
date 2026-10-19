@@ -4,6 +4,8 @@
 
 Live: **https://aiforecastatlas.com** · by [Creoox AG](https://creoox.com), the team behind [xeokit SDK](https://xeokit.io).
 
+Start with the [eight scenarios](https://aiforecastatlas.com/scenarios/), [measure definitions](https://aiforecastatlas.com/measures/), [methodology](https://aiforecastatlas.com/methodology/) or [FAQ](https://aiforecastatlas.com/faq/). These readable pages work without JavaScript and identify their published data release. [About and contact](https://aiforecastatlas.com/about/).
+
 ![AI Forecast Atlas](web/static/og.png)
 
 ## What it does
@@ -13,7 +15,7 @@ Live: **https://aiforecastatlas.com** · by [Creoox AG](https://creoox.com), the
 - **Weekly releases** — every day official sources (SEC EDGAR, EIA, OpenRouter, Epoch AI) and an **AI research panel** feed a review queue. The panel asks five AI agents (OpenAI, Anthropic Claude, Google Gemini, xAI Grok, DeepSeek) the same question; each answer must quote its source page or be marked as the model's own knowledge, and the answers are combined by weighted median with weights the editor sets. A value is approved only with its source link (or the "AI knowledge" label) and keeps its provenance, including every agent's answer, in the public data. Approved values re-anchor the model; every **Friday at 13:00 Central European time** a release recomputes all scenarios and publishes data files, charts and feeds.
 - **X watch** — Grok scans X every weekday for posts that matter to the monitor, from credible accounts and accounts with heavy impact on X, labelled for credibility and impact. The editor approves each item; approved items appear on the dashboard, in the release, the feeds and the newsletter. Signals, not data.
 - **Newsletter** — double opt-in sign-up with topics, language (EN/DE/FR/PL) and frequency; one email per subscriber built from the release; one-click unsubscribe; no tracking. Sent with Mailjet.
-- **AI assistant** — visitors ask about what they see ("what does this mean for an AECO firm?" or "explain this panel") and can send improvement ideas to the team. Answers cite the evidence ledger and the model formulas with clickable references. Works with OpenAI, Anthropic, Google Gemini, xAI, DeepSeek, Mistral, Perplexity or OpenRouter.
+- **AI assistant** — visitors ask about what they see ("what does this mean for an AECO firm?" or "explain this panel") and can send improvement ideas to the team. Answers cite the evidence ledger and the model formulas with clickable references. It also explains the site, its operator and how to contact the team. Visitor chat can use OpenAI, Anthropic, Google Gemini, xAI, Mistral, Perplexity or OpenRouter; DeepSeek is limited to background research.
 - **Open data** — JSON/CSV per release, a Frictionless data package, chart images (SVG), RSS/Atom/JSON Feed, an iCalendar of releases, embeddable charts, `llms.txt`, an OpenAPI description and a read-only **MCP server**. Data under CC BY 4.0.
 
 ## Runs on plain PHP hosting

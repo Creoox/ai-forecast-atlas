@@ -389,7 +389,10 @@ function aim_nl_compose(array $rel, string $lang, array $cats, string $edition, 
     $foot = '<p style="margin:22px 0 4px;color:#66635b;font-size:12px">' . aim_h(aim_t('nl_why', $lang)) . ' <a href="{{PREFS}}" style="color:#66635b">' . aim_h(aim_t('nl_prefs', $lang)) . '</a> · <a href="{{UNSUB}}" style="color:#66635b">' . aim_h(aim_t('nl_unsub', $lang)) . '</a></p>'
         . '<p style="margin:0 0 4px;color:#66635b;font-size:12px">' . aim_h(aim_t('nl_disclaimer', $lang)) . ' ' . aim_h(aim_t('nl_ai_note', $lang)) . '</p>'
         . '<p style="margin:0;color:#8a877e;font-size:11px">Autodesk is a registered trademark of Autodesk, Inc. All other names are trademarks of their respective holders. No affiliation or endorsement is implied.</p>';
+    $contact = implode(' · ', array_filter([$s['site']['company'], $s['site']['email'], $s['site']['phone']], fn($v) => $v !== ''));
+    if ($contact !== '') $foot .= '<p style="margin:8px 0 0;color:#66635b;font-size:12px">' . aim_h($contact) . '</p>';
     $T[] = ''; $T[] = aim_t('nl_why', $lang); $T[] = aim_t('nl_prefs', $lang) . ': {{PREFS}}'; $T[] = aim_t('nl_unsub', $lang) . ': {{UNSUB}}'; $T[] = aim_t('nl_disclaimer', $lang);
+    if ($contact !== '') $T[] = $contact;
     return [$subject, aim_email_shell($lang, $h . $foot, $intro), implode("\n", $T) . "\n"];
 }
 /** Short note on how a changed value entered the data (official interface, AI research reviewed by the team, …). */

@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 — 19 October 2026
+- Readability and orientation: automatic text sizing on wide screens, larger text and chart labels, grouped controls, a scenario overview, explicit historical/scenario events with pause, section navigation, phone panel controls and full-window expanded charts.
+- Crawlable scenario, measure, release, About, FAQ and methodology pages are generated from already-published data, alongside a homepage summary, dated sitemap, structured data and complete AI reading files. Every named crawler inherits the same private-route exclusions. An authenticated public-page refresh rebuilds presentation without changing datasets or sending newsletters.
+- The assistant receives the operator's public contact, website and licence facts on every request and supports safe links to those facts. The footer, About view and newsletter expose contact information.
+- Locally served fonts, browser and phone icons, content-addressed assets with long caching, canonical-host redirects and Apache security-header rules. Existing installations retain storage, data, configuration and cron files; the install guide explains the separate header-rule update and public-page refresh.
 - A Text size control offers 100%, 125% and 150% reading sizes, remembered in the visitor's browser independently of layout and theme. Dashboard text, chart labels, help and chat scale together, with responsive layouts for larger text.
 - The visitor assistant now receives a shared site guide with all scenario names and summaries, feature definitions and the glossary. Ordinary questions about “Bubble Burst”, Broadcast and other controls retrieve the same explanations used by the dashboard; short follow-up questions retain the relevant topic. The live site and single-file preview use the same guide, with regression checks for basic questions, citations and unsupported features.
 
