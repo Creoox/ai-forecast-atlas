@@ -72,6 +72,161 @@ function aim_stage(string $id, array $files, string $by): array
     aim_log('release', 'staged', ['id' => $id, 'by' => $by, 'files' => count($clean)]);
     return ['ok' => true, 'id' => $id, 'files' => count($clean)];
 }
+
+/* Browser upload transport only. The existing bundle validator remains the publication gate. */
+const AIM_UPLOAD_MAX_BYTES = 8 * 1024 * 1024;
+const AIM_UPLOAD_MAX_PART_BYTES = 300000;
+const AIM_UPLOAD_MAX_PARTS = 64;
+class AimStageUploadError extends RuntimeException
+{
+    public string $reason;
+    public function __construct(string $reason, string $message) { parent::__construct($message); $this->reason = $reason; }
+}
+function aim_upload_valid_id($upload): bool { return is_string($upload) && preg_match('/\A[a-f0-9]{32}\z/', $upload) === 1; }
+function aim_upload_failure($id, string $reason, string $message): array
+{
+    // Never log bundle validation messages: they may contain an uploaded path or URL.
+    $safeId = is_string($id) && preg_match('/\A\d{4}-W\d{2}(?:\.\d{1,2})?\z/', $id) ? $id : '';
+    aim_log('release', 'stage-failed', ['id' => $safeId, 'reason' => $reason]);
+    return ['ok' => false, 'error' => $message];
+}
+/** Unlike the general helper, an upload lock must fail closed if the lock file cannot be opened. */
+function aim_upload_locked(callable $fn)
+{
+    if (is_link(aim_storage('uploads'))) throw new RuntimeException('Upload storage is unavailable.');
+    aim_mkdir(aim_storage('locks'));
+    $path = aim_storage('locks/stage-upload.lock');
+    $fh = @fopen($path, 'c');
+    if (!$fh) throw new RuntimeException('Upload lock is unavailable.');
+    try {
+        if (!flock($fh, LOCK_EX)) throw new RuntimeException('Upload lock is unavailable.');
+        @touch($path);
+        return $fn();
+    } finally { flock($fh, LOCK_UN); fclose($fh); }
+}
+/** Delete only one flat upload folder under the private uploads root; never follow a symlink. */
+function aim_upload_remove(string $upload): void
+{
+    if (!aim_upload_valid_id($upload) || is_link(aim_storage('uploads'))) return;
+    $dir = aim_storage('uploads/' . $upload);
+    if (is_link($dir) || !is_dir($dir)) return;
+    foreach (scandir($dir) ?: [] as $name) {
+        if ($name === '.' || $name === '..') continue;
+        $file = $dir . '/' . $name;
+        if (is_link($file) || is_file($file)) @unlink($file);
+    }
+    @rmdir($dir);
+}
+/** Caller holds the upload lock. Directory mtime records the most recently accepted part. */
+function aim_upload_prune_locked(): int
+{
+    $removed = 0;
+    foreach (glob(aim_storage('uploads/*'), GLOB_ONLYDIR) ?: [] as $dir) {
+        if (!aim_upload_valid_id(basename($dir)) || is_link($dir)) continue;
+        $mtime = @filemtime($dir);
+        if ($mtime !== false && $mtime < time() - 86400) {
+            aim_upload_remove(basename($dir));
+            if (!is_dir($dir)) $removed++;
+        }
+    }
+    return $removed;
+}
+function aim_upload_prune(): int
+{
+    try { return aim_upload_locked(fn() => aim_upload_prune_locked()); }
+    catch (Throwable $e) { aim_log('release', 'stage-failed', ['id' => '', 'reason' => 'upload-cleanup-unavailable']); return 0; }
+}
+/** Read guarded parts and verify their stored metadata before counting or combining them. */
+function aim_upload_parts(string $upload, int $total): array
+{
+    $parts = []; $bytes = 0;
+    for ($i = 0; $i < $total; $i++) {
+        $rel = 'uploads/' . $upload . '/' . $i;
+        if (is_link(aim_store_path($rel))) throw new AimStageUploadError('invalid-part-storage', 'Upload storage is invalid. Start the upload again.');
+        if (!is_file(aim_store_path($rel))) continue;
+        $part = aim_store_read($rel);
+        if (!is_array($part) || ($part['index'] ?? null) !== $i || ($part['total'] ?? null) !== $total || !is_string($part['data'] ?? null) || strlen($part['data']) > AIM_UPLOAD_MAX_PART_BYTES) {
+            throw new AimStageUploadError('invalid-part-metadata', 'Upload parts are inconsistent. Start the upload again.');
+        }
+        $bytes += strlen($part['data']);
+        if ($bytes > AIM_UPLOAD_MAX_BYTES) throw new AimStageUploadError('upload-too-large', 'The upload exceeds the 8 MiB transport limit.');
+        $parts[$i] = $part['data'];
+    }
+    return [$parts, $bytes];
+}
+/** Accept a zero-based part. Identical retries are safe; part contents and total cannot be changed. */
+function aim_stage_part(array $in): array
+{
+    try {
+        $upload = $in['upload'] ?? null; $index = $in['index'] ?? null; $total = $in['total'] ?? null; $data = $in['data'] ?? null;
+        if (!aim_upload_valid_id($upload)) throw new AimStageUploadError('invalid-upload-id', 'Bad upload id.');
+        if (!is_int($total) || $total < 1 || $total > AIM_UPLOAD_MAX_PARTS || !is_int($index) || $index < 0 || $index >= $total) throw new AimStageUploadError('invalid-part-index', 'Bad upload part index or total.');
+        if (!is_string($data) || strlen($data) > AIM_UPLOAD_MAX_PART_BYTES) throw new AimStageUploadError('invalid-part-size', 'An upload part must be a string of at most 300,000 characters.');
+        return aim_upload_locked(function () use ($upload, $index, $total, $data) {
+            aim_upload_prune_locked();
+            $dir = aim_storage('uploads/' . $upload);
+            $metaRel = 'uploads/' . $upload . '/meta';
+            if (is_link($dir) || is_link(aim_store_path($metaRel))) throw new AimStageUploadError('invalid-upload-storage', 'Upload storage is invalid. Start the upload again.');
+            $meta = aim_store_read($metaRel);
+            if ($meta !== null && (!is_array($meta) || ($meta['total'] ?? null) !== $total)) throw new AimStageUploadError('inconsistent-total', 'The upload part total changed. Start the upload again.');
+            if ($meta === null && is_dir($dir)) throw new AimStageUploadError('missing-upload-metadata', 'Upload metadata is missing. Start the upload again.');
+            [$parts, $bytes] = aim_upload_parts($upload, $total);
+            if (array_key_exists($index, $parts)) {
+                if ($parts[$index] !== $data) throw new AimStageUploadError('conflicting-part', 'This upload part was already supplied with different contents.');
+            } elseif ($bytes + strlen($data) > AIM_UPLOAD_MAX_BYTES) throw new AimStageUploadError('upload-too-large', 'The upload exceeds the 8 MiB transport limit.');
+            if ($meta === null) {
+                aim_store_write($metaRel, ['total' => $total]);
+            }
+            if (!array_key_exists($index, $parts)) aim_store_write('uploads/' . $upload . '/' . $index, ['index' => $index, 'total' => $total, 'data' => $data]);
+            @touch($dir);
+            return ['ok' => true, 'upload' => $upload, 'index' => $index, 'total' => $total];
+        });
+    } catch (AimStageUploadError $e) { return aim_upload_failure(null, $e->reason, $e->getMessage()); }
+    catch (Throwable $e) { return aim_upload_failure(null, 'upload-storage-unavailable', 'The server could not save this upload part. Start the upload again.'); }
+}
+/** Commit is terminal: remove its parts on success or rejection, and pass plain file strings to aim_stage. */
+function aim_stage_commit(array $in): array
+{
+    $id = $in['id'] ?? null;
+    try {
+        $upload = $in['upload'] ?? null;
+        if (!aim_upload_valid_id($upload)) throw new AimStageUploadError('invalid-upload-id', 'Bad upload id.');
+        return aim_upload_locked(function () use ($upload, $id, $in) {
+            try {
+                if (!is_string($id) || !aim_valid_release_id($id)) throw new AimStageUploadError('invalid-release-id', 'Bad release id.');
+                $encoding = $in['encoding'] ?? null; $sha = $in['sha256'] ?? null;
+                if (!is_string($encoding) || !in_array($encoding, ['gzip', 'json'], true)) throw new AimStageUploadError('invalid-encoding', 'Unsupported upload encoding.');
+                if (!is_string($sha) || preg_match('/\A[a-f0-9]{64}\z/', $sha) !== 1) throw new AimStageUploadError('invalid-checksum', 'Bad upload checksum.');
+                $metaRel = 'uploads/' . $upload . '/meta';
+                if (is_link(aim_storage('uploads/' . $upload)) || is_link(aim_store_path($metaRel))) throw new AimStageUploadError('invalid-upload-storage', 'Upload storage is invalid. Start the upload again.');
+                $meta = aim_store_read($metaRel);
+                $total = is_array($meta) ? ($meta['total'] ?? null) : null;
+                if (!is_int($total) || $total < 1 || $total > AIM_UPLOAD_MAX_PARTS) throw new AimStageUploadError('missing-upload-metadata', 'The upload was not found or has expired. Start the upload again.');
+                [$parts, $bytes] = aim_upload_parts($upload, $total);
+                if (count($parts) !== $total) throw new AimStageUploadError('missing-part', 'An upload part is missing. Start the upload again.');
+                $encoded = implode('', $parts); unset($parts);
+                if (!hash_equals($sha, hash('sha256', $encoded))) throw new AimStageUploadError('checksum-mismatch', 'The upload checksum does not match. Start the upload again.');
+                $bin = base64_decode($encoded, true);
+                if ($bin === false || base64_encode($bin) !== $encoded) throw new AimStageUploadError('invalid-base64', 'The upload is not valid base64.');
+                unset($encoded);
+                if ($encoding === 'gzip') {
+                    if (!function_exists('gzdecode')) throw new AimStageUploadError('gzip-unavailable', 'PHP extension zlib is unavailable. Start the upload again without compression.');
+                    $json = @gzdecode($bin, 16000000);
+                    if ($json === false) throw new AimStageUploadError('invalid-gzip', 'The compressed upload is invalid or exceeds 16,000,000 decoded bytes.');
+                } else $json = $bin;
+                unset($bin);
+                if (strlen($json) > 16000000) throw new AimStageUploadError('decoded-too-large', 'The decoded upload exceeds 16,000,000 bytes.');
+                $payload = json_decode($json, true); unset($json);
+                if (!is_array($payload) || !is_string($payload['id'] ?? null) || !is_array($payload['files'] ?? null)) throw new AimStageUploadError('invalid-json-envelope', 'The upload must contain a release id and plain file strings.');
+                if ($payload['id'] !== $id) throw new AimStageUploadError('release-id-mismatch', 'The upload does not match the release id.');
+                $r = aim_stage($id, $payload['files'], 'admin');
+                if (empty($r['ok'])) aim_upload_failure($id, 'bundle-validation-failed', 'The uploaded release failed validation.');
+                return $r;
+            } finally { aim_upload_remove($upload); }
+        });
+    } catch (AimStageUploadError $e) { return aim_upload_failure($id, $e->reason, $e->getMessage()); }
+    catch (Throwable $e) { return aim_upload_failure($id, 'upload-commit-failed', 'The server could not finish this upload. Start the upload again.'); }
+}
 function aim_rmtree(string $dir): void
 {
     if (!is_dir($dir)) return;

@@ -2,7 +2,7 @@
 /* AI Forecast Atlas — shared helpers (files, JSON, time, responses). PHP 8.0+.
    Copyright (C) 2026 Creoox AG. Licence: Business Source License 1.1 (see LICENSE). */
 
-const AIM_VERSION = '1.3.0';
+const AIM_VERSION = '1.3.1';
 const AIM_TZ = 'Europe/Zurich';
 
 /* mbstring is usual but not guaranteed on shared hosting: minimal UTF-8 fallbacks */

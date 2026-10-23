@@ -8,6 +8,7 @@ function aim_health(bool $deep = false): array
     $add = function (string $name, bool $ok, string $info = '', string $level = 'error') use (&$c) { $c[] = ['name' => $name, 'ok' => $ok, 'info' => $info, 'level' => $ok ? 'ok' : $level]; };
     $add('PHP version', PHP_VERSION_ID >= 80000, PHP_VERSION . ' (8.0 or newer needed; 8.2 recommended)');
     foreach (['curl' => 'outgoing connections', 'json' => 'data files', 'mbstring' => 'text handling (a fallback is built in)', 'openssl' => 'HTTPS'] as $ext => $why) $add('PHP extension ' . $ext, extension_loaded($ext), $why, $ext === 'mbstring' ? 'warn' : 'error');
+    $add('PHP extension zlib', function_exists('gzdecode'), function_exists('gzdecode') ? 'compressed release uploads supported' : 'compressed uploads unavailable; the browser will use uncompressed parts', 'warn');
     $add('Server software', true, (string)($_SERVER['SERVER_SOFTWARE'] ?? 'unknown'));
     $w = aim_storage();
     $probe = $w . '/.write-test';
@@ -63,7 +64,7 @@ function aim_admin_state(): array
     foreach (aim_staged_ids() as $id) $staged[] = (aim_store_read('staged/' . $id . '-meta') ?: []) + ['id' => $id];
     $site = rtrim($s['site']['url'], '/') . '/';
     return [
-        'ok' => true, 'version' => AIM_VERSION, 'now' => aim_iso(), 'nextRelease' => aim_iso(aim_next_release()),
+        'ok' => true, 'version' => AIM_VERSION, 'now' => aim_iso(), 'nextRelease' => aim_iso(aim_next_release()), 'uploadGzip' => function_exists('gzdecode'),
         'settings' => aim_settings_masked(), 'providers' => aim_provider_catalog(), 'categories' => aim_categories(), 'languages' => aim_cfg('newsletter')['languages'] ?? [],
         'state' => array_intersect_key($st, array_flip(['lastRelease', 'lastReleaseAt', 'lastReleaseSource', 'lastTick', 'lastTickSource', 'lastCollectAt', 'collect', 'lastScheduledWeek', 'edgarQuarter', 'tickMs', 'tickMaxMs', 'tickCutoffs', 'lastMonthlyEdition'])),
         'releases' => array_slice(aim_releases_index()['releases'], 0, 12), 'staged' => $staged,
@@ -92,13 +93,13 @@ function aim_feedback_list(int $months = 3): array
 
 /* Actions that only read may use GET; everything that changes something needs POST with the CSRF header. */
 const AIM_ADMIN_READ = ['state', 'health', 'working', 'feedback', 'logs', 'newsletter-preview'];
-const AIM_ADMIN_WRITE = ['logout', 'password', 'settings', 'test-provider', 'mailjet-setup', 'newsletter-test', 'newsletter-stop', 'candidate', 'working-edit', 'working-reset', 'stage', 'unstage', 'publish-now', 'regenerate_public_pages', 'collect-now', 'cron-now', 'feedback-mark', 'xwatch', 'xwatch-withdraw', 'xwatch-scan'];
+const AIM_ADMIN_WRITE = ['logout', 'password', 'settings', 'test-provider', 'mailjet-setup', 'newsletter-test', 'newsletter-stop', 'candidate', 'working-edit', 'working-reset', 'stage', 'stage-part', 'stage-commit', 'unstage', 'publish-now', 'regenerate_public_pages', 'collect-now', 'cron-now', 'feedback-mark', 'xwatch', 'xwatch-withdraw', 'xwatch-scan'];
 function aim_handle_admin(): void
 {
     $a = (string)($_GET['a'] ?? '');
     $post = aim_method() === 'POST';
     if (!aim_admin_host_ok()) { aim_error('host', 'Open the admin page at ' . aim_site_url('admin/') . ' (the site address set in Settings).', 403); return; }
-    $in = $post ? aim_input_payload(12000000) : [];
+    $in = $post ? aim_input_payload(in_array($a, ['stage-part', 'stage-commit'], true) ? 330000 : 12000000) : [];
     // first-run setup and login need no session
     if ($a === 'setup' && $post) {
         if (aim_admin_has_password()) { aim_error('done', 'Setup is already complete.', 409); return; }
@@ -182,6 +183,11 @@ function aim_handle_admin(): void
             $files = [];
             foreach ((array)($in['files'] ?? []) as $p => $b64) $files[(string)$p] = (string)base64_decode((string)$b64, true);
             aim_json_out(aim_stage((string)($in['id'] ?? ''), $files, 'admin')); return;
+        case 'stage-part':
+        case 'stage-commit':
+            if (!aim_discovery_origin_ok()) { aim_error('origin', 'Open this action from the site\'s own admin page.', 403); return; }
+            $r = $a === 'stage-part' ? aim_stage_part($in) : aim_stage_commit($in);
+            aim_json_out($r, !empty($r['ok']) ? 200 : 400); return;
         case 'unstage': aim_unstage((string)($in['id'] ?? '')); aim_json_out(['ok' => true]); return;
         case 'publish-now': aim_json_out(aim_publish_now((string)($in['id'] ?? ''))); return;
         case 'regenerate_public_pages':

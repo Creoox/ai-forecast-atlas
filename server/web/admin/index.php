@@ -25,6 +25,7 @@ $v = AIM_VERSION . '-' . substr(md5((string)@filemtime(__DIR__ . '/admin.js')), 
 :root { --bg: #f3f2ed; --panel: #ffffff; --panel2: #f7f6f2; --ink: #17171a; --ink2: #43413c; --ink3: #66635b; --rule: #dfdcd2; --rule2: #c8c4b7; --a: #9c5500; --ai: #ffffff; --ok: #1b7a39; --warn: #8f6200; --err: #c0261f; --info: #2a62b2; color-scheme: light; }
 @media (prefers-color-scheme: dark) { :root { --bg: #0b0b0c; --panel: #141416; --panel2: #1a1a1d; --ink: #f1efe8; --ink2: #c9c6bc; --ink3: #8f8c83; --rule: #2a2a2e; --rule2: #3a3a40; --a: #f5a524; --ai: #141414; --ok: #4cc97a; --warn: #e2b04a; --err: #f47b74; --info: #7cb6ff; color-scheme: dark; } }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
 header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 2px solid var(--a); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px)); }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); background: var(--panel); z-index: 10; }

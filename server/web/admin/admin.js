@@ -11,6 +11,7 @@ let S = null;          // admin state
 let TAB = (location.hash || '#overview').slice(1);
 let WORK = null;       // working dataset bundle
 let BUILT = null;      // last browser-built release
+let RELEASE_BUSY = false;
 
 /* ---------- helpers ---------- */
 function h(tag, attrs, ...kids) {
@@ -24,16 +25,25 @@ function h(tag, attrs, ...kids) {
   for (const k of kids.flat()) if (k != null && k !== false) e.append(k instanceof Node ? k : document.createTextNode(String(k)));
   return e;
 }
-function b64(str) { const by = new TextEncoder().encode(str); let s = ''; for (let i = 0; i < by.length; i += 0x8000) s += String.fromCharCode.apply(null, by.subarray(i, i + 0x8000)); return btoa(s); }
+function b64Bytes(by) { let s = ''; for (let i = 0; i < by.length; i += 0x8000) s += String.fromCharCode.apply(null, by.subarray(i, i + 0x8000)); return btoa(s); }
+function b64(str) { return b64Bytes(new TextEncoder().encode(str)); }
 async function call(a, body, extra) {
   const opt = { method: body ? 'POST' : 'GET', headers: { 'Accept': 'application/json' }, credentials: 'same-origin' };
   if (body) { opt.headers['Content-Type'] = 'application/json'; opt.headers['X-AIM-CSRF'] = CSRF; opt.body = JSON.stringify({ p: b64(JSON.stringify(body)) }); }
-  const r = await fetch(API + '?a=' + encodeURIComponent(a) + (extra || ''), opt);
-  if ((r.headers.get('content-type') || '').indexOf('json') < 0) { if (r.ok) return r.text(); throw new Error('Server answered HTTP ' + r.status + (r.status === 403 ? ' (blocked — the host firewall may have stopped this request)' : '')); }
-  const j = await r.json();
-  if (j.ok === false) { const e = new Error(typeof j.error === 'string' ? j.error : (j.error && j.error.message) || 'Error'); e.code = j.error && j.error.code; throw e; }
+  const context = a === 'stage-part' ? 'Upload part ' + (body.index + 1) + ' of ' + body.total : a === 'stage-commit' ? 'Release validation' : a;
+  const responseError = message => new Error(context + ': ' + message + '. Try again. If it happens again, contact the developer.');
+  let r;
+  try { r = await fetch(API + '?a=' + encodeURIComponent(a) + (extra || ''), opt); }
+  catch (e) { throw responseError(e.message || 'Could not contact the server'); }
+  if ((r.headers.get('content-type') || '').indexOf('json') < 0) { if (r.ok && a === 'newsletter-preview') return r.text(); throw responseError('Server answered HTTP ' + r.status + ' without a JSON response' + (r.status === 403 ? ' (blocked — the host firewall may have stopped this request)' : '')); }
+  let j;
+  try { j = await r.json(); } catch (_) { throw responseError('Server answered HTTP ' + r.status + ' with invalid JSON'); }
+  if (!j || typeof j !== 'object') throw responseError('Server answered HTTP ' + r.status + ' with an invalid response');
+  if (j.ok === false) { const e = new Error((a === 'stage-part' || a === 'stage-commit' ? context + ': ' : '') + (typeof j.error === 'string' ? j.error : (j.error && j.error.message) || 'Error')); e.code = j.error && j.error.code; throw e; }
+  if (!r.ok) throw responseError('Server answered HTTP ' + r.status);
   return j;
 }
+
 let toastT;
 function toast(m, bad) { let t = document.querySelector('.toast'); if (!t) { t = h('div', { class: 'toast', role: 'status' }); document.body.append(t); } t.textContent = m; t.style.borderColor = bad ? 'var(--err)' : ''; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 4200); }
 const when = iso => { if (!iso) return '—'; const d = new Date(iso); return isNaN(d) ? iso : new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Zurich', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(d); };
@@ -276,8 +286,8 @@ async function viewRelease() {
     }
     if (!complete) refreshStatus.textContent = 'This batch is complete. Click again to continue refreshing older release pages.';
   });
-  const build = h('button', { class: 'btn primary', type: 'button' }, 'Build the release from the working dataset');
-  build.onclick = busy(build, async () => {
+  const build = h('button', { class: 'btn primary', type: 'button', 'data-release-action': '', disabled: RELEASE_BUSY }, 'Build the release from the working dataset');
+  build.onclick = releaseAction(build, async () => {
     WORK = await call('working');
     const [eng, RC] = await Promise.all([import('../assets/engine.esm.js'), import('../assets/release-core.js')]);
     const t0 = performance.now();
@@ -299,15 +309,64 @@ async function viewRelease() {
     h('h2', {}, 'Published releases'),
     h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, S.releases.map(r => h('tr', {}, h('td', { class: 'mono' }, h('a', { href: S.settings.site.url + 'data/releases/' + r.id + '/', target: '_blank', rel: 'noopener' }, r.id)), h('td', { class: 'small' }, when(r.publishedAt)), h('td', { class: 'small' }, r.summary)))))));
 }
+// One guard covers staging and publishing, including repeated clicks on the confirmation.
+function releaseAction(btn, fn) {
+  return async () => {
+    if (RELEASE_BUSY) return;
+    RELEASE_BUSY = true;
+    const label = btn.textContent;
+    const controls = [...document.querySelectorAll('[data-release-action]')];
+    controls.forEach(b => { b.disabled = true; });
+    btn.textContent = 'Working…';
+    try { await fn(text => { btn.textContent = text; }); }
+    catch (e) { toast(e.message || String(e), true); }
+    finally {
+      RELEASE_BUSY = false;
+      btn.textContent = label;
+      document.querySelectorAll('[data-release-action]').forEach(b => { b.disabled = false; });
+    }
+  };
+}
+async function uploadBuild(id, progress) {
+  progress('Preparing upload…');
+  const json = JSON.stringify({ id, files: BUILT.files });
+  let bytes = new TextEncoder().encode(json), encoding = 'json';
+  if (S.uploadGzip && typeof CompressionStream === 'function') {
+    try {
+      bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+      encoding = 'gzip';
+    } catch (_) { /* Older browsers can still send the same JSON in small parts. */ }
+  }
+  const data = b64Bytes(bytes);
+  const hex = bytes => Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  const upload = hex(crypto.getRandomValues(new Uint8Array(16)));
+  const sha256 = hex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data))));
+  const partSize = 192 * 1024, total = Math.ceil(data.length / partSize);
+  for (let index = 0; index < total; index++) {
+    progress('Uploading ' + (index + 1) + ' of ' + total + '…');
+    await call('stage-part', { upload, index, total, data: data.slice(index * partSize, (index + 1) * partSize) });
+  }
+  progress('Validating upload…');
+  return await call('stage-commit', { upload, id, encoding, sha256 });
+}
 function showBuilt(out, id) {
   const r = BUILT.release;
   const size = Object.values(BUILT.files).reduce((a, s) => a + s.length, 0);
-  const stage = h('button', { class: 'btn primary', type: 'button' }, 'Stage for ' + when(S.nextRelease));
-  const pubNow = h('button', { class: 'btn', type: 'button' }, 'Publish now instead');
-  const files = () => { const f = {}; for (const [p, c] of Object.entries(BUILT.files)) f[p] = b64(c); return f; };
-  stage.onclick = busy(stage, async () => { await call('stage', { id, files: files() }); toast('Staged. It goes live on ' + when(S.nextRelease) + '.'); await refresh(); await render(); });
-  const confirmRow = h('p', { class: 'row', hidden: true }, h('span', { class: 'warn' }, 'Publish now and send the newsletter to all subscribers?'), h('button', { class: 'btn primary', type: 'button', onclick: busy(pubNow, async () => { await call('stage', { id, files: files() }); const x = await call('publish-now', { id }); toast('Published as ' + x.id + '.'); await refresh(); await render(); }) }, 'Yes, publish now'), h('button', { class: 'btn', type: 'button', onclick: () => { confirmRow.hidden = true; } }, 'Cancel'));
-  pubNow.onclick = () => { confirmRow.hidden = false; };
+  const action = { class: 'btn', type: 'button', 'data-release-action': '', disabled: RELEASE_BUSY };
+  const stage = h('button', { ...action, class: 'btn primary' }, 'Stage for ' + when(S.nextRelease));
+  const pubNow = h('button', action, 'Publish now instead');
+  const confirm = h('button', { ...action, class: 'btn primary' }, 'Yes, publish now');
+  const cancel = h('button', action, 'Cancel');
+  stage.onclick = releaseAction(stage, async progress => { await uploadBuild(id, progress); toast('Staged. It goes live on ' + when(S.nextRelease) + '.'); await refresh(); await render(); });
+  confirm.onclick = releaseAction(confirm, async progress => {
+    await uploadBuild(id, progress);
+    progress('Publishing…');
+    const x = await call('publish-now', { id });
+    toast('Published as ' + x.id + '.'); await refresh(); await render();
+  });
+  const confirmRow = h('p', { class: 'row', hidden: true }, h('span', { class: 'warn' }, 'Publish now and send the newsletter to all subscribers?'), confirm, cancel);
+  pubNow.onclick = () => { if (!RELEASE_BUSY) { confirmRow.hidden = false; confirm.focus(); } };
+  cancel.onclick = () => { if (!RELEASE_BUSY) { confirmRow.hidden = true; pubNow.focus(); } };
   out.replaceChildren(h('div', { class: 'card' },
     h('p', {}, h('b', {}, 'Release ' + id), ' · ' + Object.keys(BUILT.files).length + ' files · ' + Math.round(size / 1024) + ' KB · computed in ' + BUILT.ms + ' ms'),
     h('p', {}, r.summary),

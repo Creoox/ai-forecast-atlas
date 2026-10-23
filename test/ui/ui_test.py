@@ -1,9 +1,9 @@
 """AI Forecast Atlas browser test (Playwright, Chromium): public site, embed, admin release builder and the single-file preview.
    python3 test/ui/ui_test.py            (after: node web/build.mjs)
    Starts PHP's built-in server for the site and for mocked external services; screenshots go to test/ui/out/."""
-import base64, json, os, re, shutil, subprocess, sys, tempfile, time
+import base64, gzip, hashlib, json, os, re, shutil, subprocess, sys, tempfile, time
 import requests
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, expect
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 OUT = os.path.join(ROOT, 'test', 'ui', 'out')
@@ -328,6 +328,102 @@ def check_discovery(browser):
     finally:
         ctx.close()
 
+def check_release_uploads(page):
+    """Exercise the real local stage endpoints; immediate publication is intercepted, never sent."""
+    calls = []
+    def capture(request):
+        if request.method != 'POST' or '/api/admin.php?a=' not in request.url: return
+        action = request.url.split('?a=', 1)[1].split('&', 1)[0]
+        if action not in ('stage', 'stage-part', 'stage-commit', 'publish-now'): return
+        wire = request.post_data or ''
+        payload = json.loads(base64.b64decode(json.loads(wire)['p']).decode('utf-8'))
+        calls.append((action, payload, len(wire)))
+    page.on('request', capture)
+    state_url = '**/api/admin.php?a=state'
+    part_url = '**/api/admin.php?a=stage-part'
+    publish_url = '**/api/admin.php?a=publish-now'
+    def without_server_gzip(route):
+        response = route.fetch()
+        state = response.json(); state['uploadGzip'] = False
+        route.fulfill(response=response, json=state)
+    def rebuild():
+        page.reload(wait_until='networkidle')
+        page.get_by_role('button', name='Build the release from the working dataset', exact=True).click()
+        page.wait_for_selector('text=computed in', timeout=20000)
+    def staged():
+        expect(page.locator(".toast")).to_have_text(re.compile(r"^Staged\."), timeout=30000)
+        expect(page.locator("button[data-release-action]:disabled")).to_have_count(0)
+    def verify_transfer(label, encoding):
+        parts = [body for action, body, _ in calls if action == 'stage-part']
+        commits = [body for action, body, _ in calls if action == 'stage-commit']
+        check(label + ': one verified commit', len(commits) == 1, len(commits))
+        if not parts or len(commits) != 1: return
+        commit = commits[0]
+        encoded = ''.join(part['data'] for part in parts)
+        check(label + ': bounded ordered parts share a random upload ID', bool(re.fullmatch('[a-f0-9]{32}', commit['upload'])) and all(part['index'] == index and part['total'] == len(parts) and part['upload'] == commit['upload'] and 0 < len(part['data']) <= 192 * 1024 for index, part in enumerate(parts)))
+        check(label + ': complete base64 SHA-256 and encoding', hashlib.sha256(encoded.encode('ascii')).hexdigest() == commit['sha256'] and commit['encoding'] == encoding)
+        raw = base64.b64decode(encoded)
+        payload = json.loads((gzip.decompress(raw) if encoding == 'gzip' else raw).decode('utf-8'))
+        check(label + ': files are plain strings encoded only once', payload['id'] == commit['id'] and len(payload['files']) > 10 and all(isinstance(value, str) for value in payload['files'].values()) and json.loads(payload['files']['release.json'])['id'] == commit['id'])
+        check(label + ': never uses the legacy large request', all(action != 'stage' and length < 270 * 1024 for action, _, length in calls))
+    try:
+        confirm = page.get_by_role('button', name='Yes, publish now', exact=True)
+        check('publish confirmation starts genuinely hidden after Build', confirm.is_hidden())
+        page.get_by_role('button', name='Publish now instead', exact=True).click()
+        check('Publish now instead reveals its explicit confirmation', confirm.is_visible())
+        page.get_by_role('button', name='Cancel', exact=True).click()
+        check('Cancel hides the confirmation without staging or publishing', confirm.is_hidden() and not calls)
+
+        # A host HTML failure on the second JSON part must never be mistaken for a staged release.
+        page.route(state_url, without_server_gzip); rebuild(); calls.clear()
+        def fail_second_part(route):
+            payload = json.loads(base64.b64decode(route.request.post_data_json['p']).decode('utf-8'))
+            if payload['index'] == 1: route.fulfill(status=503, content_type='text/html', body='<html>Service temporarily unavailable</html>')
+            else: route.continue_()
+        page.route(part_url, fail_second_part)
+        page.get_by_role('button', name=re.compile('^Stage for ')).click()
+        expect(page.locator(".toast")).to_contain_text(re.compile(r"Upload part 2 of [0-9]+:.*HTTP 503"), timeout=15000)
+        check('HTML upload failure identifies its part, HTTP status and recovery', all(text in page.inner_text('.toast') for text in ('without a JSON response', 'Try again', 'contact the developer')))
+        check('failed upload restores actions and never commits or publishes', page.get_by_role('button', name=re.compile('^Stage for ')).is_enabled() and not any(action in ('stage-commit', 'publish-now') for action, _, _ in calls))
+        page.unroute(part_url, fail_second_part); page.unroute(state_url, without_server_gzip)
+
+        # Hold the first part while dispatching duplicate actions to test the shared busy guard.
+        rebuild(); calls.clear(); held = []
+        def hold_first_part(route):
+            if not held: held.append(route)
+            else: route.continue_()
+        page.route(part_url, hold_first_part)
+        page.get_by_role('button', name=re.compile('^Stage for ')).click()
+        page.wait_for_selector('button:has-text("Uploading 1 of")', timeout=10000)
+        for _ in range(50):
+            if held: break
+            page.wait_for_timeout(20)
+        check('upload progress is visible and all release actions are disabled', bool(held) and page.eval_on_selector_all('[data-release-action]', 'xs=>xs.every(e=>e.disabled)'))
+        page.locator('button:has-text("Uploading 1 of")').evaluate('e=>{e.dispatchEvent(new Event("click"));e.dispatchEvent(new Event("click"));}')
+        page.get_by_role('button', name='Yes, publish now', exact=True, include_hidden=True).evaluate('e=>e.dispatchEvent(new Event("click"))')
+        held[0].continue_(); staged(); page.unroute(part_url, hold_first_part)
+        verify_transfer('gzip upload', 'gzip' if admin('state')['uploadGzip'] else 'json')
+        staged_rows = admin('state')['staged']
+        check('Stage finishes in the visible Staged list without publishing', len(staged_rows) == 1 and page.locator('main li', has_text=staged_rows[0]['id']).is_visible() and not any(action == 'publish-now' for action, _, _ in calls))
+
+        page.route(state_url, without_server_gzip); rebuild(); calls.clear()
+        page.get_by_role('button', name=re.compile('^Stage for ')).click(); staged()
+        verify_transfer('server gzip fallback', 'json')
+        page.unroute(state_url, without_server_gzip)
+
+        # The browser fallback follows the same stage path before a mocked immediate publish.
+        rebuild(); page.evaluate('window.CompressionStream = undefined'); calls.clear()
+        page.route(publish_url, lambda route: route.fulfill(json={'ok': True, 'id': 'UI-mocked-release'}))
+        page.get_by_role('button', name='Publish now instead', exact=True).click()
+        page.get_by_role('button', name='Yes, publish now', exact=True).click()
+        expect(page.locator(".toast")).to_have_text("Published as UI-mocked-release.", timeout=30000)
+        verify_transfer('browser gzip fallback', 'json')
+        actions = [action for action, _, _ in calls]
+        check('confirmed publish stages once before one publish request', actions.count('publish-now') == 1 and actions[-2:] == ['stage-commit', 'publish-now'])
+    finally:
+        page.remove_listener('request', capture)
+        page.unroute(state_url); page.unroute(part_url); page.unroute(publish_url)
+
 s = requests.Session()
 def admin(a, body=None):
     if body is None: return s.get(SITE + 'api/admin.php?a=' + a).json()
@@ -649,7 +745,7 @@ try:
         pg.click('nav.tabs >> text=Release'); pg.wait_for_timeout(500)
         pg.click('button:has-text("Build the release")'); pg.wait_for_selector('text=computed in', timeout=20000)
         check('release built in the browser', 'files' in pg.inner_text('main'))
-        pg.click('button:has-text("Stage for")'); pg.wait_for_timeout(2500)
+        check_release_uploads(pg)
         st = admin('state')
         check('release staged on the server', len(st['staged']) == 1, st.get('staged'))
         pg.screenshot(path=os.path.join(OUT, 'admin_release.png'), full_page=True)
