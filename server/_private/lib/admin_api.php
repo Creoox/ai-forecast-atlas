@@ -91,6 +91,43 @@ function aim_feedback_list(int $months = 3): array
     return $out;
 }
 
+/** Read a multipart JSON envelope only after the action's authentication and origin checks. */
+function aim_admin_upload_part_payload(): array
+{
+    $file = $_FILES['payload'] ?? null;
+    if (count($_FILES) !== 1 || $_POST || !is_array($file)) {
+        throw new AimStageUploadError('invalid-upload-file', 'Send exactly one upload part file. The host may have rejected the file upload.');
+    }
+    if (!is_int($file['error'] ?? null) || !is_int($file['size'] ?? null) || !is_string($file['tmp_name'] ?? null)) {
+        throw new AimStageUploadError('invalid-upload-file', 'The upload part file is invalid. Start the upload again.');
+    }
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        if (in_array($file['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+            throw new AimStageUploadError('upload-file-too-large', 'The host rejected the upload part size. Check the PHP upload limits.');
+        }
+        if ($file['error'] === UPLOAD_ERR_PARTIAL) {
+            throw new AimStageUploadError('upload-file-incomplete', 'The upload part arrived incomplete. Start the upload again.');
+        }
+        throw new AimStageUploadError('upload-file-unavailable', 'The host could not receive the upload part file. Check that PHP file uploads and temporary storage are available.');
+    }
+    if ($file['size'] < 1 || $file['size'] > 330000) {
+        throw new AimStageUploadError('invalid-upload-file-size', 'An upload part envelope must contain 1 to 330,000 bytes.');
+    }
+    if (!is_uploaded_file($file['tmp_name'])) {
+        throw new AimStageUploadError('invalid-upload-file', 'The upload part was not received as an HTTP file upload.');
+    }
+    // Ignore the client's filename and MIME type. PHP removes this temporary file after the request.
+    $raw = @file_get_contents($file['tmp_name'], false, null, 0, 330001);
+    if ($raw === false || strlen($raw) !== $file['size'] || strlen($raw) > 330000) {
+        throw new AimStageUploadError('upload-file-incomplete', 'The upload part file could not be read completely. Start the upload again.');
+    }
+    $payload = json_decode($raw);
+    if (!$payload instanceof stdClass) {
+        throw new AimStageUploadError('invalid-upload-envelope', 'The upload part file must contain a valid JSON object.');
+    }
+    return (array)$payload;
+}
+
 /* Actions that only read may use GET; everything that changes something needs POST with the CSRF header. */
 const AIM_ADMIN_READ = ['state', 'health', 'working', 'feedback', 'logs', 'newsletter-preview'];
 const AIM_ADMIN_WRITE = ['logout', 'password', 'settings', 'test-provider', 'mailjet-setup', 'newsletter-test', 'newsletter-stop', 'candidate', 'working-edit', 'working-reset', 'stage', 'stage-part', 'stage-commit', 'unstage', 'publish-now', 'regenerate_public_pages', 'collect-now', 'cron-now', 'feedback-mark', 'xwatch', 'xwatch-withdraw', 'xwatch-scan'];
@@ -99,7 +136,8 @@ function aim_handle_admin(): void
     $a = (string)($_GET['a'] ?? '');
     $post = aim_method() === 'POST';
     if (!aim_admin_host_ok()) { aim_error('host', 'Open the admin page at ' . aim_site_url('admin/') . ' (the site address set in Settings).', 403); return; }
-    $in = $post ? aim_input_payload(in_array($a, ['stage-part', 'stage-commit'], true) ? 330000 : 12000000) : [];
+    $multipartPart = $post && $a === 'stage-part' && preg_match('#\Amultipart/form-data(?:\s*;|$)#i', trim((string)($_SERVER['CONTENT_TYPE'] ?? ''))) === 1;
+    $in = $post && !$multipartPart ? aim_input_payload(in_array($a, ['stage-part', 'stage-commit'], true) ? 330000 : 12000000) : [];
     // first-run setup and login need no session
     if ($a === 'setup' && $post) {
         if (aim_admin_has_password()) { aim_error('done', 'Setup is already complete.', 409); return; }
@@ -186,7 +224,14 @@ function aim_handle_admin(): void
         case 'stage-part':
         case 'stage-commit':
             if (!aim_discovery_origin_ok()) { aim_error('origin', 'Open this action from the site\'s own admin page.', 403); return; }
-            $r = $a === 'stage-part' ? aim_stage_part($in) : aim_stage_commit($in);
+            try {
+                if ($multipartPart) $in = aim_admin_upload_part_payload();
+                $r = $a === 'stage-part' ? aim_stage_part($in) : aim_stage_commit($in);
+            } catch (AimStageUploadError $e) {
+                $r = aim_upload_failure(null, $e->reason, $e->getMessage());
+            } catch (Throwable $e) {
+                $r = aim_upload_failure(null, 'upload-file-unavailable', 'The server could not read this upload part. Start the upload again.');
+            }
             aim_json_out($r, !empty($r['ok']) ? 200 : 400); return;
         case 'unstage': aim_unstage((string)($in['id'] ?? '')); aim_json_out(['ok' => true]); return;
         case 'publish-now': aim_json_out(aim_publish_now((string)($in['id'] ?? ''))); return;

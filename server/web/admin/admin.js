@@ -29,7 +29,18 @@ function b64Bytes(by) { let s = ''; for (let i = 0; i < by.length; i += 0x8000) 
 function b64(str) { return b64Bytes(new TextEncoder().encode(str)); }
 async function call(a, body, extra) {
   const opt = { method: body ? 'POST' : 'GET', headers: { 'Accept': 'application/json' }, credentials: 'same-origin' };
-  if (body) { opt.headers['Content-Type'] = 'application/json'; opt.headers['X-AIM-CSRF'] = CSRF; opt.body = JSON.stringify({ p: b64(JSON.stringify(body)) }); }
+  if (body) {
+    opt.headers['X-AIM-CSRF'] = CSRF;
+    if (a === 'stage-part') {
+      // PHP's file-upload parser handles the part without relying on a large raw JSON body.
+      const form = new FormData();
+      form.append('payload', new Blob([JSON.stringify(body)], { type: 'application/json' }), 'upload-part.json');
+      opt.body = form; // The browser supplies the multipart boundary and Content-Type.
+    } else {
+      opt.headers['Content-Type'] = 'application/json';
+      opt.body = JSON.stringify({ p: b64(JSON.stringify(body)) });
+    }
+  }
   const context = a === 'stage-part' ? 'Upload part ' + (body.index + 1) + ' of ' + body.total : a === 'stage-commit' ? 'Release validation' : a;
   const responseError = message => new Error(context + ': ' + message + '. Try again. If it happens again, contact the developer.');
   let r;
@@ -341,8 +352,7 @@ async function uploadBuild(id, progress) {
   const hex = bytes => Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
   const upload = hex(crypto.getRandomValues(new Uint8Array(16)));
   const sha256 = hex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data))));
-  // call() base64-wraps the JSON again; keep the actual request below 175 KB.
-  // home.pl rejects the previous ~262 KB requests before PHP can handle them.
+  // Leave room for the JSON envelope and multipart boundary around each file part.
   const partSize = 128 * 1024, total = Math.ceil(data.length / partSize);
   for (let index = 0; index < total; index++) {
     progress('Uploading ' + (index + 1) + ' of ' + total + '…');

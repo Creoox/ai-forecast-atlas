@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.3 — 23 October 2026
+- Release uploads now send each part as a small standard file upload. This fixes the misleading “Bad upload id” error on hosting that accepts a request but cannot decode its large JSON body. Compression, progress, checksums and editor approval remain in place.
+- Incomplete or malformed uploads report an upload error instead of an invalid identifier. Tests cover the hosting limitation, multipart uploads and their security checks. The update preserves settings, API keys and historical data.
+
 ## 1.3.2 — 23 October 2026
 - Fixed the remaining HTTP 500 error when uploading a release on home.pl. Upload parts are smaller, keeping each request below 175 KB after encoding. Compression, upload progress and the separate publish confirmation are unchanged.
 - Browser tests now simulate hosting that rejects larger requests, including when compression is unavailable. The update preserves existing settings, API keys and historical data.

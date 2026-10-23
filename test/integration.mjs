@@ -381,19 +381,28 @@ try {
   const chunkId = '2026-W43.90';
   const uploadRoot = path.join(WEB, '_private/storage/uploads');
   const stagedPath = path.join(WEB, '_private/storage/staged', chunkId + '.php');
-  const requestSizes = [];
+  const requestSizes = [], multipartSizes = [];
+  const multipartFile = (content, name = 'payload', filename = 'part.json') => {
+    const form = new FormData();
+    form.append(name, new Blob([content], { type: 'application/json' }), filename);
+    return form;
+  };
   const chunkRequest = async (action, payload, options = {}) => {
-    const body = options.method === 'GET' ? undefined : JSON.stringify({ p: b64(JSON.stringify(payload)) });
-    if (body && options.small !== false) {
-      const bytes = Buffer.byteLength(body);
-      assert.ok(bytes < 192 * 1024, action + ' actual HTTP body must stay below the shared-host limit: ' + bytes);
-      requestSizes.push(bytes);
-    }
-    const headers = { 'Content-Type': 'application/json' };
+    const multipart = action === 'stage-part' && options.transport !== 'json';
+    const body = options.method === 'GET' ? undefined : multipart ? options.form || multipartFile(JSON.stringify(payload)) : JSON.stringify({ p: b64(JSON.stringify(payload)) });
+    const headers = multipart ? {} : { 'Content-Type': 'application/json' };
     if (options.cookie !== false) headers.Cookie = COOKIE;
     if (options.csrf !== false) headers['X-AIM-CSRF'] = CSRF;
     if (options.origin !== false) headers.Origin = options.origin || SITE.slice(0, -1);
-    const response = await fetch(SITE + 'api/admin.php?a=' + action, { method: options.method || 'POST', body, headers, redirect: 'manual', signal: AbortSignal.timeout(90000) });
+    const request = new Request(SITE + 'api/admin.php?a=' + action, { method: options.method || 'POST', body, headers, redirect: 'manual', signal: AbortSignal.timeout(90000) });
+    if (body && options.small !== false) {
+      // Measure the exact serialized body, including the browser-style multipart boundary and file headers.
+      const bytes = (await request.clone().arrayBuffer()).byteLength;
+      assert.ok(bytes < 192 * 1024, action + ' actual HTTP body must stay below the shared-host limit: ' + bytes);
+      requestSizes.push(bytes);
+      if (multipart) multipartSizes.push(bytes);
+    }
+    const response = await fetch(request);
     return { status: response.status, json: await response.json() };
   };
   const encodedUpload = (payload, encoding = 'json') => {
@@ -408,7 +417,7 @@ try {
     assert.ok(total >= 1 && total <= 64);
     for (let index = 0; index < total; index++) {
       if (index === options.omit) continue;
-      const result = await chunkRequest('stage-part', { upload, index, total, data: encoded.data.slice(index * size, (index + 1) * size) });
+      const result = await chunkRequest('stage-part', { upload, index, total, data: encoded.data.slice(index * size, (index + 1) * size) }, { transport: options.transport });
       assert.equal(result.json.ok, true, 'part ' + index + ': ' + JSON.stringify(result.json));
     }
     return { upload, total };
@@ -442,6 +451,37 @@ try {
     }
   }
   ok('unauthorized chunk requests create no upload or staged release', uploadGone(authUpload) && stagedAbsent());
+  for (const [label, options, status, code] of [
+    ['no cookie', { cookie: false }, 401, 'auth'],
+    ['no CSRF', { csrf: false }, 403, 'csrf'],
+    ['other origin', { origin: 'https://unrelated.example' }, 403, 'origin'],
+  ]) {
+    const denied = await chunkRequest('stage-part', null, { form: multipartFile('{'), ...options });
+    ok('malformed multipart is authenticated before parsing: ' + label, denied.status === status && denied.json.error?.code === code && stagedAbsent(), JSON.stringify(denied));
+  }
+  const malformedForms = [
+    ['missing uploaded file', () => new FormData()],
+    ['wrong file field', raw => multipartFile(raw, 'other')],
+    ['text field instead of uploaded file', raw => { const form = new FormData(); form.append('payload', raw); return form; }],
+    ['array file field', raw => multipartFile(raw, 'payload[]')],
+    ['multiple array uploads', raw => { const form = multipartFile(raw, 'payload[]'); form.append('payload[]', new Blob([raw]), 'second.json'); return form; }],
+    ['multiple distinct file fields', raw => { const form = multipartFile(raw); form.append('extra', new Blob([raw]), 'extra.json'); return form; }],
+    ['extra text field', raw => { const form = multipartFile(raw); form.append('extra', 'unexpected'); return form; }],
+    ['empty upload filename', raw => multipartFile(raw, 'payload', '')],
+    ['invalid JSON', () => multipartFile('{')],
+    ['null JSON', () => multipartFile('null')],
+    ['array JSON', raw => multipartFile('[' + raw + ']')],
+    ['string JSON', raw => multipartFile(JSON.stringify(raw))],
+    ['uploaded file over 330000 bytes', raw => multipartFile(raw.padEnd(330001, ' ')), true],
+  ];
+  for (const [label, form, large] of malformedForms) {
+    const upload = randomBytes(16).toString('hex');
+    const payload = { upload, index: 0, total: 1, data: 'e30=' };
+    const denied = await chunkRequest('stage-part', payload, { form: form(JSON.stringify(payload)), small: !large });
+    ok('multipart rejects ' + label + ' before storage', denied.status === 400 && denied.json.ok === false && uploadGone(upload) && stagedAbsent(), JSON.stringify(denied));
+  }
+  const nonUpload = JSON.parse(cli('$_POST = []; $_FILES = ["payload" => ["error" => UPLOAD_ERR_OK, "size" => 1, "tmp_name" => AIM_ROOT . "/LICENSE"]]; try { aim_admin_upload_part_payload(); echo json_encode("accepted"); } catch (AimStageUploadError $e) { echo json_encode($e->reason); }'));
+  ok('multipart parser refuses local files that were not HTTP uploads', nonUpload === 'invalid-upload-file', nonUpload);
   for (const upload of ['../escape', 'a'.repeat(31), 'g'.repeat(32)]) {
     const denied = await chunkRequest('stage-part', { upload, index: 0, total: 1, data: 'e30=' });
     ok('chunk upload identifier is restricted: ' + upload, denied.json.ok === false && stagedAbsent());
@@ -465,7 +505,7 @@ try {
   for (const encoding of ['gzip', 'json']) {
     const encoded = encodedUpload(largeEnvelope, encoding);
     const sent = await sendParts(encoded);
-    ok(encoding + ' upload requires multiple small requests', sent.total > 1);
+    ok(encoding + ' upload requires multiple small multipart requests', sent.total > 1);
     const parts = fs.readdirSync(path.join(uploadRoot, sent.upload), { recursive: true }).map(f => path.join(uploadRoot, sent.upload, String(f))).filter(f => fs.statSync(f).isFile());
     ok(encoding + ' parts are guarded PHP data files', parts.length >= sent.total && parts.every(f => f.endsWith('.php') && fs.readFileSync(f, 'utf8').startsWith('<?php http_response_code(404); exit; ?>')));
     const firstPart = parts[0];
@@ -485,6 +525,13 @@ try {
 
   const smallFiles = { ...built.files, 'release.json': JSON.stringify({ ...JSON.parse(built.files['release.json']), id: chunkId }) };
   const validSmall = encodedUpload({ id: chunkId, files: smallFiles });
+  const legacyParts = await sendParts(validSmall, { transport: 'json' });
+  const legacyCommit = await commitUpload(validSmall, legacyParts.upload);
+  ok('legacy JSON stage-part requests still stage and clean up', legacyCommit.json.ok === true && uploadGone(legacyParts.upload));
+  const legacyStagedRaw = fs.readFileSync(stagedPath, 'utf8');
+  assert.deepEqual(JSON.parse(legacyStagedRaw.slice(legacyStagedRaw.indexOf('\n') + 1)).files, smallFiles);
+  await admin('unstage', { id: chunkId });
+  assert.ok(stagedAbsent());
   const chunkLogMarker = 'CHUNK_LOG_PRIVATE_SOURCE_4ac5e131';
   const rejectionCases = [
     { name: 'wrong combined-base64 checksum', encoded: validSmall, commit: { sha256: '0'.repeat(64) } },
@@ -538,6 +585,7 @@ try {
   ok('recent incomplete upload can be rejected and cleaned after housekeeping', uploadGone(recent.upload) && stagedAbsent());
   const maxChunkWireBytes = Math.max(...requestSizes);
   ok('all ordinary chunk/commit HTTP bodies remain below 192 KiB', requestSizes.length > 20 && maxChunkWireBytes < 192 * 1024, 'maximum=' + maxChunkWireBytes + ' bytes');
+  ok('real multipart upload bodies including file headers remain below 300 KB', multipartSizes.length > 20 && Math.max(...multipartSizes) < 300000, 'maximum=' + Math.max(...multipartSizes) + ' bytes');
   console.log('    Chunk upload wire size: max ' + maxChunkWireBytes + ' bytes across ' + requestSizes.length + ' normal requests.');
 
   console.log('Legacy release staging remains available');
