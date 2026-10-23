@@ -1,6 +1,6 @@
 {
   "name": "ai-forecast-atlas",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "AI Forecast Atlas by Creoox AG: a weekly-updated scenario model of AI commoditization (2023–2035), with open data, newsletter, AI assistant and MCP server. Runs on plain PHP hosting.",
   "private": true,
   "type": "module",

@@ -2,6 +2,8 @@
    python3 test/ui/ui_test.py            (after: node web/build.mjs)
    Starts PHP's built-in server for the site and for mocked external services; screenshots go to test/ui/out/."""
 import base64, gzip, hashlib, json, os, re, shutil, subprocess, sys, tempfile, time
+from email import policy
+from email.parser import BytesParser
 import requests
 from playwright.sync_api import sync_playwright, expect
 
@@ -331,23 +333,36 @@ def check_discovery(browser):
 def check_release_uploads(page):
     """Exercise the real local stage endpoints; immediate publication is intercepted, never sent."""
     calls, host_requests = [], []
+    def request_payload(request):
+        wire = request.post_data_buffer or b''
+        content_type = request.headers.get('content-type', '')
+        if content_type.startswith('multipart/form-data;'):
+            message = BytesParser(policy=policy.default).parsebytes(('Content-Type: ' + content_type + '\r\nMIME-Version: 1.0\r\n\r\n').encode('ascii') + wire)
+            parts = list(message.iter_parts())
+            assert len(parts) == 1 and parts[0].get_param('name', header='content-disposition') == 'payload', 'one multipart payload file is required'
+            assert parts[0].get_filename(), 'payload must use the PHP uploaded-file path'
+            return json.loads(parts[0].get_payload(decode=True).decode('utf-8')), len(wire)
+        return json.loads(base64.b64decode(json.loads(wire)['p']).decode('utf-8')), len(wire)
     def capture(request):
         if request.method != 'POST' or '/api/admin.php?a=' not in request.url: return
         action = request.url.split('?a=', 1)[1].split('&', 1)[0]
         if action not in ('stage', 'stage-part', 'stage-commit', 'publish-now'): return
-        wire = request.post_data or ''
-        payload = json.loads(base64.b64decode(json.loads(wire)['p']).decode('utf-8'))
-        calls.append((action, payload, len(wire.encode('utf-8'))))
+        payload, wire_bytes = request_payload(request)
+        calls.append((action, payload, wire_bytes))
     page.on('request', capture)
     state_url = '**/api/admin.php?a=state'
     part_url = '**/api/admin.php?a=stage-part'
     publish_url = '**/api/admin.php?a=publish-now'
     def shared_host_limit(route):
-        # home.pl rejects an oversized wrapped body before PHP can validate its part.
-        wire_bytes = len((route.request.post_data or '').encode('utf-8'))
-        host_requests.append(wire_bytes)
+        # Reproduce both live hosting failures: oversized bodies are refused, and
+        # raw JSON above 16 KiB reaches the application without a usable payload.
+        wire_bytes = len(route.request.post_data_buffer or b'')
+        content_type = route.request.headers.get('content-type', '')
+        host_requests.append((wire_bytes, content_type))
         if wire_bytes >= 192 * 1024:
             route.fulfill(status=500, content_type='text/html', body='<html>Request body refused by hosting</html>')
+        elif content_type.startswith('application/json') and wire_bytes > 16 * 1024:
+            route.fulfill(status=400, json={'error': 'Bad upload id.'})
         else:
             route.continue_()
     page.route(part_url, shared_host_limit)
@@ -370,7 +385,8 @@ def check_release_uploads(page):
         commit = commits[0]
         encoded = ''.join(part['data'] for part in parts)
         check(label + ': bounded ordered parts share a random upload ID', bool(re.fullmatch('[a-f0-9]{32}', commit['upload'])) and all(part['index'] == index and part['total'] == len(parts) and part['upload'] == commit['upload'] and 0 < len(part['data']) <= 128 * 1024 for index, part in enumerate(parts)))
-        check(label + ': complete transfer passes the shared-host body limit', len(parts) > 1 and len(host_requests) == len(parts) and all(length < 192 * 1024 for length in host_requests))
+        check(label + ': complete transfer passes the shared-host body limit', len(parts) > 1 and len(host_requests) == len(parts) and all(length < 192 * 1024 for length, _ in host_requests))
+        check(label + ': every part bypasses the raw JSON limit using a multipart file', all(content_type.startswith('multipart/form-data; boundary=') for _, content_type in host_requests))
         check(label + ': complete base64 SHA-256 and encoding', hashlib.sha256(encoded.encode('ascii')).hexdigest() == commit['sha256'] and commit['encoding'] == encoding)
         raw = base64.b64decode(encoded)
         payload = json.loads((gzip.decompress(raw) if encoding == 'gzip' else raw).decode('utf-8'))
@@ -384,10 +400,19 @@ def check_release_uploads(page):
         page.get_by_role('button', name='Cancel', exact=True).click()
         check('Cancel hides the confirmation without staging or publishing', confirm.is_hidden() and not calls)
 
-        # A host HTML failure on the second JSON part must never be mistaken for a staged release.
+        # Prove the host shim rejects the previous wrapped JSON transport before
+        # exercising the real multipart implementation against the same shim.
+        wrapped = {'p': base64.b64encode(json.dumps({'upload': '0' * 32, 'index': 0, 'total': 1, 'data': 'A' * (20 * 1024)}).encode()).decode()}
+        old_transport = page.evaluate('''async body => {
+            const response = await fetch(''' + json.dumps(SITE + 'api/admin.php?a=stage-part') + ''', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+            return {status: response.status, body: await response.json()};
+        }''', wrapped)
+        check('shared-host regression refuses the previous raw JSON transport above 16 KiB', old_transport['status'] == 400 and old_transport['body'].get('error') == 'Bad upload id.' and len(host_requests) == 1)
+
+        # A host HTML failure on the second part must never be mistaken for a staged release.
         page.route(state_url, without_server_gzip); rebuild(); calls.clear(); host_requests.clear()
         def fail_second_part(route):
-            payload = json.loads(base64.b64decode(route.request.post_data_json['p']).decode('utf-8'))
+            payload, _ = request_payload(route.request)
             if payload['index'] == 1: route.fulfill(status=503, content_type='text/html', body='<html>Service temporarily unavailable</html>')
             else: route.fallback()
         page.route(part_url, fail_second_part)
