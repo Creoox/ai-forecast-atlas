@@ -330,18 +330,27 @@ def check_discovery(browser):
 
 def check_release_uploads(page):
     """Exercise the real local stage endpoints; immediate publication is intercepted, never sent."""
-    calls = []
+    calls, host_requests = [], []
     def capture(request):
         if request.method != 'POST' or '/api/admin.php?a=' not in request.url: return
         action = request.url.split('?a=', 1)[1].split('&', 1)[0]
         if action not in ('stage', 'stage-part', 'stage-commit', 'publish-now'): return
         wire = request.post_data or ''
         payload = json.loads(base64.b64decode(json.loads(wire)['p']).decode('utf-8'))
-        calls.append((action, payload, len(wire)))
+        calls.append((action, payload, len(wire.encode('utf-8'))))
     page.on('request', capture)
     state_url = '**/api/admin.php?a=state'
     part_url = '**/api/admin.php?a=stage-part'
     publish_url = '**/api/admin.php?a=publish-now'
+    def shared_host_limit(route):
+        # home.pl rejects an oversized wrapped body before PHP can validate its part.
+        wire_bytes = len((route.request.post_data or '').encode('utf-8'))
+        host_requests.append(wire_bytes)
+        if wire_bytes >= 192 * 1024:
+            route.fulfill(status=500, content_type='text/html', body='<html>Request body refused by hosting</html>')
+        else:
+            route.continue_()
+    page.route(part_url, shared_host_limit)
     def without_server_gzip(route):
         response = route.fetch()
         state = response.json(); state['uploadGzip'] = False
@@ -360,12 +369,13 @@ def check_release_uploads(page):
         if not parts or len(commits) != 1: return
         commit = commits[0]
         encoded = ''.join(part['data'] for part in parts)
-        check(label + ': bounded ordered parts share a random upload ID', bool(re.fullmatch('[a-f0-9]{32}', commit['upload'])) and all(part['index'] == index and part['total'] == len(parts) and part['upload'] == commit['upload'] and 0 < len(part['data']) <= 192 * 1024 for index, part in enumerate(parts)))
+        check(label + ': bounded ordered parts share a random upload ID', bool(re.fullmatch('[a-f0-9]{32}', commit['upload'])) and all(part['index'] == index and part['total'] == len(parts) and part['upload'] == commit['upload'] and 0 < len(part['data']) <= 128 * 1024 for index, part in enumerate(parts)))
+        check(label + ': complete transfer passes the shared-host body limit', len(parts) > 1 and len(host_requests) == len(parts) and all(length < 192 * 1024 for length in host_requests))
         check(label + ': complete base64 SHA-256 and encoding', hashlib.sha256(encoded.encode('ascii')).hexdigest() == commit['sha256'] and commit['encoding'] == encoding)
         raw = base64.b64decode(encoded)
         payload = json.loads((gzip.decompress(raw) if encoding == 'gzip' else raw).decode('utf-8'))
         check(label + ': files are plain strings encoded only once', payload['id'] == commit['id'] and len(payload['files']) > 10 and all(isinstance(value, str) for value in payload['files'].values()) and json.loads(payload['files']['release.json'])['id'] == commit['id'])
-        check(label + ': never uses the legacy large request', all(action != 'stage' and length < 270 * 1024 for action, _, length in calls))
+        check(label + ': never uses the legacy large request', all(action != 'stage' and length < 192 * 1024 for action, _, length in calls))
     try:
         confirm = page.get_by_role('button', name='Yes, publish now', exact=True)
         check('publish confirmation starts genuinely hidden after Build', confirm.is_hidden())
@@ -375,11 +385,11 @@ def check_release_uploads(page):
         check('Cancel hides the confirmation without staging or publishing', confirm.is_hidden() and not calls)
 
         # A host HTML failure on the second JSON part must never be mistaken for a staged release.
-        page.route(state_url, without_server_gzip); rebuild(); calls.clear()
+        page.route(state_url, without_server_gzip); rebuild(); calls.clear(); host_requests.clear()
         def fail_second_part(route):
             payload = json.loads(base64.b64decode(route.request.post_data_json['p']).decode('utf-8'))
             if payload['index'] == 1: route.fulfill(status=503, content_type='text/html', body='<html>Service temporarily unavailable</html>')
-            else: route.continue_()
+            else: route.fallback()
         page.route(part_url, fail_second_part)
         page.get_by_role('button', name=re.compile('^Stage for ')).click()
         expect(page.locator(".toast")).to_contain_text(re.compile(r"Upload part 2 of [0-9]+:.*HTTP 503"), timeout=15000)
@@ -388,10 +398,10 @@ def check_release_uploads(page):
         page.unroute(part_url, fail_second_part); page.unroute(state_url, without_server_gzip)
 
         # Hold the first part while dispatching duplicate actions to test the shared busy guard.
-        rebuild(); calls.clear(); held = []
+        rebuild(); calls.clear(); host_requests.clear(); held = []
         def hold_first_part(route):
             if not held: held.append(route)
-            else: route.continue_()
+            else: route.fallback()
         page.route(part_url, hold_first_part)
         page.get_by_role('button', name=re.compile('^Stage for ')).click()
         page.wait_for_selector('button:has-text("Uploading 1 of")', timeout=10000)
@@ -401,18 +411,18 @@ def check_release_uploads(page):
         check('upload progress is visible and all release actions are disabled', bool(held) and page.eval_on_selector_all('[data-release-action]', 'xs=>xs.every(e=>e.disabled)'))
         page.locator('button:has-text("Uploading 1 of")').evaluate('e=>{e.dispatchEvent(new Event("click"));e.dispatchEvent(new Event("click"));}')
         page.get_by_role('button', name='Yes, publish now', exact=True, include_hidden=True).evaluate('e=>e.dispatchEvent(new Event("click"))')
-        held[0].continue_(); staged(); page.unroute(part_url, hold_first_part)
+        held[0].fallback(); staged(); page.unroute(part_url, hold_first_part)
         verify_transfer('gzip upload', 'gzip' if admin('state')['uploadGzip'] else 'json')
         staged_rows = admin('state')['staged']
         check('Stage finishes in the visible Staged list without publishing', len(staged_rows) == 1 and page.locator('main li', has_text=staged_rows[0]['id']).is_visible() and not any(action == 'publish-now' for action, _, _ in calls))
 
-        page.route(state_url, without_server_gzip); rebuild(); calls.clear()
+        page.route(state_url, without_server_gzip); rebuild(); calls.clear(); host_requests.clear()
         page.get_by_role('button', name=re.compile('^Stage for ')).click(); staged()
         verify_transfer('server gzip fallback', 'json')
         page.unroute(state_url, without_server_gzip)
 
         # The browser fallback follows the same stage path before a mocked immediate publish.
-        rebuild(); page.evaluate('window.CompressionStream = undefined'); calls.clear()
+        rebuild(); page.evaluate('window.CompressionStream = undefined'); calls.clear(); host_requests.clear()
         page.route(publish_url, lambda route: route.fulfill(json={'ok': True, 'id': 'UI-mocked-release'}))
         page.get_by_role('button', name='Publish now instead', exact=True).click()
         page.get_by_role('button', name='Yes, publish now', exact=True).click()

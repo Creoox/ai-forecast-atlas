@@ -235,7 +235,7 @@ Use the **update package** (`aimonitor-homepl-update-<version>.zip`): it contain
 
 Never upload the **full** package over a running site: it would replace your published data with the first release.
 
-For version **1.3.1**, follow [the release checklist](RELEASE-1.3.1.md). Upload `aimonitor-homepl-update-1.3.1.zip`'s `aimonitor/` contents into the existing site folder, keeping existing files and folders that are not in the update. No configuration, scheduler or root `.htaccess` change is needed when updating from 1.3.0. Reload Admin, then check **Release → Build → Stage → Staged**. Staging queues the release for its scheduled publication; it does not publish immediately or send an email at that moment.
+For version **1.3.2**, follow [the release checklist](RELEASE-1.3.2.md). Upload `aimonitor-homepl-update-1.3.2.zip`'s `aimonitor/` contents into the existing site folder, keeping existing files and folders that are not in the update. No configuration, scheduler or root `.htaccess` change is needed when updating from 1.3.0 or 1.3.1. Reload Admin, then check **Release → Build → Stage → Staged**. Staging queues the release for its scheduled publication; it does not publish immediately or send an email at that moment.
 
 For version 1.3.0, follow [the release checklist](RELEASE-1.3.0.md): merge the new public security and canonical-host rules into the existing `.htaccess`, keeping its PHP handler. Then use **Admin → Release → Refresh public pages** to generate the new pages from already-published releases. This does not publish working data or send a newsletter.
 
