@@ -225,6 +225,16 @@ Visitors can now subscribe with the **Subscribe** button: they pick topics, lang
 
 ## Updating to a new version
 
+### PHP temporary storage on an isolated site
+
+PHP needs a writable temporary folder for file uploads and for buffering larger JSON requests. On the current home.pl installation the domain has an isolated filesystem root: its PHP `/tmp` corresponds to `public_html/aimonitor/tmp` in WebFTP. A `public_html/tmp` folder outside that isolated root does not serve this site.
+
+If staging reports **Bad upload id**, **the host could not receive the upload part file**, or larger requests fail while small ones work, check this folder first. If it is missing, create `tmp` inside the site's existing directory. On this installation, owner-only permissions **700** work. Put `Require all denied` in `tmp/.htaccess` and confirm that `https://aiforecastatlas.com/tmp/` returns HTTP 403. Do not grant world-write permissions or change the shared server's PHP configuration. Ask the host to check its configured temporary path if the folder already exists but uploads still fail.
+
+Keep this runtime folder during updates, alongside storage and configuration. Do not put historical data or settings in it: PHP temporary files are disposable. Restoring the missing folder on 23 October 2026 resolved the live upload failures; release 2026-W44 was then successfully staged.
+
+### Upload the update package
+
 Use the **update package** (`aimonitor-homepl-update-<version>.zip`): it contains only program files. Upload its `aimonitor` folder over the old one. It leaves these alone on the server:
 
 - `aimonitor/_private/storage/` — your settings, keys, review queue and logs,

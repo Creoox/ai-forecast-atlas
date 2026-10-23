@@ -2,6 +2,8 @@
 
 This update addresses “Upload part 1: Bad upload id” on home.pl. Version 1.3.2 kept requests below the host's HTTP error threshold, but larger raw JSON bodies still failed decoding on the live host. Admin now sends each part as a standard multipart file upload. The small commit request, checksum, content validation, guarded storage and admin security checks remain unchanged. The server requires PHP file uploads to be enabled and a writable temporary upload directory.
 
+**Live verification, 23 October 2026:** the multipart error exposed the underlying hosting fault: the isolated site's PHP `/tmp` folder was missing. The code update alone did not repair that hosting configuration. Creating `public_html/aimonitor/tmp` with owner-only permissions and denied HTTP access restored both large JSON requests and multipart uploads. The complete 55-file release 2026-W44 then appeared under **Staged**. Preserve this runtime folder on later updates; see [PHP temporary storage](INSTALL-HOMEPL.md#php-temporary-storage-on-an-isolated-site).
+
 ## Install without losing settings or history
 
 Follow [INSTALL-HOMEPL.md → Updating to a new version](INSTALL-HOMEPL.md#updating-to-a-new-version).
