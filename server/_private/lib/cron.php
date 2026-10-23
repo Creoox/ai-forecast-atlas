@@ -117,5 +117,6 @@ function aim_housekeeping(): array
         foreach ($left as $r) aim_store_append('unsub-retry', $r);
     }
     if (function_exists('aim_xwatch_prune')) $n += aim_xwatch_prune();   // also writes data/xwatch.json after an update installed without it
+    $n += aim_upload_prune();   // incomplete browser uploads expire after 24 hours
     return ['removed' => $n, 'unsubRetried' => count($retry)];
 }

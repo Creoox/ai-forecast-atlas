@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
+import { gzipSync } from 'node:zlib';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createEngine as createChatEngine } from '../engine/engine.mjs';
@@ -375,6 +376,169 @@ try {
   const RC = await import(pathToFileURL(path.join(ROOT, 'web/src/release-core.mjs')).href);
   const built = RC.buildRelease({ createEngine, dataset: j.working, previous: { release: j.latest, dataset: j.published }, id: '2026-W43', siteUrl: SITE });
   ok('release built in JS', built.release.changes.length === 3 && built.release.highlights.length > 0);
+
+  console.log('Chunked release staging');
+  const chunkId = '2026-W43.90';
+  const uploadRoot = path.join(WEB, '_private/storage/uploads');
+  const stagedPath = path.join(WEB, '_private/storage/staged', chunkId + '.php');
+  const requestSizes = [];
+  const chunkRequest = async (action, payload, options = {}) => {
+    const body = options.method === 'GET' ? undefined : JSON.stringify({ p: b64(JSON.stringify(payload)) });
+    if (body && options.small !== false) {
+      const bytes = Buffer.byteLength(body);
+      assert.ok(bytes < 300000, action + ' actual HTTP body must stay below the host limit: ' + bytes);
+      requestSizes.push(bytes);
+    }
+    const headers = { 'Content-Type': 'application/json' };
+    if (options.cookie !== false) headers.Cookie = COOKIE;
+    if (options.csrf !== false) headers['X-AIM-CSRF'] = CSRF;
+    if (options.origin !== false) headers.Origin = options.origin || SITE.slice(0, -1);
+    const response = await fetch(SITE + 'api/admin.php?a=' + action, { method: options.method || 'POST', body, headers, redirect: 'manual', signal: AbortSignal.timeout(90000) });
+    return { status: response.status, json: await response.json() };
+  };
+  const encodedUpload = (payload, encoding = 'json') => {
+    const raw = Buffer.from(JSON.stringify(payload));
+    const data = (encoding === 'gzip' ? gzipSync(raw) : raw).toString('base64');
+    return { data, encoding, sha256: createHash('sha256').update(data).digest('hex') };
+  };
+  const sendParts = async (encoded, options = {}) => {
+    const upload = options.upload || randomBytes(16).toString('hex');
+    const size = 192 * 1024;
+    const total = Math.ceil(encoded.data.length / size);
+    assert.ok(total >= 1 && total <= 64);
+    for (let index = 0; index < total; index++) {
+      if (index === options.omit) continue;
+      const result = await chunkRequest('stage-part', { upload, index, total, data: encoded.data.slice(index * size, (index + 1) * size) });
+      assert.equal(result.json.ok, true, 'part ' + index + ': ' + JSON.stringify(result.json));
+    }
+    return { upload, total };
+  };
+  const commitUpload = (encoded, upload, overrides = {}) => chunkRequest('stage-commit', { upload, id: chunkId, encoding: encoded.encoding, sha256: encoded.sha256, ...overrides });
+  const uploadGone = upload => !fs.existsSync(path.join(uploadRoot, upload));
+  const stagedAbsent = () => !fs.existsSync(stagedPath) && !fs.existsSync(stagedPath.replace(/\.php$/, '-meta.php'));
+  const publicAndMailFiles = ['data', 'feeds', '_private/storage/newsletter'].flatMap(folder => {
+    const dir = path.join(WEB, folder);
+    return fs.existsSync(dir) ? fs.readdirSync(dir, { recursive: true }).map(f => path.join(dir, String(f))).filter(f => fs.statSync(f).isFile()) : [];
+  });
+  const stagePreserved = new Map(publicAndMailFiles.map(f => [f, createHash('sha256').update(fs.readFileSync(f)).digest('hex')]));
+  const stageCallsBefore = mockLog().length;
+  j = await admin('state');
+  const cliGzip = JSON.parse(cli('echo json_encode(function_exists("gzdecode"));'));
+  ok('admin advertises gzip capability from the installed PHP extension', typeof j.uploadGzip === 'boolean' && j.uploadGzip === cliGzip);
+  ok('admin health reports gzip support', j.health.some(c => c.name === 'PHP extension zlib' && c.ok === cliGzip));
+  ok('integration runtime can exercise gzip staging', cliGzip === true);
+  const authUpload = randomBytes(16).toString('hex');
+  for (const action of ['stage-part', 'stage-commit']) {
+    const payload = action === 'stage-part' ? { upload: authUpload, index: 0, total: 1, data: 'e30=' } : { upload: authUpload, id: chunkId, encoding: 'json', sha256: '0'.repeat(64) };
+    for (const [label, options, status, code] of [
+      ['GET', { method: 'GET' }, 405, 'method'],
+      ['no cookie', { cookie: false }, 401, 'auth'],
+      ['no CSRF', { csrf: false }, 403, 'csrf'],
+      ['other origin', { origin: 'https://unrelated.example' }, 403, 'origin'],
+      ['missing origin', { origin: false }, 403, 'origin'],
+    ]) {
+      const denied = await chunkRequest(action, payload, options);
+      ok(action + ' rejects ' + label, denied.status === status && denied.json.ok === false && denied.json.error?.code === code, JSON.stringify(denied));
+    }
+  }
+  ok('unauthorized chunk requests create no upload or staged release', uploadGone(authUpload) && stagedAbsent());
+  for (const upload of ['../escape', 'a'.repeat(31), 'g'.repeat(32)]) {
+    const denied = await chunkRequest('stage-part', { upload, index: 0, total: 1, data: 'e30=' });
+    ok('chunk upload identifier is restricted: ' + upload, denied.json.ok === false && stagedAbsent());
+  }
+  const badCommitId = await chunkRequest('stage-commit', { upload: '../escape', id: chunkId, encoding: 'json', sha256: '0'.repeat(64) });
+  ok('commit also rejects a traversal upload identifier', badCommitId.json.ok === false && stagedAbsent());
+  for (const badMeta of [{ index: -1, total: 1 }, { index: 1, total: 1 }, { index: 64, total: 64 }, { index: 0, total: 0 }, { index: 0, total: 65 }, { index: 0.5, total: 1 }, { index: '0', total: 1 }, { index: 0, total: '1' }]) {
+    const upload = randomBytes(16).toString('hex');
+    const denied = await chunkRequest('stage-part', { upload, ...badMeta, data: 'e30=' });
+    ok('chunk metadata bounds/types enforced: ' + JSON.stringify(badMeta), denied.json.ok === false && uploadGone(upload) && stagedAbsent());
+  }
+  const oversizedUpload = randomBytes(16).toString('hex');
+  const oversized = await chunkRequest('stage-part', { upload: oversizedUpload, index: 0, total: 1, data: 'A'.repeat(300001) }, { small: false });
+  ok('oversized individual part is rejected before storage', oversized.json.ok === false && uploadGone(oversizedUpload) && stagedAbsent());
+
+  const largeRelease = { ...JSON.parse(built.files['release.json']), id: chunkId, notes: 'UTF-8 provenance: Zażółć gęślą jaźń · ' + randomBytes(1600000).toString('base64') };
+  const largeFiles = { ...built.files, 'release.json': JSON.stringify(largeRelease) };
+  const largeEnvelope = { id: chunkId, files: largeFiles };
+  const largeBytes = Buffer.byteLength(JSON.stringify(largeEnvelope));
+  ok('chunk fixture is a valid release bundle larger than 2 MiB', largeBytes > 2 * 1024 * 1024 && Buffer.byteLength(largeFiles['release.json']) < 3000000);
+  for (const encoding of ['gzip', 'json']) {
+    const encoded = encodedUpload(largeEnvelope, encoding);
+    const sent = await sendParts(encoded);
+    ok(encoding + ' upload requires multiple small requests', sent.total > 1);
+    const parts = fs.readdirSync(path.join(uploadRoot, sent.upload), { recursive: true }).map(f => path.join(uploadRoot, sent.upload, String(f))).filter(f => fs.statSync(f).isFile());
+    ok(encoding + ' parts are guarded PHP data files', parts.length >= sent.total && parts.every(f => f.endsWith('.php') && fs.readFileSync(f, 'utf8').startsWith('<?php http_response_code(404); exit; ?>')));
+    const firstPart = parts[0];
+    const privateResponse = await req(path.relative(WEB, firstPart).split(path.sep).join('/'));
+    ok(encoding + ' upload content cannot be read over HTTP even without htaccess', privateResponse.status === 404 && (await privateResponse.text()) === '');
+    const committed = await commitUpload(encoded, sent.upload);
+    ok(encoding + ' chunk commit stages the complete bundle', committed.json.ok === true && committed.json.files === Object.keys(largeFiles).length, JSON.stringify(committed));
+    const stagedRaw = fs.readFileSync(stagedPath, 'utf8');
+    const staged = JSON.parse(stagedRaw.slice(stagedRaw.indexOf('\n') + 1));
+    assert.deepEqual(staged.files, largeFiles, encoding + ': every file and UTF-8 byte must survive reconstruction');
+    ok(encoding + ' reconstruction is exact and uploaded parts are removed', staged.id === chunkId && uploadGone(sent.upload));
+    const replay = await commitUpload(encoded, sent.upload);
+    ok(encoding + ' consumed upload cannot be committed again', replay.json.ok === false && fs.readFileSync(stagedPath, 'utf8') === stagedRaw);
+    await admin('unstage', { id: chunkId });
+    assert.ok(stagedAbsent());
+  }
+
+  const smallFiles = { ...built.files, 'release.json': JSON.stringify({ ...JSON.parse(built.files['release.json']), id: chunkId }) };
+  const validSmall = encodedUpload({ id: chunkId, files: smallFiles });
+  const chunkLogMarker = 'CHUNK_LOG_PRIVATE_SOURCE_4ac5e131';
+  const rejectionCases = [
+    { name: 'wrong combined-base64 checksum', encoded: validSmall, commit: { sha256: '0'.repeat(64) } },
+    { name: 'missing uploaded part', encoded: validSmall, omit: 0 },
+    { name: 'decoded release identity differs from commit', encoded: encodedUpload({ id: '2026-W43.91', files: smallFiles }) },
+    { name: 'unexpected file still uses normal bundle validation', encoded: encodedUpload({ id: chunkId, files: { ...smallFiles, '../evil.php': '<?php echo 1;' } }) },
+    { name: 'unsafe source still uses normal bundle validation', encoded: encodedUpload({ id: chunkId, files: { ...smallFiles, 'dataset.json': JSON.stringify({ ...JSON.parse(smallFiles['dataset.json']), anchors: { AN1: { url: 'javascript:' + chunkLogMarker } } }) } }) },
+    { name: 'invalid base64 payload', encoded: { data: 'not!base64', encoding: 'json', sha256: createHash('sha256').update('not!base64').digest('hex') } },
+    { name: 'invalid gzip stream', encoded: { data: 'e30=', encoding: 'gzip', sha256: createHash('sha256').update('e30=').digest('hex') } },
+    { name: 'unsupported encoding', encoded: validSmall, commit: { encoding: 'zip' } },
+    { name: 'gzip expansion beyond 16 million bytes', encoded: encodedUpload({ id: chunkId, files: { 'release.json': 'x'.repeat(16000001) } }, 'gzip') },
+  ];
+  for (const c of rejectionCases) {
+    const sent = await sendParts(c.encoded, { omit: c.omit });
+    const rejected = await commitUpload(c.encoded, sent.upload, c.commit);
+    ok('chunk commit rejects ' + c.name + ' and removes its parts', rejected.json.ok === false && uploadGone(sent.upload) && stagedAbsent(), JSON.stringify(rejected));
+  }
+  const quotaFiles = {
+    ...smallFiles,
+    'release.json': JSON.stringify({ ...JSON.parse(smallFiles['release.json']), notes: 'x'.repeat(2600000) }),
+    'dataset.json': JSON.stringify({ ...JSON.parse(smallFiles['dataset.json']), note: 'x'.repeat(2600000) }),
+    'series/all.csv': smallFiles['series/all.csv'] + '\n' + 'COMM,Q4 2030,16,K,1\n'.repeat(65000),
+  };
+  const quotaEncoded = encodedUpload({ id: chunkId, files: quotaFiles });
+  const overLimit = quotaEncoded.data;
+  assert.ok(overLimit.length > 8 * 1024 * 1024 && overLimit.length < 64 * 192 * 1024);
+  assert.ok(Object.values(quotaFiles).every(content => Buffer.byteLength(content) <= 3000000), 'quota fixture must satisfy individual bundle-file limits');
+  assert.ok(Object.values(quotaFiles).reduce((sum, content) => sum + Buffer.byteLength(content), 0) < 12000000, 'quota fixture must otherwise fit a valid release');
+  const overUpload = randomBytes(16).toString('hex');
+  const overTotal = Math.ceil(overLimit.length / (192 * 1024));
+  for (let index = 0; index < overTotal; index++) {
+    const part = await chunkRequest('stage-part', { upload: overUpload, index, total: overTotal, data: overLimit.slice(index * 192 * 1024, (index + 1) * 192 * 1024) });
+    if (!part.json.ok) break; // Either incremental quota enforcement or commit may reject the oversize session.
+  }
+  const overCommit = await commitUpload(quotaEncoded, overUpload);
+  ok('combined base64 over 8 MiB is rejected and its parts removed', overCommit.json.ok === false && uploadGone(overUpload) && stagedAbsent(), JSON.stringify(overCommit));
+  const releaseLogText = fs.readdirSync(path.join(WEB, '_private/storage/logs')).filter(f => /^release-.*\.php$/.test(f)).map(f => fs.readFileSync(path.join(WEB, '_private/storage/logs', f), 'utf8')).join('\n');
+  const failedStages = releaseLogText.split('\n').filter(line => line.startsWith('{')).map(line => JSON.parse(line)).filter(row => row.msg === 'stage-failed');
+  ok('failed staging logs only sanitized release IDs and reason codes', failedStages.length > 0 && failedStages.some(row => row.ctx.reason === 'bundle-validation-failed') && !releaseLogText.includes(chunkLogMarker) && failedStages.every(row => Object.keys(row.ctx).sort().join(',') === 'id,reason' && (row.ctx.id === '' || /^\d{4}-W\d{2}(?:\.\d{1,2})?$/.test(row.ctx.id)) && /^[a-z0-9-]+$/.test(row.ctx.reason)));
+  ok('chunk staging never publishes data, sends mail or calls a provider', [...stagePreserved].every(([f, hash]) => createHash('sha256').update(fs.readFileSync(f)).digest('hex') === hash) && mockLog().length === stageCallsBefore);
+  // Age only a test-owned upload, leaving a recent session in place to exercise housekeeping's boundary.
+  const stale = await sendParts(validSmall, { omit: 0 });
+  const recent = await sendParts(validSmall, { omit: 0 });
+  const past = new Date(Date.now() - 25 * 60 * 60 * 1000);
+  fs.utimesSync(path.join(uploadRoot, stale.upload), past, past);
+  cli('aim_housekeeping();');
+  ok('housekeeping removes abandoned uploads after 24 hours and retains recent uploads', uploadGone(stale.upload) && !uploadGone(recent.upload));
+  await commitUpload(validSmall, recent.upload);
+  ok('recent incomplete upload can be rejected and cleaned after housekeeping', uploadGone(recent.upload) && stagedAbsent());
+  const maxChunkWireBytes = Math.max(...requestSizes);
+  ok('all ordinary chunk/commit HTTP bodies remain below 300 KB', requestSizes.length > 20 && maxChunkWireBytes < 300000, 'maximum=' + maxChunkWireBytes + ' bytes');
+  console.log('    Chunk upload wire size: max ' + maxChunkWireBytes + ' bytes across ' + requestSizes.length + ' normal requests.');
+
+  console.log('Legacy release staging remains available');
   const files = {}; for (const [p, c] of Object.entries(built.files)) files[p] = b64(c);
   j = await admin('stage', { id: '2026-W43', files: { ...files, '../evil.php': b64('<?php echo 1;') } });
   ok('stage refuses unexpected files', j.ok === false);

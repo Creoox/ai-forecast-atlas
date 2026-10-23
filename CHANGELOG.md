@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1 — 23 October 2026
+- Large builds now upload in small parts, compressed when supported, so staging and publishing no longer need one oversized request. The editor sees upload progress and clearer hosting errors. The server checks the complete upload before staging it and removes temporary parts after a commit or when abandoned for a day.
+- The final publish-and-newsletter confirmation stays hidden until the editor chooses “Publish now instead”. Staging uses the same upload process without publishing immediately or sending a newsletter.
+- Existing AI-agent settings, keys, review work and historical datasets are preserved by the update package. PHP zlib is recommended for compression; uploads also work without it.
+
 ## 1.3.0 — 19 October 2026
 - Readability and orientation: automatic text sizing on wide screens, larger text and chart labels, grouped controls, a scenario overview, explicit historical/scenario events with pause, section navigation, phone panel controls and full-window expanded charts.
 - Crawlable scenario, measure, release, About, FAQ and methodology pages are generated from already-published data, alongside a homepage summary, dated sitemap, structured data and complete AI reading files. Every named crawler inherits the same private-route exclusions. An authenticated public-page refresh rebuilds presentation without changing datasets or sending newsletters.
