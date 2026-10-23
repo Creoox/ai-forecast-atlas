@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2 — 23 October 2026
+- Fixed the remaining HTTP 500 error when uploading a release on home.pl. Upload parts are smaller, keeping each request below 175 KB after encoding. Compression, upload progress and the separate publish confirmation are unchanged.
+- Browser tests now simulate hosting that rejects larger requests, including when compression is unavailable. The update preserves existing settings, API keys and historical data.
+
 ## 1.3.1 — 23 October 2026
 - Large builds now upload in small parts, compressed when supported, so staging and publishing no longer need one oversized request. The editor sees upload progress and clearer hosting errors. The server checks the complete upload before staging it and removes temporary parts after a commit or when abandoned for a day.
 - The final publish-and-newsletter confirmation stays hidden until the editor chooses “Publish now instead”. Staging uses the same upload process without publishing immediately or sending a newsletter.

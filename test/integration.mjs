@@ -386,7 +386,7 @@ try {
     const body = options.method === 'GET' ? undefined : JSON.stringify({ p: b64(JSON.stringify(payload)) });
     if (body && options.small !== false) {
       const bytes = Buffer.byteLength(body);
-      assert.ok(bytes < 300000, action + ' actual HTTP body must stay below the host limit: ' + bytes);
+      assert.ok(bytes < 192 * 1024, action + ' actual HTTP body must stay below the shared-host limit: ' + bytes);
       requestSizes.push(bytes);
     }
     const headers = { 'Content-Type': 'application/json' };
@@ -403,7 +403,7 @@ try {
   };
   const sendParts = async (encoded, options = {}) => {
     const upload = options.upload || randomBytes(16).toString('hex');
-    const size = 192 * 1024;
+    const size = 128 * 1024;
     const total = Math.ceil(encoded.data.length / size);
     assert.ok(total >= 1 && total <= 64);
     for (let index = 0; index < total; index++) {
@@ -514,9 +514,11 @@ try {
   assert.ok(Object.values(quotaFiles).every(content => Buffer.byteLength(content) <= 3000000), 'quota fixture must satisfy individual bundle-file limits');
   assert.ok(Object.values(quotaFiles).reduce((sum, content) => sum + Buffer.byteLength(content), 0) < 12000000, 'quota fixture must otherwise fit a valid release');
   const overUpload = randomBytes(16).toString('hex');
+  // Deliberately bypass the browser's smaller wire limit to reach the server's
+  // aggregate quota within 64 parts; these are malformed-client requests.
   const overTotal = Math.ceil(overLimit.length / (192 * 1024));
   for (let index = 0; index < overTotal; index++) {
-    const part = await chunkRequest('stage-part', { upload: overUpload, index, total: overTotal, data: overLimit.slice(index * 192 * 1024, (index + 1) * 192 * 1024) });
+    const part = await chunkRequest('stage-part', { upload: overUpload, index, total: overTotal, data: overLimit.slice(index * 192 * 1024, (index + 1) * 192 * 1024) }, { small: false });
     if (!part.json.ok) break; // Either incremental quota enforcement or commit may reject the oversize session.
   }
   const overCommit = await commitUpload(quotaEncoded, overUpload);
@@ -535,7 +537,7 @@ try {
   await commitUpload(validSmall, recent.upload);
   ok('recent incomplete upload can be rejected and cleaned after housekeeping', uploadGone(recent.upload) && stagedAbsent());
   const maxChunkWireBytes = Math.max(...requestSizes);
-  ok('all ordinary chunk/commit HTTP bodies remain below 300 KB', requestSizes.length > 20 && maxChunkWireBytes < 300000, 'maximum=' + maxChunkWireBytes + ' bytes');
+  ok('all ordinary chunk/commit HTTP bodies remain below 192 KiB', requestSizes.length > 20 && maxChunkWireBytes < 192 * 1024, 'maximum=' + maxChunkWireBytes + ' bytes');
   console.log('    Chunk upload wire size: max ' + maxChunkWireBytes + ' bytes across ' + requestSizes.length + ' normal requests.');
 
   console.log('Legacy release staging remains available');

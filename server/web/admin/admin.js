@@ -341,7 +341,9 @@ async function uploadBuild(id, progress) {
   const hex = bytes => Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
   const upload = hex(crypto.getRandomValues(new Uint8Array(16)));
   const sha256 = hex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data))));
-  const partSize = 192 * 1024, total = Math.ceil(data.length / partSize);
+  // call() base64-wraps the JSON again; keep the actual request below 175 KB.
+  // home.pl rejects the previous ~262 KB requests before PHP can handle them.
+  const partSize = 128 * 1024, total = Math.ceil(data.length / partSize);
   for (let index = 0; index < total; index++) {
     progress('Uploading ' + (index + 1) + ' of ' + total + '…');
     await call('stage-part', { upload, index, total, data: data.slice(index * partSize, (index + 1) * partSize) });
